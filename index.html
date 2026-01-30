@@ -815,6 +815,186 @@
     </footer>
 
     <script>
+        // ===== CONFIGURAZIONE API =====
+const API_URL = 'http://racing-game-backend-production-a5dd.up.railway.app';  // ← SOSTITUISCI CON IL TUO URL!
+let authToken = localStorage.getItem('authToken');
+let currentUser = JSON.parse(localStorage.getItem('user') || 'null');
+
+// Funzioni autenticazione
+async function showAuthModal() {
+    const html = `
+        <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 9999; display: flex; justify-content: center; align-items: center;">
+            <div style="background: #1a1a1a; padding: 40px; border-radius: 20px; border: 3px solid #ff3333; max-width: 400px; width: 90%;">
+                <h2 style="font-family: Orbitron; text-align: center; margin-bottom: 30px;">🏁 RACING GAME</h2>
+                
+                <div id="loginForm">
+                    <input type="text" id="loginUsername" placeholder="Username" style="width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 2px solid #333; background: #0a0a0a; color: white; font-size: 1rem;">
+                    <input type="password" id="loginPassword" placeholder="Password" style="width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 2px solid #333; background: #0a0a0a; color: white; font-size: 1rem;">
+                    <button onclick="handleLogin()" style="width: 100%; padding: 15px; margin: 10px 0; background: linear-gradient(135deg, #ff3333, #cc0000); border: none; border-radius: 8px; color: white; font-weight: 700; cursor: pointer; font-size: 1rem;">LOGIN</button>
+                    <button onclick="showRegisterForm()" style="width: 100%; padding: 15px; margin: 10px 0; background: #333; border: none; border-radius: 8px; color: white; cursor: pointer;">Registrati</button>
+                </div>
+                
+                <div id="registerForm" style="display: none;">
+                    <input type="text" id="regUsername" placeholder="Username" style="width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 2px solid #333; background: #0a0a0a; color: white; font-size: 1rem;">
+                    <input type="email" id="regEmail" placeholder="Email" style="width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 2px solid #333; background: #0a0a0a; color: white; font-size: 1rem;">
+                    <input type="password" id="regPassword" placeholder="Password (min 6 caratteri)" style="width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 2px solid #333; background: #0a0a0a; color: white; font-size: 1rem;">
+                    <button onclick="handleRegister()" style="width: 100%; padding: 15px; margin: 10px 0; background: linear-gradient(135deg, #00ff88, #00cc66); border: none; border-radius: 8px; color: white; font-weight: 700; cursor: pointer; font-size: 1rem;">REGISTRATI</button>
+                    <button onclick="showLoginForm()" style="width: 100%; padding: 15px; margin: 10px 0; background: #333; border: none; border-radius: 8px; color: white; cursor: pointer;">Torna al Login</button>
+                </div>
+                
+                <div id="authMessage" style="margin-top: 20px; text-align: center; color: #ff3333;"></div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', html);
+}
+
+function showRegisterForm() {
+    document.getElementById('loginForm').style.display = 'none';
+    document.getElementById('registerForm').style.display = 'block';
+}
+
+function showLoginForm() {
+    document.getElementById('loginForm').style.display = 'block';
+    document.getElementById('registerForm').style.display = 'none';
+}
+
+async function handleLogin() {
+    const username = document.getElementById('loginUsername').value;
+    const password = document.getElementById('loginPassword').value;
+    const msgEl = document.getElementById('authMessage');
+    
+    if (!username || !password) {
+        msgEl.textContent = 'Compila tutti i campi!';
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${API_URL}/api/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+            msgEl.textContent = data.error;
+            return;
+        }
+        
+        authToken = data.token;
+        currentUser = data.user;
+        localStorage.setItem('authToken', authToken);
+        localStorage.setItem('user', JSON.stringify(currentUser));
+        
+        msgEl.style.color = '#00ff88';
+        msgEl.textContent = 'Login effettuato! Caricamento...';
+        
+        await loadGameFromServer();
+        document.querySelector('[style*="position: fixed"]').remove();
+        game.render();
+        
+    } catch (error) {
+        msgEl.textContent = 'Errore connessione al server';
+        console.error(error);
+    }
+}
+
+async function handleRegister() {
+    const username = document.getElementById('regUsername').value;
+    const email = document.getElementById('regEmail').value;
+    const password = document.getElementById('regPassword').value;
+    const msgEl = document.getElementById('authMessage');
+    
+    if (!username || !email || !password) {
+        msgEl.textContent = 'Compila tutti i campi!';
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${API_URL}/api/auth/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, email, password })
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+            msgEl.textContent = data.error;
+            return;
+        }
+        
+        msgEl.style.color = '#00ff88';
+        msgEl.textContent = 'Registrazione completata! Ora fai login.';
+        setTimeout(showLoginForm, 2000);
+        
+    } catch (error) {
+        msgEl.textContent = 'Errore connessione al server';
+        console.error(error);
+    }
+}
+
+async function loadGameFromServer() {
+    try {
+        const response = await fetch(`${API_URL}/api/game/state`, {
+            headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        
+        if (!response.ok) throw new Error('Errore caricamento');
+        
+        const data = await response.json();
+        
+        game.resources = data.resources;
+        game.workshop = data.workshop;
+        game.ownedCars = data.ownedCars || [];
+        game.drivers = data.drivers || game.drivers;
+        game.currentDriver = data.currentDriver;
+        game.sponsors = data.sponsors || game.sponsors;
+        game.currentSponsor = data.currentSponsor;
+        game.technologies = data.technologies || game.technologies;
+        game.races = data.races;
+        game.championship = data.championship || game.championship;
+        game.raceHistory = data.raceHistory || [];
+        
+    } catch (error) {
+        console.error('Errore caricamento:', error);
+    }
+}
+
+async function saveGameToServer() {
+    if (!authToken) return;
+    
+    try {
+        await fetch(`${API_URL}/api/game/state`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${authToken}`
+            },
+            body: JSON.stringify({
+                gameState: {
+                    resources: game.resources,
+                    workshop: game.workshop,
+                    ownedCars: game.ownedCars,
+                    drivers: game.drivers,
+                    currentDriver: game.currentDriver,
+                    sponsors: game.sponsors,
+                    currentSponsor: game.currentSponsor,
+                    technologies: game.technologies,
+                    races: game.races,
+                    championship: game.championship,
+                    raceHistory: game.raceHistory
+                }
+            })
+        });
+    } catch (error) {
+        console.error('Errore salvataggio:', error);
+    }
+}
+
+// ===== FINE CONFIGURAZIONE API =====
         const game = {
             currentPage: 'workshop',
             selectedCarIndex: 0,
@@ -2450,24 +2630,25 @@
             },
 
             saveGame() {
-                const saveData = {
-                    resources: this.resources,
-                    workshop: this.workshop,
-                    availableCars: this.availableCars,
-                    ownedCars: this.ownedCars,
-                    races: this.races,
-                    championship: this.championship,
-                    selectedCarIndex: this.selectedCarIndex,
-                    drivers: this.drivers,
-                    currentDriver: this.currentDriver,
-                    sponsors: this.sponsors,
-                    currentSponsor: this.currentSponsor,
-                    technologies: this.technologies,
-                    raceHistory: this.raceHistory,
-                    lastSaveTime: Date.now()
-                };
-                localStorage.setItem('garageRacingGame', JSON.stringify(saveData));
-            },
+    const saveData = {
+        resources: this.resources,
+        workshop: this.workshop,
+        availableCars: this.availableCars,
+        ownedCars: this.ownedCars,
+        races: this.races,
+        championship: this.championship,
+        selectedCarIndex: this.selectedCarIndex,
+        drivers: this.drivers,
+        currentDriver: this.currentDriver,
+        sponsors: this.sponsors,
+        currentSponsor: this.currentSponsor,
+        technologies: this.technologies,
+        raceHistory: this.raceHistory,
+        lastSaveTime: Date.now()
+    };
+    localStorage.setItem('garageRacingGame', JSON.stringify(saveData));
+    saveGameToServer(); // ← AGGIUNGI QUESTA RIGA!
+},
 
             loadGame() {
                 const saved = localStorage.getItem('garageRacingGame');
@@ -2541,9 +2722,13 @@
             }
         };
 
-        window.addEventListener('load', () => {
-            game.init();
-        });
+window.addEventListener('load', () => {
+    if (!authToken) {
+        showAuthModal();
+    } else {
+        game.init();
+    }
+});
 
         document.getElementById('raceModal').addEventListener('click', (e) => {
             if (e.target.id === 'raceModal') {
