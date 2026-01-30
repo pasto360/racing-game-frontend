@@ -1,0 +1,2557 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Garage Racing Manager v4.1</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0a0a0a;
+            --bg-card: #1a1a1a;
+            --accent-red: #ff3333;
+            --accent-yellow: #ffd700;
+            --accent-cyan: #00d9ff;
+            --accent-green: #00ff88;
+            --accent-purple: #9d4edd;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0a0a0a 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255, 51, 51, 0.03) 2px, rgba(255, 51, 51, 0.03) 4px);
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 2;
+        }
+
+        header {
+            text-align: center;
+            padding: 20px;
+            background: linear-gradient(180deg, rgba(26, 26, 26, 0.9) 0%, transparent 100%);
+            border-bottom: 2px solid var(--accent-red);
+            margin-bottom: 20px;
+            animation: slideDown 0.8s ease-out;
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-100px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 6px;
+            background: linear-gradient(135deg, var(--accent-red) 0%, var(--accent-yellow) 50%, var(--accent-cyan) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 8px;
+        }
+
+        .resources {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin: 15px 0;
+            flex-wrap: wrap;
+        }
+
+        .resource-card {
+            background: var(--bg-card);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 8px 16px;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 140px;
+        }
+
+        .resource-card:hover {
+            border-color: var(--accent-red);
+            box-shadow: 0 0 20px rgba(255, 51, 51, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .resource-icon { font-size: 1.3rem; }
+
+        .resource-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .resource-value {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .resource-rate {
+            font-size: 0.65rem;
+            color: var(--accent-green);
+        }
+
+        .navigation {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .nav-btn {
+            background: var(--bg-card);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            color: var(--text-primary);
+            padding: 15px 30px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .nav-btn:hover {
+            border-color: var(--accent-red);
+            box-shadow: 0 0 30px rgba(255, 51, 51, 0.3);
+            transform: translateY(-3px);
+        }
+
+        .nav-btn.active {
+            background: linear-gradient(135deg, var(--accent-red), #cc0000);
+            border-color: var(--accent-red);
+            box-shadow: 0 0 30px rgba(255, 51, 51, 0.3);
+        }
+
+        .nav-btn .icon {
+            font-size: 1.5rem;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .page {
+            display: none;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        .page.active { display: block; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .section-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            margin: 30px 0 20px 0;
+            padding-bottom: 15px;
+            border-bottom: 3px solid var(--accent-red);
+            position: relative;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -3px;
+            left: 0;
+            width: 100px;
+            height: 3px;
+            background: var(--accent-yellow);
+        }
+
+        .workshop-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .workshop-section {
+            background: var(--bg-card);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            transition: all 0.3s ease;
+        }
+
+        .workshop-section:hover {
+            border-color: var(--accent-yellow);
+            box-shadow: 0 0 40px rgba(255, 215, 0, 0.2);
+            transform: scale(1.02);
+        }
+
+        .workshop-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .workshop-icon {
+            font-size: 2.5rem;
+            margin-right: 15px;
+        }
+
+        .workshop-name {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .workshop-level span {
+            background: linear-gradient(135deg, var(--accent-red), var(--accent-yellow));
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+            display: inline-block;
+            margin-bottom: 15px;
+        }
+
+        .workshop-stats {
+            margin: 15px 0;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            font-size: 0.95rem;
+        }
+
+        .workshop-stats div {
+            margin: 5px 0;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, var(--accent-red), #cc0000);
+            border: none;
+            color: white;
+            padding: 12px 30px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .btn:hover {
+            box-shadow: 0 0 30px rgba(255, 51, 51, 0.6);
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            background: #333;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        .btn:disabled:hover {
+            box-shadow: none;
+            transform: none;
+        }
+
+        .btn-success { background: linear-gradient(135deg, var(--accent-green), #00cc66); }
+        .btn-cyan { background: linear-gradient(135deg, var(--accent-cyan), #0099cc); }
+        .btn-purple { background: linear-gradient(135deg, var(--accent-purple), #7209b7); }
+        .btn-small {
+            padding: 8px 20px;
+            font-size: 0.9rem;
+            width: auto;
+        }
+
+        .car-card {
+            background: var(--bg-card);
+            border: 2px solid rgba(0, 217, 255, 0.3);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 25px;
+            transition: all 0.3s ease;
+        }
+
+        .car-card:hover {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 40px rgba(0, 217, 255, 0.3);
+        }
+
+        .car-card.damaged {
+            border-color: var(--accent-red);
+            background: linear-gradient(135deg, rgba(255, 51, 51, 0.05), transparent);
+        }
+
+        .car-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .car-name {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--accent-cyan);
+        }
+
+        .car-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .stat-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 12px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 6px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-red), var(--accent-yellow));
+            border-radius: 6px;
+            transition: width 0.5s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+            to { left: 100%; }
+        }
+
+        .locked {
+            opacity: 0.4;
+            filter: grayscale(1);
+        }
+
+        .unlock-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, var(--accent-red), var(--accent-yellow));
+            padding: 20px 30px;
+            border-radius: 10px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            text-align: center;
+            box-shadow: 0 0 30px rgba(255, 51, 51, 0.8);
+            z-index: 1000;
+            animation: slideInOut 3s ease-out forwards;
+        }
+
+        @keyframes slideInOut {
+            0% { transform: translateX(400px); opacity: 0; }
+            10% { transform: translateX(0); opacity: 1; }
+            90% { transform: translateX(0); opacity: 1; }
+            100% { transform: translateX(400px); opacity: 0; }
+        }
+
+        .race-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .race-stat {
+            text-align: center;
+            padding: 20px;
+            background: var(--bg-card);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .race-stat:hover {
+            border-color: var(--accent-yellow);
+            transform: translateY(-3px);
+        }
+
+        .race-stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent-yellow);
+        }
+
+        .race-stat-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-top: 5px;
+        }
+
+        .cost-display {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-top: 8px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active { display: flex; }
+
+        .modal-content {
+            background: var(--bg-card);
+            border: 3px solid var(--accent-red);
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: scaleIn 0.5s ease-out;
+            box-shadow: 0 0 100px rgba(255, 51, 51, 0.5);
+        }
+
+        @keyframes scaleIn {
+            from { transform: scale(0.5); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 900;
+            text-align: center;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+        }
+
+        .modal-title.win {
+            color: var(--accent-green);
+            text-shadow: 0 0 20px var(--accent-green);
+        }
+
+        .modal-title.lose {
+            color: var(--accent-red);
+            text-shadow: 0 0 20px var(--accent-red);
+        }
+
+        .race-comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .race-car {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .race-car-name {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            text-align: center;
+            color: var(--accent-cyan);
+        }
+
+        .race-car-stat {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            font-size: 0.9rem;
+        }
+
+        .race-rewards {
+            background: rgba(0, 255, 136, 0.1);
+            border: 2px solid var(--accent-green);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .race-rewards h3 {
+            font-family: 'Orbitron', sans-serif;
+            color: var(--accent-green);
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .reward-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0;
+            font-size: 1.1rem;
+        }
+
+        .empty-garage {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+            font-size: 1.2rem;
+        }
+
+        .empty-garage-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .dealer-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 25px;
+        }
+
+        .damage-indicator {
+            background: rgba(255, 51, 51, 0.2);
+            border: 2px solid var(--accent-red);
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            text-align: center;
+        }
+
+        .damage-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent-red);
+        }
+
+        .championship-progress {
+            background: var(--bg-card);
+            border: 2px solid var(--accent-purple);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .championship-race {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            margin: 5px 0;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+        }
+
+        .championship-race.completed { opacity: 0.6; }
+        .championship-race.win { border-left: 4px solid var(--accent-green); }
+        .championship-race.lose { border-left: 4px solid var(--accent-red); }
+
+        .car-selector {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .car-select-btn {
+            padding: 15px 25px;
+            background: var(--bg-card);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+
+        .car-select-btn:hover {
+            border-color: var(--accent-cyan);
+            transform: translateY(-2px);
+        }
+
+        .car-select-btn.active {
+            border-color: var(--accent-green);
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), transparent);
+        }
+
+        .car-select-btn.damaged {
+            border-color: var(--accent-red);
+        }
+
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .team-card {
+            background: var(--bg-card);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 25px;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .team-card:hover {
+            border-color: var(--accent-purple);
+            box-shadow: 0 0 40px rgba(157, 78, 221, 0.3);
+            transform: scale(1.02);
+        }
+
+        .team-card.active {
+            border-color: var(--accent-green);
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.05), transparent);
+        }
+
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .tech-card {
+            background: var(--bg-card);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .tech-card:hover {
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 30px rgba(0, 217, 255, 0.3);
+            transform: scale(1.02);
+        }
+
+        .tech-card.researched {
+            border-color: var(--accent-green);
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.05), transparent);
+        }
+
+        footer {
+            text-align: center;
+            padding: 30px;
+            margin-top: 50px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏁 Garage Racing Manager</h1>
+            <div class="resources" id="resources"></div>
+        </header>
+
+        <nav class="navigation">
+            <button class="nav-btn active" onclick="game.changePage('workshop')">
+                <span class="icon">🔧</span>
+                Officina
+            </button>
+            <button class="nav-btn" onclick="game.changePage('garage')">
+                <span class="icon">🏎️</span>
+                Garage
+            </button>
+            <button class="nav-btn" onclick="game.changePage('dealer')">
+                <span class="icon">🏪</span>
+                Concessionario
+            </button>
+            <button class="nav-btn" onclick="game.changePage('team')">
+                <span class="icon">👥</span>
+                Team
+            </button>
+            <button class="nav-btn" onclick="game.changePage('tech')">
+                <span class="icon">🔬</span>
+                Tecnologie
+            </button>
+            <button class="nav-btn" onclick="game.changePage('race')">
+                <span class="icon">🏁</span>
+                Gare
+            </button>
+            <button class="nav-btn" onclick="game.changePage('history')">
+                <span class="icon">📜</span>
+                Storico
+            </button>
+        </nav>
+
+        <div id="page-workshop" class="page active">
+            <h2 class="section-title">🔧 Reparti Officina</h2>
+            <div class="workshop-grid" id="workshop"></div>
+        </div>
+
+        <div id="page-garage" class="page">
+            <h2 class="section-title">🏎️ Le Mie Auto</h2>
+            <div id="myGarage"></div>
+        </div>
+
+        <div id="page-dealer" class="page">
+            <h2 class="section-title">🏪 Auto Disponibili</h2>
+            <div class="dealer-grid" id="dealerCars"></div>
+        </div>
+
+        <div id="page-team" class="page">
+            <h2 class="section-title">👤 Pilota</h2>
+            <div class="team-grid" id="driversSection"></div>
+            
+            <h2 class="section-title">🏢 Sponsor</h2>
+            <div class="team-grid" id="sponsorsSection"></div>
+        </div>
+
+        <div id="page-tech" class="page">
+            <h2 class="section-title">🔬 Albero Tecnologie</h2>
+            <div class="tech-grid" id="techTree"></div>
+        </div>
+
+        <div id="page-race" class="page">
+            <h2 class="section-title">🏁 Seleziona Auto</h2>
+            <div class="car-selector" id="carSelector"></div>
+            
+            <h2 class="section-title">🏁 Gare Stradali</h2>
+            <div class="race-info" id="raceInfo"></div>
+            <button class="btn btn-success" onclick="game.startRace()" id="raceBtn">Inizia Gara Stradale</button>
+            
+            <h2 class="section-title">🏆 Campionato (5 Gare)</h2>
+            <div id="championshipSection"></div>
+        </div>
+
+        <div id="page-history" class="page">
+            <h2 class="section-title">📜 Storico Gare</h2>
+            <div id="raceHistoryContainer"></div>
+        </div>
+    </div>
+
+    <div class="modal" id="raceModal">
+        <div class="modal-content">
+            <h2 class="modal-title" id="raceResult"></h2>
+            <div class="race-comparison" id="raceComparison"></div>
+            <div class="race-rewards" id="raceRewards"></div>
+            <div id="damageSection"></div>
+            <button class="btn" onclick="game.closeRaceModal()">Chiudi</button>
+        </div>
+    </div>
+
+    <div class="modal" id="repairModal">
+        <div class="modal-content">
+            <h2 class="modal-title" style="color: var(--accent-red);">🔧 Riparazione Auto</h2>
+            <div id="repairContent"></div>
+        </div>
+    </div>
+
+    <footer>
+        Garage Racing Manager v4.3 COMPLETO • Campionato + Piloti + Sponsor + Tecnologie • Salvataggio automatico
+    </footer>
+
+    <script>
+        const game = {
+            currentPage: 'workshop',
+            selectedCarIndex: 0,
+            
+            resources: {
+                money: { value: 15000, rate: 0, max: 999999, icon: '💰', name: 'Denaro' },
+                parts: { value: 150, rate: 0, max: 999999, icon: '🔩', name: 'Parti' },
+                reputation: { value: 0, rate: 0, max: 10000, icon: '⭐', name: 'Reputazione' },
+                energy: { value: 100, rate: 0, max: 100, icon: '⚡', name: 'Energia' }
+            },
+
+            workshop: {
+                engine: {
+                    name: 'Reparto Motori',
+                    icon: '⚙️',
+                    level: 0,
+                    maxLevel: 10,
+                    cost: { money: 1000, parts: 50 },
+                    production: { parts: 0.5 },
+                    unlocked: true
+                },
+                electronics: {
+                    name: 'Elettronica',
+                    icon: '💻',
+                    level: 0,
+                    maxLevel: 10,
+                    cost: { money: 1500, parts: 75 },
+                    production: { money: 50 },
+                    unlocked: false,
+                    unlockCondition: { money: 15000 }
+                },
+                body: {
+                    name: 'Carrozzeria',
+                    icon: '🎨',
+                    level: 0,
+                    maxLevel: 10,
+                    cost: { money: 2000, parts: 100 },
+                    oneTimeBonus: { reputation: 10 },
+                    unlocked: false,
+                    unlockCondition: { reputation: 50 }
+                },
+                aerodynamics: {
+                    name: 'Aerodinamica',
+                    icon: '🌪️',
+                    level: 0,
+                    maxLevel: 10,
+                    cost: { money: 3000, parts: 150 },
+                    oneTimeBonus: { reputation: 10 },
+                    unlocked: false,
+                    unlockCondition: { reputation: 200, money: 25000 }
+                }
+            },
+
+            availableCars: [
+                {
+                    name: 'Honda Civic Type R',
+                    stats: { engine: 45, body: 40, electronics: 35, aero: 30 },
+                    price: { money: 8000, parts: 100 },
+                    unlocked: true,
+                    image: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 100"%3E%3Crect fill="%23ff3333" width="200" height="100"/%3E%3Ctext x="100" y="55" text-anchor="middle" font-size="16" fill="white" font-family="Arial"%3EHonda Civic%3C/text%3E%3C/svg%3E'
+                },
+                {
+                    name: 'Ford Focus RS',
+                    stats: { engine: 50, body: 45, electronics: 40, aero: 35 },
+                    price: { money: 12000, parts: 150 },
+                    unlocked: true,
+                    image: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 100"%3E%3Crect fill="%230099ff" width="200" height="100"/%3E%3Ctext x="100" y="55" text-anchor="middle" font-size="16" fill="white" font-family="Arial"%3EFord Focus%3C/text%3E%3C/svg%3E'
+                },
+                {
+                    name: 'Subaru Impreza WRX',
+                    stats: { engine: 60, body: 50, electronics: 45, aero: 45 },
+                    price: { money: 18000, parts: 200 },
+                    unlocked: false,
+                    unlockCondition: { reputation: 100 },
+                    image: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 100"%3E%3Crect fill="%23ffd700" width="200" height="100"/%3E%3Ctext x="100" y="55" text-anchor="middle" font-size="16" fill="white" font-family="Arial"%3ESubaru WRX%3C/text%3E%3C/svg%3E'
+                },
+                {
+                    name: 'Mitsubishi Lancer Evo X',
+                    stats: { engine: 65, body: 55, electronics: 50, aero: 50 },
+                    price: { money: 22000, parts: 250 },
+                    unlocked: false,
+                    unlockCondition: { reputation: 200 },
+                    image: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 100"%3E%3Crect fill="%2300ff88" width="200" height="100"/%3E%3Ctext x="100" y="55" text-anchor="middle" font-size="16" fill="white" font-family="Arial"%3EMitsubishi Evo%3C/text%3E%3C/svg%3E'
+                },
+                {
+                    name: 'Nissan GT-R R35',
+                    stats: { engine: 80, body: 70, electronics: 75, aero: 65 },
+                    price: { money: 45000, parts: 400 },
+                    unlocked: false,
+                    unlockCondition: { reputation: 500, money: 50000 },
+                    image: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 100"%3E%3Crect fill="%23333333" width="200" height="100"/%3E%3Ctext x="100" y="55" text-anchor="middle" font-size="16" fill="white" font-family="Arial"%3ENissan GT-R%3C/text%3E%3C/svg%3E'
+                },
+                {
+                    name: 'Porsche 911 GT3',
+                    stats: { engine: 90, body: 85, electronics: 85, aero: 80 },
+                    price: { money: 75000, parts: 600 },
+                    unlocked: false,
+                    unlockCondition: { reputation: 1000, money: 80000 },
+                    image: 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 100"%3E%3Crect fill="%23ff9900" width="200" height="100"/%3E%3Ctext x="100" y="55" text-anchor="middle" font-size="16" fill="white" font-family="Arial"%3EPorsche 911%3C/text%3E%3C/svg%3E'
+                }
+            ],
+
+            ownedCars: [],
+
+            raceHistory: [],
+
+            drivers: [
+                { name: 'Mario Rossi', icon: '🏃', bonus: { type: 'energy', value: -5 }, cost: 5000, description: 'Pilota efficiente', unlocked: true },
+                { name: 'Luca Bianchi', icon: '💰', bonus: { type: 'money', value: 0.2 }, cost: 8000, description: 'Porta sponsor', unlocked: true },
+                { name: 'Sara Verdi', icon: '🔧', bonus: { type: 'repair', value: -0.1 }, cost: 10000, description: 'Esperta meccanica', unlocked: false, unlockCondition: { reputation: 100 } },
+                { name: 'Andrea Neri', icon: '⭐', bonus: { type: 'reputation', value: 0.15 }, cost: 12000, description: 'Star del racing', unlocked: false, unlockCondition: { reputation: 200 } },
+                { name: 'Paolo Ferrari', icon: '🏆', bonus: { type: 'winBonus', value: 0.25 }, cost: 20000, description: 'Campione veterano', unlocked: false, unlockCondition: { reputation: 500 } }
+            ],
+
+            currentDriver: null,
+
+            sponsors: [
+                { name: 'Auto Parts Inc', icon: '🔩', bonus: { type: 'parts', value: 0.1 }, unlocked: true, requirement: 0 },
+                { name: 'Speed Oil', icon: '⚙️', bonus: { type: 'money', value: 0.1 }, unlocked: true, requirement: 0 },
+                { name: 'Turbo Tyres', icon: '⚡', bonus: { type: 'reputation', value: 0.05 }, unlocked: false, requirement: 10 },
+                { name: 'Racing Magazine', icon: '📰', bonus: { type: 'reputation', value: 0.1 }, unlocked: false, requirement: 25 },
+                { name: 'Performance Chips', icon: '💻', bonus: { type: 'money', value: 0.15 }, unlocked: false, requirement: 50 },
+                { name: 'Carbon Fiber Co', icon: '🏎️', bonus: { type: 'parts', value: 0.15 }, unlocked: false, requirement: 75 },
+                { name: 'Energy Drink X', icon: '⚡', bonus: { type: 'energy', value: 10 }, unlocked: false, requirement: 100 },
+                { name: 'Nitro Systems', icon: '🚀', bonus: { type: 'winBonus', value: 0.15 }, unlocked: false, requirement: 150 },
+                { name: 'Formula Lubricants', icon: '🛢️', bonus: { type: 'repair', value: -0.15 }, unlocked: false, requirement: 200 },
+                { name: 'Red Bull Racing', icon: '🏆', bonus: { type: 'all', value: 0.1 }, unlocked: false, requirement: 300 }
+            ],
+
+            currentSponsor: null,
+
+            technologies: [
+                { id: 'turbo', name: 'Turbocompressore', icon: '🌪️', bonus: { stat: 'engine', value: 5 }, cost: { money: 5000, parts: 200 }, researched: false },
+                { id: 'carbon', name: 'Fibra di Carbonio', icon: '⚫', bonus: { type: 'repair', value: -0.1 }, cost: { money: 8000, parts: 300, reputation: 50 }, researched: false },
+                { id: 'ecu', name: 'ECU Avanzata', icon: '💻', bonus: { stat: 'electronics', value: 5 }, cost: { money: 6000, parts: 250 }, researched: false },
+                { id: 'aero', name: 'Kit Aerodinamico', icon: '✈️', bonus: { stat: 'aero', value: 5 }, cost: { money: 7000, parts: 300, reputation: 30 }, researched: false },
+                { id: 'suspension', name: 'Sospensioni Pro', icon: '🔧', bonus: { stat: 'body', value: 5 }, cost: { money: 5500, parts: 220 }, researched: false },
+                { id: 'nitro', name: 'Sistema Nitro', icon: '🚀', bonus: { stat: 'engine', value: 8 }, cost: { money: 12000, parts: 500, reputation: 100 }, researched: false, requires: ['turbo'] },
+                { id: 'weight', name: 'Alleggerimento', icon: '⚖️', bonus: { type: 'allStats', value: 3 }, cost: { money: 10000, parts: 400, reputation: 80 }, researched: false },
+                { id: 'cooling', name: 'Raffreddamento', icon: '❄️', bonus: { type: 'repair', value: -0.15 }, cost: { money: 9000, parts: 350, reputation: 60 }, researched: false }
+            ],
+
+            races: {
+                completed: 0,
+                wins: 0,
+                lastRaceTime: 0,
+                cooldown: 30000
+            },
+
+            championship: {
+                active: false,
+                currentRace: 0,
+                totalRaces: 5,
+                wins: 0,
+                results: [],
+                entryFee: 7000,
+                prizePool: 5000
+            },
+
+            init() {
+                this.loadGame();
+                this.render();
+                this.startGameLoop();
+                this.checkUnlocks();
+            },
+
+            startGameLoop() {
+                setInterval(() => {
+                    this.updateResources();
+                    this.render();
+                    this.saveGame();
+                    this.checkUnlocks();
+                }, 1000);
+            },
+
+            updateResources() {
+                Object.keys(this.workshop).forEach(key => {
+                    const section = this.workshop[key];
+                    if (section.level > 0 && section.production) {
+                        Object.keys(section.production).forEach(resource => {
+                            if (this.resources[resource]) {
+                                // Produzione oraria = base * livello
+                                const productionPerHour = section.production[resource] * section.level;
+                                const productionPerSecond = productionPerHour / 3600;
+                                
+                                this.resources[resource].value = Math.min(
+                                    this.resources[resource].value + productionPerSecond,
+                                    this.resources[resource].max
+                                );
+                            }
+                        });
+                    }
+                });
+
+                Object.keys(this.resources).forEach(key => {
+                    this.resources[key].rate = 0;
+                });
+
+                Object.keys(this.workshop).forEach(key => {
+                    const section = this.workshop[key];
+                    if (section.level > 0 && section.production) {
+                        Object.keys(section.production).forEach(resource => {
+                            if (this.resources[resource]) {
+                                // Rate orario = base * livello
+                                const rate = section.production[resource] * section.level;
+                                this.resources[resource].rate += rate;
+                            }
+                        });
+                    }
+                });
+
+                if (this.resources.energy.value < this.resources.energy.max) {
+                    this.resources.energy.value = Math.min(
+                        this.resources.energy.value + (1 / 60),
+                        this.resources.energy.max
+                    );
+                }
+            },
+
+            changePage(page) {
+                this.currentPage = page;
+                
+                document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+                document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+                
+                document.getElementById('page-' + page).classList.add('active');
+                event.target.closest('.nav-btn').classList.add('active');
+                
+                this.render();
+            },
+
+            upgradeWorkshop(sectionKey) {
+                const section = this.workshop[sectionKey];
+                if (!section.unlocked || section.level >= section.maxLevel) return;
+
+                const cost = this.getUpgradeCost(section);
+                
+                if (this.canAfford(cost)) {
+                    this.spendResources(cost);
+                    section.level++;
+                    
+                    // Bonus one-time reputazione per Carrozzeria e Aerodinamica
+                    if (section.reputationBonus) {
+                        const bonus = section.reputationBonus * section.level;
+                        this.resources.reputation.value = Math.min(
+                            this.resources.reputation.value + bonus,
+                            this.resources.reputation.max
+                        );
+                    }
+                    
+                    this.render();
+                } else {
+                    alert('Risorse insufficienti!');
+                }
+            },
+
+            getUpgradeCost(section) {
+                const multiplier = Math.pow(1.5, section.level);
+                const cost = {};
+                Object.keys(section.cost).forEach(key => {
+                    cost[key] = Math.floor(section.cost[key] * multiplier);
+                });
+                return cost;
+            },
+
+            canAfford(cost) {
+                return Object.keys(cost).every(key => 
+                    this.resources[key] && this.resources[key].value >= cost[key]
+                );
+            },
+
+            spendResources(cost) {
+                Object.keys(cost).forEach(key => {
+                    if (this.resources[key]) {
+                        this.resources[key].value -= cost[key];
+                    }
+                });
+            },
+
+            buyCar(carIndex) {
+                const car = this.availableCars[carIndex];
+                if (!car.unlocked) return;
+
+                const owned = this.ownedCars.some(c => c.name === car.name);
+                if (owned) {
+                    alert('Possiedi già questa auto!');
+                    return;
+                }
+
+                if (this.canAfford(car.price)) {
+                    this.spendResources(car.price);
+                    this.ownedCars.push({
+                        ...car,
+                        upgrades: { engine: 0, body: 0, electronics: 0, aero: 0 },
+                        condition: 100
+                    });
+                    this.showUnlockNotification(`🏎️ Acquistata: ${car.name}!`);
+                    this.render();
+                } else {
+                    alert('Fondi insufficienti!');
+                }
+            },
+
+            sellCar(carIndex) {
+                if (!confirm('Sei sicuro di voler vendere questa auto?')) return;
+                
+                const car = this.ownedCars[carIndex];
+                const sellPrice = {
+                    money: Math.floor(car.price.money * 0.6),
+                    parts: Math.floor(car.price.parts * 0.6)
+                };
+                
+                this.resources.money.value += sellPrice.money;
+                this.resources.parts.value += sellPrice.parts;
+                
+                this.ownedCars.splice(carIndex, 1);
+                
+                if (this.selectedCarIndex >= this.ownedCars.length) {
+                    this.selectedCarIndex = Math.max(0, this.ownedCars.length - 1);
+                }
+                
+                this.showUnlockNotification(`💰 Venduta per ${sellPrice.money}€ + ${sellPrice.parts} parti`);
+                this.render();
+            },
+
+            hireDriver(driverIndex) {
+                const driver = this.drivers[driverIndex];
+                if (!driver.unlocked) return;
+
+                if (this.currentDriver) {
+                    alert('Hai già un pilota! Licenzialo prima.');
+                    return;
+                }
+
+                if (this.canAfford({ money: driver.cost })) {
+                    this.spendResources({ money: driver.cost });
+                    this.currentDriver = driver;
+                    this.showUnlockNotification(`👤 Assunto: ${driver.name}!`);
+                    this.render();
+                } else {
+                    alert('Fondi insufficienti!');
+                }
+            },
+
+            fireDriver() {
+                if (!confirm('Sei sicuro di voler licenziare il tuo pilota?')) return;
+                this.currentDriver = null;
+                this.render();
+            },
+
+            activateSponsor(sponsorIndex) {
+                const sponsor = this.sponsors[sponsorIndex];
+                if (!sponsor.unlocked) return;
+
+                if (this.currentSponsor === sponsor) {
+                    this.currentSponsor = null;
+                } else {
+                    this.currentSponsor = sponsor;
+                }
+                this.render();
+            },
+
+            researchTech(techId) {
+                const tech = this.technologies.find(t => t.id === techId);
+                if (!tech || tech.researched) return;
+
+                // Verifica prerequisiti
+                if (tech.requires) {
+                    const hasRequirements = tech.requires.every(reqId => {
+                        const reqTech = this.technologies.find(t => t.id === reqId);
+                        return reqTech && reqTech.researched;
+                    });
+                    
+                    if (!hasRequirements) {
+                        alert('Devi prima ricercare le tecnologie prerequisite!');
+                        return;
+                    }
+                }
+
+                if (this.canAfford(tech.cost)) {
+                    this.spendResources(tech.cost);
+                    tech.researched = true;
+                    this.showUnlockNotification(`🔬 Ricercata: ${tech.name}!`);
+                    this.render();
+                } else {
+                    alert('Risorse insufficienti!');
+                }
+            },
+
+            upgradeCar(carIndex, stat) {
+                const car = this.ownedCars[carIndex];
+                if (!car) return;
+
+                const cost = {
+                    money: 500 * (car.upgrades[stat] + 1),
+                    parts: 50 * (car.upgrades[stat] + 1)
+                };
+
+                if (this.canAfford(cost)) {
+                    this.spendResources(cost);
+                    car.upgrades[stat]++;
+                    this.render();
+                } else {
+                    alert('Risorse insufficienti!');
+                }
+            },
+
+            repairCar(carIndex, useParts) {
+                const car = this.ownedCars[carIndex];
+                if (!car || car.condition >= 100) return;
+
+                const damage = 100 - car.condition;
+                let cost;
+                
+                if (useParts) {
+                    cost = { parts: Math.ceil(damage * 2) };
+                } else {
+                    cost = { money: Math.ceil(damage * 50) };
+                }
+
+                // Applica bonus riparazione
+                let discount = 0;
+                if (this.currentDriver && this.currentDriver.bonus.type === 'repair') {
+                    discount = Math.abs(this.currentDriver.bonus.value);
+                }
+                if (this.currentSponsor && this.currentSponsor.bonus.type === 'repair') {
+                    discount += Math.abs(this.currentSponsor.bonus.value);
+                }
+                this.technologies.forEach(tech => {
+                    if (tech.researched && tech.bonus.type === 'repair') {
+                        discount += Math.abs(tech.bonus.value);
+                    }
+                });
+
+                Object.keys(cost).forEach(key => {
+                    cost[key] = Math.ceil(cost[key] * (1 - discount));
+                });
+
+                if (this.canAfford(cost)) {
+                    this.spendResources(cost);
+                    car.condition = 100;
+                    document.getElementById('repairModal').classList.remove('active');
+                    this.render();
+                } else {
+                    alert('Risorse insufficienti!');
+                }
+            },
+
+            getCarPower(car) {
+                let power = 0;
+                Object.keys(car.stats).forEach(stat => {
+                    let statValue = car.stats[stat] + (car.upgrades[stat] * 10);
+                    
+                    // Applica bonus tecnologie
+                    this.technologies.forEach(tech => {
+                        if (tech.researched) {
+                            if (tech.bonus.stat === stat) {
+                                statValue += tech.bonus.value;
+                            } else if (tech.bonus.type === 'allStats') {
+                                statValue += tech.bonus.value;
+                            }
+                        }
+                    });
+                    
+                    power += statValue;
+                });
+                
+                // Riduzione per condizione auto
+                power = power * (car.condition / 100);
+                
+                return power;
+            },
+
+            startRace() {
+                const now = Date.now();
+                if (now - this.races.lastRaceTime < this.races.cooldown) {
+                    const secondsLeft = Math.ceil((this.races.cooldown - (now - this.races.lastRaceTime)) / 1000);
+                    alert(`Aspetta ${secondsLeft} secondi prima di iniziare un'altra gara!`);
+                    return;
+                }
+
+                if (this.ownedCars.length === 0) {
+                    alert('Devi prima comprare un\'auto dal concessionario!');
+                    return;
+                }
+
+                const car = this.ownedCars[this.selectedCarIndex];
+                if (car.condition < 30) {
+                    alert('Auto troppo danneggiata! Riparala prima di gareggiare.');
+                    return;
+                }
+
+                // Applica bonus energia pilota
+                const energyCost = 20 - (this.currentDriver && this.currentDriver.bonus.type === 'energy' ? Math.abs(this.currentDriver.bonus.value) : 0);
+
+                if (this.resources.energy.value < energyCost) {
+                    alert('Team troppo stanco! Aspetta che l\'energia si ricarichi.');
+                    return;
+                }
+
+                this.resources.energy.value -= energyCost;
+
+                const carPower = this.getCarPower(car);
+                
+                let difficultyFactor = 0.85;
+                
+                if (this.races.completed > 0) {
+                    const winRate = this.races.wins / this.races.completed;
+                    
+                    if (winRate > 0.7) {
+                        difficultyFactor = 0.95 + Math.random() * 0.15;
+                    } else if (winRate > 0.5) {
+                        difficultyFactor = 0.85 + Math.random() * 0.2;
+                    } else if (winRate > 0.3) {
+                        difficultyFactor = 0.75 + Math.random() * 0.2;
+                    } else {
+                        difficultyFactor = 0.65 + Math.random() * 0.2;
+                    }
+                }
+                
+                const opponentBasePower = carPower * difficultyFactor;
+                
+                const statDistribution = [
+                    0.20 + Math.random() * 0.15,
+                    0.15 + Math.random() * 0.15,
+                    0.20 + Math.random() * 0.15,
+                    0.15 + Math.random() * 0.15
+                ];
+                
+                const sum = statDistribution.reduce((a, b) => a + b, 0);
+                const normalized = statDistribution.map(v => v / sum);
+                
+                const opponent = {
+                    name: this.getRandomOpponentName(),
+                    stats: {
+                        engine: Math.floor(opponentBasePower * normalized[0]),
+                        body: Math.floor(opponentBasePower * normalized[1]),
+                        electronics: Math.floor(opponentBasePower * normalized[2]),
+                        aero: Math.floor(opponentBasePower * normalized[3])
+                    }
+                };
+                
+                const opponentPower = Object.values(opponent.stats).reduce((a, b) => a + b, 0);
+                const win = carPower > opponentPower;
+
+                let rewards = {};
+                
+                if (win) {
+                    this.races.wins++;
+                    
+                    const difficultyBonus = Math.max(1, opponentPower / carPower);
+                    
+                    rewards = {
+                        money: Math.floor((Math.random() * 500 + 300) * difficultyBonus),
+                        reputation: Math.floor((Math.random() * 15 + 5) * difficultyBonus),
+                        parts: Math.floor((Math.random() * 20 + 10) * difficultyBonus)
+                    };
+
+                    // Applica bonus pilota
+                    if (this.currentDriver) {
+                        if (this.currentDriver.bonus.type === 'money') {
+                            rewards.money = Math.floor(rewards.money * (1 + this.currentDriver.bonus.value));
+                        } else if (this.currentDriver.bonus.type === 'reputation') {
+                            rewards.reputation = Math.floor(rewards.reputation * (1 + this.currentDriver.bonus.value));
+                        } else if (this.currentDriver.bonus.type === 'winBonus') {
+                            Object.keys(rewards).forEach(key => {
+                                rewards[key] = Math.floor(rewards[key] * (1 + this.currentDriver.bonus.value));
+                            });
+                        }
+                    }
+
+                    // Applica bonus sponsor
+                    if (this.currentSponsor) {
+                        if (this.currentSponsor.bonus.type === 'money') {
+                            rewards.money = Math.floor(rewards.money * (1 + this.currentSponsor.bonus.value));
+                        } else if (this.currentSponsor.bonus.type === 'reputation') {
+                            rewards.reputation = Math.floor(rewards.reputation * (1 + this.currentSponsor.bonus.value));
+                        } else if (this.currentSponsor.bonus.type === 'parts') {
+                            rewards.parts = Math.floor(rewards.parts * (1 + this.currentSponsor.bonus.value));
+                        } else if (this.currentSponsor.bonus.type === 'winBonus') {
+                            Object.keys(rewards).forEach(key => {
+                                rewards[key] = Math.floor(rewards[key] * (1 + this.currentSponsor.bonus.value));
+                            });
+                        } else if (this.currentSponsor.bonus.type === 'all') {
+                            Object.keys(rewards).forEach(key => {
+                                rewards[key] = Math.floor(rewards[key] * (1 + this.currentSponsor.bonus.value));
+                            });
+                        }
+                    }
+                    
+                    Object.keys(rewards).forEach(key => {
+                        if (this.resources[key]) {
+                            this.resources[key].value = Math.min(
+                                this.resources[key].value + rewards[key],
+                                this.resources[key].max
+                            );
+                        }
+                    });
+                }
+
+                this.races.completed++;
+                this.races.lastRaceTime = now;
+                
+                // Aggiungi al log gare
+                this.raceHistory.unshift({
+                    date: new Date().toLocaleString('it-IT'),
+                    type: 'Stradale',
+                    playerCar: car.name,
+                    playerPower: Math.floor(carPower),
+                    opponentName: opponent.name,
+                    opponentPower: Math.floor(opponentPower),
+                    win: win,
+                    rewards: win ? rewards : null
+                });
+                
+                // Mantieni solo ultime 50 gare
+                if (this.raceHistory.length > 50) {
+                    this.raceHistory = this.raceHistory.slice(0, 50);
+                }
+                
+                this.showRaceSummary(win, car, carPower, opponent, opponentPower, rewards, 0, false);
+                this.render();
+            },
+
+            startChampionship() {
+                if (this.championship.active) {
+                    alert('Campionato già in corso!');
+                    return;
+                }
+
+                if (!this.canAfford({ money: this.championship.entryFee })) {
+                    alert('Fondi insufficienti per l\'iscrizione!');
+                    return;
+                }
+
+                if (this.ownedCars.length === 0) {
+                    alert('Serve un\'auto per partecipare!');
+                    return;
+                }
+
+                const car = this.ownedCars[this.selectedCarIndex];
+                if (car.condition < 30) {
+                    alert('Auto troppo danneggiata!');
+                    return;
+                }
+
+                this.spendResources({ money: this.championship.entryFee });
+                this.championship.active = true;
+                this.championship.currentRace = 0;
+                this.championship.wins = 0;
+                this.championship.results = [];
+                
+                this.render();
+            },
+
+            runChampionshipRace() {
+                if (!this.championship.active) return;
+
+                const car = this.ownedCars[this.selectedCarIndex];
+                
+                const energyCost = 20 - (this.currentDriver && this.currentDriver.bonus.type === 'energy' ? Math.abs(this.currentDriver.bonus.value) : 0);
+                
+                if (this.resources.energy.value < energyCost) {
+                    alert('Energia insufficiente!');
+                    return;
+                }
+
+                this.resources.energy.value -= energyCost;
+
+                const carPower = this.getCarPower(car);
+                const difficultyFactor = 0.9 + (this.championship.currentRace * 0.05);
+                const opponentBasePower = carPower * difficultyFactor;
+                
+                const statDistribution = [
+                    0.20 + Math.random() * 0.15,
+                    0.15 + Math.random() * 0.15,
+                    0.20 + Math.random() * 0.15,
+                    0.15 + Math.random() * 0.15
+                ];
+                
+                const sum = statDistribution.reduce((a, b) => a + b, 0);
+                const normalized = statDistribution.map(v => v / sum);
+                
+                const opponent = {
+                    name: this.getRandomOpponentName(),
+                    stats: {
+                        engine: Math.floor(opponentBasePower * normalized[0]),
+                        body: Math.floor(opponentBasePower * normalized[1]),
+                        electronics: Math.floor(opponentBasePower * normalized[2]),
+                        aero: Math.floor(opponentBasePower * normalized[3])
+                    }
+                };
+                
+                const opponentPower = Object.values(opponent.stats).reduce((a, b) => a + b, 0);
+                const win = carPower > opponentPower;
+
+                const damage = Math.floor(Math.random() * 15 + 10);
+                car.condition = Math.max(0, car.condition - damage);
+
+                let rewards = {};
+                if (win) {
+                    this.championship.wins++;
+                    rewards = {
+                        money: Math.floor(500 + (this.championship.currentRace * 200)),
+                        reputation: Math.floor(20 + (this.championship.currentRace * 5)),
+                        parts: Math.floor(30 + (this.championship.currentRace * 10))
+                    };
+                    
+                    Object.keys(rewards).forEach(key => {
+                        if (this.resources[key]) {
+                            this.resources[key].value += rewards[key];
+                        }
+                    });
+                }
+
+                this.championship.results.push({ win, opponent: opponent.name, rewards, damage });
+                this.championship.currentRace++;
+
+                // Aggiungi al log gare
+                this.raceHistory.unshift({
+                    date: new Date().toLocaleString('it-IT'),
+                    type: 'Campionato',
+                    playerCar: car.name,
+                    playerPower: Math.floor(carPower),
+                    opponentName: opponent.name,
+                    opponentPower: Math.floor(opponentPower),
+                    win: win,
+                    rewards: win ? rewards : null,
+                    damage: damage
+                });
+                
+                if (this.raceHistory.length > 50) {
+                    this.raceHistory = this.raceHistory.slice(0, 50);
+                }
+
+                if (this.championship.currentRace >= this.championship.totalRaces) {
+                    if (this.championship.wins >= 3) {
+                        this.resources.money.value += this.championship.prizePool;
+                        rewards.championshipBonus = this.championship.prizePool;
+                    }
+                }
+
+                this.showRaceSummary(win, car, carPower, opponent, opponentPower, rewards, damage, true);
+                this.render();
+            },
+
+            abandonChampionship() {
+                if (!confirm('Sei sicuro di voler abbandonare il campionato?')) return;
+                
+                this.championship.active = false;
+                this.championship.currentRace = 0;
+                this.championship.wins = 0;
+                this.championship.results = [];
+                this.render();
+            },
+
+            showRaceSummary(win, playerCar, playerPower, opponent, opponentPower, rewards, damage, isChampionship) {
+                const modal = document.getElementById('raceModal');
+                const result = document.getElementById('raceResult');
+                const comparison = document.getElementById('raceComparison');
+                const rewardsDiv = document.getElementById('raceRewards');
+                const damageSection = document.getElementById('damageSection');
+
+                result.textContent = win ? '🏆 VITTORIA!' : '💥 SCONFITTA!';
+                result.className = `modal-title ${win ? 'win' : 'lose'}`;
+
+                comparison.innerHTML = `
+                    <div class="race-car">
+                        <div class="race-car-name">${playerCar.name}</div>
+                        <div class="race-car-stat"><span>Motore:</span> <span>${playerCar.stats.engine + (playerCar.upgrades.engine * 10)}</span></div>
+                        <div class="race-car-stat"><span>Carrozzeria:</span> <span>${playerCar.stats.body + (playerCar.upgrades.body * 10)}</span></div>
+                        <div class="race-car-stat"><span>Elettronica:</span> <span>${playerCar.stats.electronics + (playerCar.upgrades.electronics * 10)}</span></div>
+                        <div class="race-car-stat"><span>Aerodinamica:</span> <span>${playerCar.stats.aero + (playerCar.upgrades.aero * 10)}</span></div>
+                        <div class="race-car-stat" style="margin-top: 15px; border-top: 2px solid var(--accent-cyan); padding-top: 10px;">
+                            <span><strong>POTENZA:</strong></span> <span><strong>${Math.floor(playerPower)}</strong></span>
+                        </div>
+                    </div>
+                    <div class="race-car">
+                        <div class="race-car-name">${opponent.name}</div>
+                        <div class="race-car-stat"><span>Motore:</span> <span>${opponent.stats.engine}</span></div>
+                        <div class="race-car-stat"><span>Carrozzeria:</span> <span>${opponent.stats.body}</span></div>
+                        <div class="race-car-stat"><span>Elettronica:</span> <span>${opponent.stats.electronics}</span></div>
+                        <div class="race-car-stat"><span>Aerodinamica:</span> <span>${opponent.stats.aero}</span></div>
+                        <div class="race-car-stat" style="margin-top: 15px; border-top: 2px solid var(--accent-red); padding-top: 10px;">
+                            <span><strong>POTENZA:</strong></span> <span><strong>${Math.floor(opponentPower)}</strong></span>
+                        </div>
+                    </div>
+                `;
+
+                if (win) {
+                    let rewardsHtml = '<h3>💰 Ricompense</h3>';
+                    if (rewards.money) rewardsHtml += `<div class="reward-item"><span>💰 Denaro:</span> <span>+${rewards.money}</span></div>`;
+                    if (rewards.reputation) rewardsHtml += `<div class="reward-item"><span>⭐ Reputazione:</span> <span>+${rewards.reputation}</span></div>`;
+                    if (rewards.parts) rewardsHtml += `<div class="reward-item"><span>🔩 Parti:</span> <span>+${rewards.parts}</span></div>`;
+                    if (rewards.championshipBonus) rewardsHtml += `<div class="reward-item"><span>🏆 Premio Campionato:</span> <span>+${rewards.championshipBonus}€</span></div>`;
+                    
+                    rewardsDiv.innerHTML = rewardsHtml;
+                    rewardsDiv.style.display = 'block';
+                } else {
+                    rewardsDiv.style.display = 'none';
+                }
+
+                if (isChampionship && damage > 0) {
+                    damageSection.innerHTML = `
+                        <div class="damage-indicator">
+                            <div>⚠️ Danni Subiti</div>
+                            <div class="damage-value">-${damage}% Condizione</div>
+                            <div style="margin-top: 10px; font-size: 0.9rem;">Condizione attuale: ${playerCar.condition.toFixed(0)}%</div>
+                        </div>
+                    `;
+                } else {
+                    damageSection.innerHTML = '';
+                }
+
+                modal.classList.add('active');
+
+                if (isChampionship && this.championship.currentRace >= this.championship.totalRaces) {
+                    setTimeout(() => {
+                        this.championship.active = false;
+                        if (this.championship.wins >= 3) {
+                            this.showUnlockNotification(`🏆 HAI VINTO IL CAMPIONATO! +${this.championship.prizePool}€`);
+                        } else {
+                            this.showUnlockNotification('❌ Campionato fallito. Ritenta!');
+                        }
+                    }, 100);
+                }
+            },
+
+            closeRaceModal() {
+                document.getElementById('raceModal').classList.remove('active');
+            },
+
+            getRandomOpponentName() {
+                const names = [
+                    'Street Racer', 'Pro Driver', 'Speed Demon', 'Track Master', 'Drift King',
+                    'Turbo Ace', 'Racing Legend', 'Circuit Pro', 'Velocity Hunter', 'Asphalt Warrior'
+                ];
+                return names[Math.floor(Math.random() * names.length)];
+            },
+
+            checkUnlocks() {
+                Object.keys(this.workshop).forEach(key => {
+                    const section = this.workshop[key];
+                    if (!section.unlocked && section.unlockCondition) {
+                        const canUnlock = Object.keys(section.unlockCondition).every(res =>
+                            this.resources[res].value >= section.unlockCondition[res]
+                        );
+                        
+                        if (canUnlock) {
+                            section.unlocked = true;
+                            this.showUnlockNotification(`🔓 SBLOCCATO: ${section.name}!`);
+                        }
+                    }
+                });
+
+                this.availableCars.forEach(car => {
+                    if (!car.unlocked && car.unlockCondition) {
+                        const canUnlock = Object.keys(car.unlockCondition).every(res =>
+                            this.resources[res].value >= car.unlockCondition[res]
+                        );
+                        
+                        if (canUnlock) {
+                            car.unlocked = true;
+                            this.showUnlockNotification(`🔓 DISPONIBILE: ${car.name}!`);
+                        }
+                    }
+                });
+
+                // Drivers unlock
+                this.drivers.forEach(driver => {
+                    if (!driver.unlocked && driver.unlockCondition) {
+                        const canUnlock = Object.keys(driver.unlockCondition).every(res =>
+                            this.resources[res].value >= driver.unlockCondition[res]
+                        );
+                        
+                        if (canUnlock) {
+                            driver.unlocked = true;
+                            this.showUnlockNotification(`🔓 PILOTA: ${driver.name}!`);
+                        }
+                    }
+                });
+
+                // Sponsors unlock
+                this.sponsors.forEach(sponsor => {
+                    if (!sponsor.unlocked && this.races.wins >= sponsor.requirement) {
+                        sponsor.unlocked = true;
+                        this.showUnlockNotification(`🔓 SPONSOR: ${sponsor.name}!`);
+                    }
+                });
+            },
+
+            showUnlockNotification(message) {
+                const notification = document.createElement('div');
+                notification.className = 'unlock-notification';
+                notification.textContent = message;
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    notification.remove();
+                }, 3000);
+            },
+
+            render() {
+                this.renderResources();
+                
+                if (this.currentPage === 'workshop') {
+                    this.renderWorkshop();
+                } else if (this.currentPage === 'garage') {
+                    this.renderOwnedCars();
+                } else if (this.currentPage === 'dealer') {
+                    this.renderAvailableCars();
+                } else if (this.currentPage === 'team') {
+                    this.renderTeam();
+                } else if (this.currentPage === 'tech') {
+                    this.renderTech();
+                } else if (this.currentPage === 'race') {
+                    this.renderRace();
+                } else if (this.currentPage === 'history') {
+                    this.renderHistory();
+                }
+            },
+
+            renderResources() {
+                const container = document.getElementById('resources');
+                container.innerHTML = Object.keys(this.resources).map(key => {
+                    const res = this.resources[key];
+                    const rateText = res.rate > 0 ? `+${res.rate.toFixed(0)}/h` : '';
+                    return `
+                        <div class="resource-card">
+                            <div class="resource-icon">${res.icon}</div>
+                            <div class="resource-info">
+                                <div class="resource-value">${Math.floor(res.value).toLocaleString()}</div>
+                                <div class="resource-rate">${rateText}</div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            },
+
+            renderWorkshop() {
+                const container = document.getElementById('workshop');
+                container.innerHTML = Object.keys(this.workshop).map(key => {
+                    const section = this.workshop[key];
+                    const cost = this.getUpgradeCost(section);
+                    const canUpgrade = this.canAfford(cost) && section.level < section.maxLevel;
+                    const locked = !section.unlocked;
+
+                    let production = '';
+                    if (section.production && section.level > 0) {
+                        production = Object.keys(section.production).map(res => {
+                            const icon = this.resources[res]?.icon || '';
+                            const amount = section.production[res] * section.level;
+                            return `${icon} +${amount.toFixed(0)}/h`;
+                        }).join(' ');
+                    }
+
+                    // Bonus reputazione one-time
+                    let reputationInfo = '';
+                    if (section.reputationBonus && section.level > 0) {
+                        const totalRep = section.reputationBonus * section.level;
+                        reputationInfo = `⭐ +${totalRep} reputazione totale guadagnata`;
+                    }
+
+                    // Calcola cosa si ottiene con il prossimo upgrade
+                    let nextLevelBonus = '';
+                    if (section.level < section.maxLevel) {
+                        if (section.production) {
+                            nextLevelBonus = Object.keys(section.production).map(res => {
+                                const icon = this.resources[res]?.icon || '';
+                                const amount = section.production[res] * (section.level + 1);
+                                return `${icon} +${amount.toFixed(0)}/h`;
+                            }).join(' ');
+                        } else if (section.reputationBonus) {
+                            const nextRep = section.reputationBonus * (section.level + 1);
+                            nextLevelBonus = `⭐ +${section.reputationBonus} reputazione (totale: ${nextRep})`;
+                        }
+                    }
+
+                    return `
+                        <div class="workshop-section ${locked ? 'locked' : ''}">
+                            <div class="workshop-header">
+                                <div class="workshop-icon">${section.icon}</div>
+                                <div class="workshop-name">${section.name}</div>
+                            </div>
+                            <div class="workshop-level">
+                                <span>Livello ${section.level}/${section.maxLevel}</span>
+                            </div>
+                            ${section.level > 0 && (production || reputationInfo) ? `
+                                <div class="workshop-stats">
+                                    ${production ? `<div><strong>Produzione:</strong> ${production}</div>` : ''}
+                                    ${reputationInfo ? `<div><strong>Bonus:</strong> ${reputationInfo}</div>` : ''}
+                                </div>
+                            ` : ''}
+                            ${!locked ? `
+                                <button 
+                                    class="btn" 
+                                    onclick="game.upgradeWorkshop('${key}')"
+                                    ${!canUpgrade ? 'disabled' : ''}>
+                                    ${section.level < section.maxLevel ? 'Upgrade' : 'MAX'}
+                                </button>
+                                ${section.level < section.maxLevel && nextLevelBonus ? `
+                                    <div style="color: var(--accent-cyan); margin-top: 10px; font-size: 0.85rem;">
+                                        ➜ Prossimo livello: ${nextLevelBonus}
+                                    </div>
+                                    <div class="cost-display">
+                                        ${Object.keys(cost).map(res => 
+                                            `${this.resources[res].icon} ${cost[res]}`
+                                        ).join(' • ')}
+                                    </div>
+                                ` : ''}
+                            ` : `
+                                <div style="margin-top: 15px; color: var(--text-secondary); font-size: 0.9rem; text-align: center;">
+                                    🔒 Richiede: ${Object.keys(section.unlockCondition).map(res =>
+                                        `${this.resources[res].icon} ${section.unlockCondition[res]}`
+                                    ).join(', ')}
+                                </div>
+                            `}
+                        </div>
+                    `;
+                }).join('');
+            },
+
+            renderAvailableCars() {
+                const container = document.getElementById('dealerCars');
+                container.innerHTML = this.availableCars.map((car, index) => {
+                    const locked = !car.unlocked;
+                    const owned = this.ownedCars.some(c => c.name === car.name);
+                    const canBuy = this.canAfford(car.price) && !owned;
+                    const power = Object.values(car.stats).reduce((a, b) => a + b, 0);
+
+                    return `
+                        <div class="car-card ${locked ? 'locked' : ''}">
+                            ${car.image ? `
+                                <div style="width: 100%; height: 150px; overflow: hidden; border-radius: 10px; margin-bottom: 15px;">
+                                    <img src="${car.image}" alt="${car.name}" style="width: 100%; height: 100%; object-fit: cover;">
+                                </div>
+                            ` : ''}
+                            <div class="car-header">
+                                <div class="car-name">${car.name}</div>
+                            </div>
+                            ${!locked ? `
+                                <div style="text-align: center; margin: 15px 0;">
+                                    <div style="font-size: 2rem; color: var(--accent-yellow); margin-bottom: 10px;">
+                                        ${power} HP
+                                    </div>
+                                    <div style="font-size: 1.2rem; color: var(--accent-yellow);">
+                                        ${Object.keys(car.price).map(res =>
+                                            `${this.resources[res].icon} ${car.price[res]}`
+                                        ).join(' • ')}
+                                    </div>
+                                </div>
+                                <div class="car-stats">
+                                    ${Object.keys(car.stats).map(stat => {
+                                        const value = car.stats[stat];
+                                        const percentage = (value / 100) * 100;
+                                        return `
+                                            <div style="margin-bottom: 10px;">
+                                                <div class="stat-label">
+                                                    <span>${stat.charAt(0).toUpperCase() + stat.slice(1)}</span>
+                                                    <span>${value}</span>
+                                                </div>
+                                                <div class="progress-bar">
+                                                    <div class="progress-fill" style="width: ${percentage}%"></div>
+                                                </div>
+                                            </div>
+                                        `;
+                                    }).join('')}
+                                </div>
+                                <button 
+                                    class="btn btn-cyan" 
+                                    onclick="game.buyCar(${index})"
+                                    ${!canBuy || owned ? 'disabled' : ''}>
+                                    ${owned ? '✓ GIÀ POSSEDUTA' : 'ACQUISTA'}
+                                </button>
+                            ` : `
+                                <div style="padding: 60px 20px; text-align: center; color: var(--text-secondary);">
+                                    <div style="font-size: 3rem; margin-bottom: 20px;">🔒</div>
+                                    <div>
+                                        Richiede: ${Object.keys(car.unlockCondition).map(res =>
+                                            `${this.resources[res].icon} ${car.unlockCondition[res]}`
+                                        ).join(', ')}
+                                    </div>
+                                </div>
+                            `}
+                        </div>
+                    `;
+                }).join('');
+            },
+
+            renderOwnedCars() {
+                const container = document.getElementById('myGarage');
+                
+                if (this.ownedCars.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-garage">
+                            <div class="empty-garage-icon">🏎️</div>
+                            <div>Nessuna auto nel garage</div>
+                            <div style="margin-top: 10px; font-size: 1rem;">Vai al Concessionario!</div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = this.ownedCars.map((car, index) => {
+                    const power = this.getCarPower(car);
+                    const needsRepair = car.condition < 100;
+
+                    return `
+                        <div class="car-card ${needsRepair ? 'damaged' : ''}">
+                            ${car.image ? `
+                                <div style="width: 100%; height: 150px; overflow: hidden; border-radius: 10px; margin-bottom: 15px;">
+                                    <img src="${car.image}" alt="${car.name}" style="width: 100%; height: 100%; object-fit: cover;">
+                                </div>
+                            ` : ''}
+                            <div class="car-header">
+                                <div class="car-name">${car.name}</div>
+                                <div style="font-size: 1.8rem; color: var(--accent-yellow);">
+                                    ${power.toFixed(0)} HP
+                                </div>
+                            </div>
+                            ${needsRepair ? `
+                                <div class="damage-indicator">
+                                    <div>⚠️ Condizione: ${car.condition.toFixed(0)}%</div>
+                                    <div style="margin: 10px 0; font-size: 0.9rem;">
+                                        Costi riparazione:
+                                        <div style="margin-top: 5px;">
+                                            💰 ${(() => {
+                                                const damage = 100 - car.condition;
+                                                let discount = 0;
+                                                if (this.currentDriver && this.currentDriver.bonus.type === 'repair') {
+                                                    discount += Math.abs(this.currentDriver.bonus.value);
+                                                }
+                                                if (this.currentSponsor && this.currentSponsor.bonus.type === 'repair') {
+                                                    discount += Math.abs(this.currentSponsor.bonus.value);
+                                                }
+                                                this.technologies.forEach(tech => {
+                                                    if (tech.researched && tech.bonus.type === 'repair') {
+                                                        discount += Math.abs(tech.bonus.value);
+                                                    }
+                                                });
+                                                return Math.ceil(damage * 50 * (1 - discount));
+                                            })()}€ 
+                                            o 
+                                            🔩 ${(() => {
+                                                const damage = 100 - car.condition;
+                                                let discount = 0;
+                                                if (this.currentDriver && this.currentDriver.bonus.type === 'repair') {
+                                                    discount += Math.abs(this.currentDriver.bonus.value);
+                                                }
+                                                if (this.currentSponsor && this.currentSponsor.bonus.type === 'repair') {
+                                                    discount += Math.abs(this.currentSponsor.bonus.value);
+                                                }
+                                                this.technologies.forEach(tech => {
+                                                    if (tech.researched && tech.bonus.type === 'repair') {
+                                                        discount += Math.abs(tech.bonus.value);
+                                                    }
+                                                });
+                                                return Math.ceil(damage * 2 * (1 - discount));
+                                            })()} parti
+                                        </div>
+                                    </div>
+                                    <button class="btn btn-small" onclick="game.showRepairModal(${index})">Ripara</button>
+                                </div>
+                            ` : `
+                                <div style="text-align: center; color: var(--accent-green); margin: 10px 0;">
+                                    ✓ Condizione: ${car.condition}%
+                                </div>
+                            `}
+                            <div class="car-stats">
+                                ${Object.keys(car.stats).map(stat => {
+                                    const baseValue = car.stats[stat];
+                                    const upgradeValue = car.upgrades[stat] * 10;
+                                    const totalValue = baseValue + upgradeValue;
+                                    const maxValue = 100 + (car.upgrades[stat] * 10);
+                                    const percentage = (totalValue / maxValue) * 100;
+                                    const cost = {
+                                        money: 500 * (car.upgrades[stat] + 1),
+                                        parts: 50 * (car.upgrades[stat] + 1)
+                                    };
+                                    const canUpgrade = this.canAfford(cost);
+
+                                    return `
+                                        <div style="margin-bottom: 10px;">
+                                            <div class="stat-label">
+                                                <span>${stat.charAt(0).toUpperCase() + stat.slice(1)}</span>
+                                                <span>${totalValue} (Lv.${car.upgrades[stat]})</span>
+                                            </div>
+                                            <div class="progress-bar">
+                                                <div class="progress-fill" style="width: ${percentage}%"></div>
+                                            </div>
+                                            <button 
+                                                class="btn" 
+                                                onclick="game.upgradeCar(${index}, '${stat}')"
+                                                ${!canUpgrade ? 'disabled' : ''}>
+                                                Migliora (+10)
+                                            </button>
+                                            <div class="cost-display">
+                                                💰 ${cost.money} • 🔩 ${cost.parts}
+                                            </div>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                            <button class="btn btn-small" onclick="game.sellCar(${index})" style="background: #666; margin-top: 15px;">
+                                Vendi (60% valore)
+                            </button>
+                        </div>
+                    `;
+                }).join('');
+            },
+
+            renderTech() {
+                const container = document.getElementById('techTree');
+                container.innerHTML = this.technologies.map(tech => {
+                    const researched = tech.researched;
+                    const canResearch = this.canAfford(tech.cost);
+                    
+                    let hasPrerequisites = true;
+                    if (tech.requires) {
+                        hasPrerequisites = tech.requires.every(reqId => {
+                            const reqTech = this.technologies.find(t => t.id === reqId);
+                            return reqTech && reqTech.researched;
+                        });
+                    }
+
+                    let bonusText = '';
+                    if (tech.bonus.stat) {
+                        bonusText = `+${tech.bonus.value} ${tech.bonus.stat.toUpperCase()}`;
+                    } else if (tech.bonus.type === 'allStats') {
+                        bonusText = `+${tech.bonus.value} a tutte le stats`;
+                    } else if (tech.bonus.type === 'repair') {
+                        bonusText = `${(tech.bonus.value * 100).toFixed(0)}% costi riparazione`;
+                    }
+
+                    return `
+                        <div class="tech-card ${researched ? 'researched' : ''}">
+                            <div style="font-size: 3rem; margin-bottom: 10px;">
+                                ${tech.icon}
+                            </div>
+                            <div style="font-family: 'Orbitron'; font-size: 1.2rem; font-weight: 700; margin-bottom: 10px;">
+                                ${tech.name}
+                            </div>
+                            <div style="color: var(--accent-cyan); margin-bottom: 15px; font-size: 1.1rem;">
+                                ${bonusText}
+                            </div>
+                            ${tech.requires && !researched ? `
+                                <div style="color: ${hasPrerequisites ? 'var(--accent-green)' : 'var(--accent-red)'}; margin-bottom: 10px; font-size: 0.9rem;">
+                                    Richiede: ${tech.requires.map(reqId => {
+                                        const reqTech = this.technologies.find(t => t.id === reqId);
+                                        return reqTech ? reqTech.name : reqId;
+                                    }).join(', ')}
+                                </div>
+                            ` : ''}
+                            ${!researched ? `
+                                <div style="margin-bottom: 15px; font-size: 0.9rem; color: var(--text-secondary);">
+                                    ${Object.keys(tech.cost).map(res =>
+                                        `${this.resources[res] ? this.resources[res].icon : res} ${tech.cost[res]}`
+                                    ).join(' • ')}
+                                </div>
+                                <button class="btn btn-cyan" onclick="game.researchTech('${tech.id}')" 
+                                        ${!canResearch || !hasPrerequisites ? 'disabled' : ''}>
+                                    Ricerca
+                                </button>
+                            ` : `
+                                <div style="color: var(--accent-green); font-weight: 700; margin-top: 15px;">
+                                    ✓ RICERCATA
+                                </div>
+                            `}
+                        </div>
+                    `;
+                }).join('');
+            },
+
+            showRepairModal(carIndex) {
+                const car = this.ownedCars[carIndex];
+                const damage = 100 - car.condition;
+                
+                const moneyCost = Math.ceil(damage * 50);
+                const partsCost = Math.ceil(damage * 2);
+
+                // Calcola sconti
+                let discount = 0;
+                if (this.currentDriver && this.currentDriver.bonus.type === 'repair') {
+                    discount += Math.abs(this.currentDriver.bonus.value);
+                }
+                if (this.currentSponsor && this.currentSponsor.bonus.type === 'repair') {
+                    discount += Math.abs(this.currentSponsor.bonus.value);
+                }
+                this.technologies.forEach(tech => {
+                    if (tech.researched && tech.bonus.type === 'repair') {
+                        discount += Math.abs(tech.bonus.value);
+                    }
+                });
+
+                const finalMoney = Math.ceil(moneyCost * (1 - discount));
+                const finalParts = Math.ceil(partsCost * (1 - discount));
+
+                document.getElementById('repairContent').innerHTML = `
+                    <div style="text-align: center; margin: 20px 0;">
+                        <div style="font-size: 1.5rem; margin-bottom: 20px;">
+                            ${car.name}
+                        </div>
+                        <div style="font-size: 1.2rem; color: var(--accent-red); margin-bottom: 20px;">
+                            Danno: ${damage.toFixed(1)}%
+                        </div>
+                        ${discount > 0 ? `
+                            <div style="color: var(--accent-green); margin-bottom: 20px;">
+                                Sconto Riparazione: -${(discount * 100).toFixed(0)}%
+                            </div>
+                        ` : ''}
+                    </div>
+                    <button class="btn" onclick="game.repairCar(${carIndex}, false)">
+                        Ripara con Denaro (${finalMoney}€)
+                    </button>
+                    <button class="btn" onclick="game.repairCar(${carIndex}, true)">
+                        Ripara con Parti (${finalParts} 🔩)
+                    </button>
+                    <button class="btn" onclick="document.getElementById('repairModal').classList.remove('active')" style="background: #666;">
+                        Annulla
+                    </button>
+                `;
+
+                document.getElementById('repairModal').classList.add('active');
+            },
+
+            renderTeam() {
+                // Piloti
+                const driversContainer = document.getElementById('driversSection');
+                driversContainer.innerHTML = this.drivers.map((driver, index) => {
+                    const locked = !driver.unlocked;
+                    const isActive = this.currentDriver === driver;
+                    const canHire = this.canAfford({ money: driver.cost });
+
+                    let bonusText = '';
+                    if (driver.bonus.type === 'energy') {
+                        bonusText = `${driver.bonus.value} energia per gara`;
+                    } else if (driver.bonus.type === 'money') {
+                        bonusText = `+${(driver.bonus.value * 100).toFixed(0)}% denaro gare`;
+                    } else if (driver.bonus.type === 'repair') {
+                        bonusText = `${(driver.bonus.value * 100).toFixed(0)}% costo riparazione`;
+                    } else if (driver.bonus.type === 'reputation') {
+                        bonusText = `+${(driver.bonus.value * 100).toFixed(0)}% reputazione`;
+                    } else if (driver.bonus.type === 'winBonus') {
+                        bonusText = `+${(driver.bonus.value * 100).toFixed(0)}% tutte ricompense`;
+                    }
+
+                    return `
+                        <div class="team-card ${locked ? 'locked' : ''} ${isActive ? 'active' : ''}">
+                            <div style="font-size: 3rem; margin-bottom: 10px;">
+                                ${driver.icon}
+                            </div>
+                            <div style="font-family: 'Orbitron'; font-size: 1.2rem; font-weight: 700; margin-bottom: 10px;">
+                                ${driver.name}
+                            </div>
+                            <div style="color: var(--text-secondary); margin-bottom: 15px;">
+                                ${driver.description}
+                            </div>
+                            ${!locked ? `
+                                <div style="color: var(--accent-green); margin-bottom: 15px;">
+                                    ${bonusText}
+                                </div>
+                                ${isActive ? `
+                                    <button class="btn" onclick="game.fireDriver()">
+                                        Licenzia
+                                    </button>
+                                ` : `
+                                    <button class="btn btn-purple" onclick="game.hireDriver(${index})" ${!canHire || this.currentDriver ? 'disabled' : ''}>
+                                        Assumi (${driver.cost}€)
+                                    </button>
+                                `}
+                            ` : `
+                                <div style="color: var(--text-secondary); margin-top: 15px;">
+                                    🔒 ${Object.keys(driver.unlockCondition).map(res =>
+                                        `${this.resources[res].icon} ${driver.unlockCondition[res]}`
+                                    ).join(', ')}
+                                </div>
+                            `}
+                        </div>
+                    `;
+                }).join('');
+
+                // Sponsor
+                const sponsorsContainer = document.getElementById('sponsorsSection');
+                sponsorsContainer.innerHTML = this.sponsors.map((sponsor, index) => {
+                    const locked = !sponsor.unlocked;
+                    const isActive = this.currentSponsor === sponsor;
+
+                    let bonusText = '';
+                    if (sponsor.bonus.type === 'money') {
+                        bonusText = `+${(sponsor.bonus.value * 100).toFixed(0)}% denaro gare`;
+                    } else if (sponsor.bonus.type === 'parts') {
+                        bonusText = `+${(sponsor.bonus.value * 100).toFixed(0)}% parti gare`;
+                    } else if (sponsor.bonus.type === 'reputation') {
+                        bonusText = `+${(sponsor.bonus.value * 100).toFixed(0)}% reputazione`;
+                    } else if (sponsor.bonus.type === 'energy') {
+                        bonusText = `+${sponsor.bonus.value} energia max`;
+                    } else if (sponsor.bonus.type === 'winBonus') {
+                        bonusText = `+${(sponsor.bonus.value * 100).toFixed(0)}% ricompense vittoria`;
+                    } else if (sponsor.bonus.type === 'repair') {
+                        bonusText = `${(sponsor.bonus.value * 100).toFixed(0)}% costo riparazione`;
+                    } else if (sponsor.bonus.type === 'all') {
+                        bonusText = `+${(sponsor.bonus.value * 100).toFixed(0)}% tutte ricompense`;
+                    }
+
+                    return `
+                        <div class="team-card ${locked ? 'locked' : ''} ${isActive ? 'active' : ''}">
+                            <div style="font-size: 3rem; margin-bottom: 10px;">
+                                ${sponsor.icon}
+                            </div>
+                            <div style="font-family: 'Orbitron'; font-size: 1.2rem; font-weight: 700; margin-bottom: 10px;">
+                                ${sponsor.name}
+                            </div>
+                            ${!locked ? `
+                                <div style="color: var(--accent-yellow); margin-bottom: 15px;">
+                                    ${bonusText}
+                                </div>
+                                <button class="btn btn-success" onclick="game.activateSponsor(${index})">
+                                    ${isActive ? 'Disattiva' : 'Attiva'}
+                                </button>
+                            ` : `
+                                <div style="color: var(--text-secondary); margin-top: 15px;">
+                                    🔒 Richiede ${sponsor.requirement} vittorie
+                                </div>
+                            `}
+                        </div>
+                    `;
+                }).join('');
+            },
+
+            showRepairModal(carIndex) {
+                const car = this.ownedCars[carIndex];
+                const damage = 100 - car.condition;
+                
+                const moneyCost = Math.ceil(damage * 50);
+                const partsCost = Math.ceil(damage * 2);
+
+                document.getElementById('repairContent').innerHTML = `
+                    <div style="text-align: center; margin: 20px 0;">
+                        <div style="font-size: 1.5rem; margin-bottom: 20px;">
+                            ${car.name}
+                        </div>
+                        <div style="font-size: 1.2rem; color: var(--accent-red); margin-bottom: 20px;">
+                            Danno: ${damage.toFixed(1)}%
+                        </div>
+                    </div>
+                    <button class="btn" onclick="game.repairCar(${carIndex}, false)">
+                        Ripara con Denaro (${moneyCost}€)
+                    </button>
+                    <button class="btn" onclick="game.repairCar(${carIndex}, true)">
+                        Ripara con Parti (${partsCost} 🔩)
+                    </button>
+                    <button class="btn" onclick="document.getElementById('repairModal').classList.remove('active')" style="background: #666;">
+                        Annulla
+                    </button>
+                `;
+
+                document.getElementById('repairModal').classList.add('active');
+            },
+
+            renderRace() {
+                // Car selector
+                const selectorContainer = document.getElementById('carSelector');
+                if (this.ownedCars.length > 0) {
+                    selectorContainer.innerHTML = this.ownedCars.map((car, index) => {
+                        const power = this.getCarPower(car);
+                        const isActive = index === this.selectedCarIndex;
+                        const isDamaged = car.condition < 100;
+                        
+                        return `
+                            <div class="car-select-btn ${isActive ? 'active' : ''} ${isDamaged ? 'damaged' : ''}"
+                                 onclick="game.selectedCarIndex = ${index}; game.render();">
+                                <div style="font-weight: 700;">${car.name}</div>
+                                <div style="font-size: 0.9rem; margin-top: 5px;">${power.toFixed(0)} HP</div>
+                                <div style="font-size: 0.8rem; color: ${car.condition < 50 ? 'var(--accent-red)' : 'var(--accent-green)'};">
+                                    ${car.condition.toFixed(0)}%
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                } else {
+                    selectorContainer.innerHTML = '<div style="text-align: center; color: var(--text-secondary);">Nessuna auto posseduta</div>';
+                }
+
+                // Race info
+                const container = document.getElementById('raceInfo');
+                const now = Date.now();
+                const timeUntilNextRace = Math.max(0, this.races.cooldown - (now - this.races.lastRaceTime));
+                const secondsLeft = Math.ceil(timeUntilNextRace / 1000);
+
+                const canRace = secondsLeft === 0 && this.ownedCars.length > 0 && this.resources.energy.value >= 20;
+                const raceBtn = document.getElementById('raceBtn');
+                if (raceBtn) {
+                    raceBtn.disabled = !canRace;
+                }
+
+                container.innerHTML = `
+                    <div class="race-stat">
+                        <div class="race-stat-value">${this.races.completed}</div>
+                        <div class="race-stat-label">Gare Completate</div>
+                    </div>
+                    <div class="race-stat">
+                        <div class="race-stat-value">${this.races.wins}</div>
+                        <div class="race-stat-label">Vittorie</div>
+                    </div>
+                    <div class="race-stat">
+                        <div class="race-stat-value">${this.races.completed > 0 ? Math.round((this.races.wins / this.races.completed) * 100) : 0}%</div>
+                        <div class="race-stat-label">Win Rate</div>
+                    </div>
+                    <div class="race-stat">
+                        <div class="race-stat-value">${secondsLeft > 0 ? secondsLeft + 's' : '✓'}</div>
+                        <div class="race-stat-label">Prossima Gara</div>
+                    </div>
+                `;
+
+                // Championship
+                const champContainer = document.getElementById('championshipSection');
+                if (this.championship.active) {
+                    let html = `
+                        <div class="championship-progress">
+                            <div style="text-align: center; margin-bottom: 20px;">
+                                <div style="font-family: 'Orbitron'; font-size: 1.5rem; font-weight: 700; margin-bottom: 10px;">
+                                    Gara ${this.championship.currentRace + 1} di ${this.championship.totalRaces}
+                                </div>
+                                <div style="font-size: 1.2rem; color: var(--accent-green);">
+                                    Vittorie: ${this.championship.wins}/${this.championship.totalRaces}
+                                </div>
+                            </div>
+                    `;
+
+                    this.championship.results.forEach((result, index) => {
+                        html += `
+                            <div class="championship-race completed ${result.win ? 'win' : 'lose'}">
+                                <span>Gara ${index + 1}</span>
+                                <span>${result.win ? '🏆 Vittoria' : '💥 Sconfitta'} vs ${result.opponent}</span>
+                            </div>
+                        `;
+                    });
+
+                    for (let i = this.championship.results.length; i < this.championship.totalRaces; i++) {
+                        html += `
+                            <div class="championship-race">
+                                <span>Gara ${i + 1}</span>
+                                <span>Da correre</span>
+                            </div>
+                        `;
+                    }
+
+                    html += `
+                        </div>
+                        <button class="btn btn-purple" onclick="game.runChampionshipRace()" 
+                                ${this.championship.currentRace >= this.championship.totalRaces || this.resources.energy.value < 20 ? 'disabled' : ''}>
+                            ${this.championship.currentRace >= this.championship.totalRaces ? 'Completato' : 'Corri Gara ' + (this.championship.currentRace + 1)}
+                        </button>
+                        <button class="btn" onclick="game.abandonChampionship()" style="background: #666; margin-top: 10px;">
+                            Abbandona Campionato
+                        </button>
+                    `;
+                    
+                    champContainer.innerHTML = html;
+                } else {
+                    const canStart = this.canAfford({ money: this.championship.entryFee }) && this.ownedCars.length > 0;
+                    champContainer.innerHTML = `
+                        <div style="background: var(--bg-card); border: 2px solid var(--accent-purple); border-radius: 12px; padding: 30px; text-align: center;">
+                            <div style="font-size: 1.5rem; margin-bottom: 20px;">
+                                🏆 5 Gare Consecutive
+                            </div>
+                            <div style="margin: 20px 0;">
+                                <div style="margin: 10px 0;">💰 Quota Iscrizione: ${this.championship.entryFee}€</div>
+                                <div style="margin: 10px 0;">🏆 Premio (minimo 3 vittorie): ${this.championship.prizePool}€</div>
+                                <div style="margin: 10px 0;">⚠️ Danni garantiti ad ogni gara</div>
+                                <div style="margin: 10px 0;">💰 Ricompense progressive ad ogni vittoria</div>
+                            </div>
+                            <button class="btn btn-purple" onclick="game.startChampionship()" ${!canStart ? 'disabled' : ''}>
+                                Iscriviti al Campionato
+                            </button>
+                        </div>
+                    `;
+                }
+            },
+
+            renderHistory() {
+                const container = document.getElementById('raceHistoryContainer');
+                
+                if (this.raceHistory.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-garage">
+                            <div class="empty-garage-icon">📜</div>
+                            <div>Nessuna gara completata</div>
+                            <div style="margin-top: 10px; font-size: 1rem;">Vai alla sezione Gare!</div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = this.raceHistory.map((race, index) => {
+                    const winClass = race.win ? 'win' : 'lose';
+                    return `
+                        <div class="championship-race ${winClass}" style="margin: 10px 0; padding: 15px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                                <div style="flex: 1; min-width: 200px;">
+                                    <div style="font-size: 0.8rem; color: var(--text-secondary);">${race.date}</div>
+                                    <div style="font-weight: 700; margin: 5px 0;">${race.type}</div>
+                                </div>
+                                <div style="flex: 2; min-width: 300px;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                        <div style="text-align: left;">
+                                            <div>${race.playerCar}</div>
+                                            <div style="color: var(--accent-cyan);">${race.playerPower} HP</div>
+                                        </div>
+                                        <div style="font-size: 1.5rem; margin: 0 15px;">
+                                            ${race.win ? '🏆' : '💥'}
+                                        </div>
+                                        <div style="text-align: right;">
+                                            <div>${race.opponentName}</div>
+                                            <div style="color: var(--accent-red);">${race.opponentPower} HP</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style="flex: 1; min-width: 150px; text-align: right;">
+                                    ${race.win && race.rewards ? `
+                                        <div style="font-size: 0.85rem;">
+                                            <div>💰 +${race.rewards.money || 0}</div>
+                                            <div>⭐ +${race.rewards.reputation || 0}</div>
+                                            <div>🔩 +${race.rewards.parts || 0}</div>
+                                        </div>
+                                    ` : ''}
+                                    ${race.damage ? `<div style="color: var(--accent-red); font-size: 0.85rem;">⚠️ -${race.damage}%</div>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            },
+
+            saveGame() {
+                const saveData = {
+                    resources: this.resources,
+                    workshop: this.workshop,
+                    availableCars: this.availableCars,
+                    ownedCars: this.ownedCars,
+                    races: this.races,
+                    championship: this.championship,
+                    selectedCarIndex: this.selectedCarIndex,
+                    drivers: this.drivers,
+                    currentDriver: this.currentDriver,
+                    sponsors: this.sponsors,
+                    currentSponsor: this.currentSponsor,
+                    technologies: this.technologies,
+                    raceHistory: this.raceHistory,
+                    lastSaveTime: Date.now()
+                };
+                localStorage.setItem('garageRacingGame', JSON.stringify(saveData));
+            },
+
+            loadGame() {
+                const saved = localStorage.getItem('garageRacingGame');
+                if (saved) {
+                    try {
+                        const data = JSON.parse(saved);
+                        this.resources = data.resources || this.resources;
+                        this.workshop = data.workshop || this.workshop;
+                        this.availableCars = data.availableCars || this.availableCars;
+                        this.ownedCars = data.ownedCars || this.ownedCars;
+                        this.races = data.races || this.races;
+                        this.championship = data.championship || this.championship;
+                        this.selectedCarIndex = data.selectedCarIndex || 0;
+                        this.drivers = data.drivers || this.drivers;
+                        this.currentDriver = data.currentDriver || null;
+                        this.sponsors = data.sponsors || this.sponsors;
+                        this.currentSponsor = data.currentSponsor || null;
+                        this.technologies = data.technologies || this.technologies;
+                        this.raceHistory = data.raceHistory || [];
+                        
+                        // Calcola produzione offline
+                        const lastSaveTime = data.lastSaveTime || Date.now();
+                        const now = Date.now();
+                        const offlineTime = (now - lastSaveTime) / 1000; // secondi
+                        
+                        if (offlineTime > 60) { // Solo se è passato almeno 1 minuto
+                            const offlineHours = offlineTime / 3600;
+                            
+                            // Calcola produzione offline per ogni reparto
+                            Object.keys(this.workshop).forEach(key => {
+                                const section = this.workshop[key];
+                                if (section.level > 0 && section.production) {
+                                    Object.keys(section.production).forEach(resource => {
+                                        if (this.resources[resource]) {
+                                            const productionPerHour = section.production[resource] * section.level;
+                                            const offlineProduction = productionPerHour * offlineHours;
+                                            
+                                            this.resources[resource].value = Math.min(
+                                                this.resources[resource].value + offlineProduction,
+                                                this.resources[resource].max
+                                            );
+                                        }
+                                    });
+                                }
+                            });
+                            
+                            // Recupero energia offline (1 al minuto)
+                            const energyRecovered = offlineTime / 60; // 1 energia per minuto
+                            this.resources.energy.value = Math.min(
+                                this.resources.energy.value + energyRecovered,
+                                this.resources.energy.max
+                            );
+                            
+                            // Mostra notifica produzione offline
+                            const hours = Math.floor(offlineHours);
+                            const minutes = Math.floor((offlineHours - hours) * 60);
+                            let timeMsg = hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
+                            this.showUnlockNotification(`⏰ Produzione offline: ${timeMsg}`);
+                        }
+                    } catch (e) {
+                        console.error('Errore caricamento', e);
+                    }
+                }
+            },
+
+            resetGame() {
+                if (confirm('Sei sicuro di voler resettare il gioco?')) {
+                    localStorage.removeItem('garageRacingGame');
+                    location.reload();
+                }
+            }
+        };
+
+        window.addEventListener('load', () => {
+            game.init();
+        });
+
+        document.getElementById('raceModal').addEventListener('click', (e) => {
+            if (e.target.id === 'raceModal') {
+                game.closeRaceModal();
+            }
+        });
+
+        console.log('Reset gioco: game.resetGame()');
+    </script>
+</body>
+</html>
