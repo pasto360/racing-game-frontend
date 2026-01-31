@@ -946,15 +946,60 @@ async function loadGameFromServer() {
         
         const data = await response.json();
         
-        game.resources = data.resources;
-        game.workshop = data.workshop;
+        // Carica risorse
+        if (data.resources) {
+            Object.keys(data.resources).forEach(key => {
+                if (game.resources[key]) {
+                    game.resources[key].value = data.resources[key].value || 100;
+                }
+            });
+        }
+        
+        // Carica workshop MA mantieni struttura locale
+        if (data.workshop) {
+            Object.keys(data.workshop).forEach(key => {
+                if (game.workshop[key]) {
+                    game.workshop[key].level = data.workshop[key].level || 0;
+                    game.workshop[key].unlocked = data.workshop[key].unlocked || false;
+                }
+            });
+        }
+        
         game.ownedCars = data.ownedCars || [];
-        game.drivers = data.drivers || game.drivers;
+        
+        // Carica drivers MA mantieni struttura locale
+        if (data.drivers && Array.isArray(data.drivers)) {
+            data.drivers.forEach((serverDriver, index) => {
+                if (game.drivers[index]) {
+                    game.drivers[index].unlocked = serverDriver.unlocked;
+                }
+            });
+        }
+        
         game.currentDriver = data.currentDriver;
-        game.sponsors = data.sponsors || game.sponsors;
+        
+        // Carica sponsors MA mantieni struttura locale  
+        if (data.sponsors && Array.isArray(data.sponsors)) {
+            data.sponsors.forEach((serverSponsor, index) => {
+                if (game.sponsors[index]) {
+                    game.sponsors[index].unlocked = serverSponsor.unlocked;
+                }
+            });
+        }
+        
         game.currentSponsor = data.currentSponsor;
-        game.technologies = data.technologies || game.technologies;
-        game.races = data.races;
+        
+        // Carica technologies MA mantieni struttura locale
+        if (data.technologies && Array.isArray(data.technologies)) {
+            data.technologies.forEach((serverTech) => {
+                const localTech = game.technologies.find(t => t.id === serverTech.id);
+                if (localTech) {
+                    localTech.researched = serverTech.researched || false;
+                }
+            });
+        }
+        
+        game.races = data.races || game.races;
         game.championship = data.championship || game.championship;
         game.raceHistory = data.raceHistory || [];
         
