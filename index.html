@@ -1022,7 +1022,47 @@ if (data.ownedCars && Array.isArray(data.ownedCars)) {
         game.races = data.races || game.races;
         game.championship = data.championship || game.championship;
         game.raceHistory = data.raceHistory || [];
+        // ===== PRODUZIONE OFFLINE =====
+        const lastSaveTime = data.lastSaveTime || Date.now();
+        const now = Date.now();
+        const offlineTime = (now - lastSaveTime) / 1000; // secondi
         
+        if (offlineTime > 60) { // Solo se è passato almeno 1 minuto
+            const offlineHours = offlineTime / 3600;
+            
+            // Calcola produzione offline per ogni reparto
+            Object.keys(game.workshop).forEach(key => {
+                const section = game.workshop[key];
+                if (section.level > 0 && section.production) {
+                    Object.keys(section.production).forEach(resource => {
+                        if (game.resources[resource]) {
+                            const productionPerHour = section.production[resource] * section.level;
+                            const offlineProduction = productionPerHour * offlineHours;
+                            
+                            game.resources[resource].value = Math.min(
+                                game.resources[resource].value + offlineProduction,
+                                game.resources[resource].max
+                            );
+                        }
+                    });
+                }
+            });
+            
+            // Recupero energia offline (1 al minuto)
+            const energyRecovered = offlineTime / 60;
+            game.resources.energy.value = Math.min(
+                game.resources.energy.value + energyRecovered,
+                game.resources.energy.max
+            );
+            
+            // Mostra notifica
+            const hours = Math.floor(offlineHours);
+            const minutes = Math.floor((offlineHours - hours) * 60);
+            let timeMsg = hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
+            setTimeout(() => {
+                game.showUnlockNotification(`⏰ Produzione offline: ${timeMsg}`);
+            }, 1000);
+        }
     } catch (error) {
         console.error('Errore caricamento:', error);
     }
@@ -1055,20 +1095,21 @@ async function saveGameToServer() {
                 'Authorization': `Bearer ${authToken}`
             },
             body: JSON.stringify({
-                gameState: {
-                    resources: game.resources,
-                    workshop: game.workshop,
-                    ownedCars: game.ownedCars,
-                    drivers: game.drivers,
-                    currentDriver: game.currentDriver,
-                    sponsors: game.sponsors,
-                    currentSponsor: game.currentSponsor,
-                    technologies: game.technologies,
-                    races: game.races,
-                    championship: game.championship,
-                    raceHistory: game.raceHistory
-                }
-            })
+    gameState: {
+        resources: game.resources,
+        workshop: game.workshop,
+        ownedCars: game.ownedCars,
+        drivers: game.drivers,
+        currentDriver: game.currentDriver,
+        sponsors: game.sponsors,
+        currentSponsor: game.currentSponsor,
+        technologies: game.technologies,
+        races: game.races,
+        championship: game.championship,
+        raceHistory: game.raceHistory,
+        lastSaveTime: Date.now()  // ← AGGIUNGI QUESTA RIGA
+    }
+})
         });
     } catch (error) {
         console.error('Errore salvataggio:', error);
@@ -1077,10 +1118,11 @@ async function saveGameToServer() {
 
 // ===== FINE CONFIGURAZIONE API =====
         const game = {
-            currentPage: 'workshop',
-            selectedCarIndex: 0,
-            
-            resources: {
+    currentPage: 'workshop',
+    selectedCarIndex: 0,
+    isLoadingFromServer: false,  // ← AGGIUNGI QUESTA RIGA
+    
+    resources: {
                 money: { value: 15000, rate: 0, max: 999999, icon: '💰', name: 'Denaro' },
                 parts: { value: 150, rate: 0, max: 999999, icon: '🔩', name: 'Parti' },
                 reputation: { value: 0, rate: 0, max: 10000, icon: '⭐', name: 'Reputazione' },
