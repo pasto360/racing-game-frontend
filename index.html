@@ -954,11 +954,11 @@ async function loadGameFromServer() {
         
         const data = await response.json();
        
-        // Carica risorse
+        // Carica risorse SENZA fallback (server è fonte verità)
 if (data.resources) {
     Object.keys(data.resources).forEach(key => {
-        if (game.resources[key]) {
-            game.resources[key].value = data.resources[key].value !== undefined ? data.resources[key].value : game.resources[key].value;
+        if (game.resources[key] && data.resources[key].value !== undefined) {
+            game.resources[key].value = data.resources[key].value;
         }
     });
 }
@@ -1236,12 +1236,13 @@ async function saveGameToServer() {
             },
 
             async init() {
-    // Prima carica dal server
+    // Carica dal server SE loggato
     if (authToken) {
         await loadGameFromServer();
+    } else {
+        // Altrimenti usa localStorage
+        this.loadGame();
     }
-    // Poi carica da localStorage solo come fallback
-    this.loadGame();
     this.render();
     this.startGameLoop();
     this.checkUnlocks();
