@@ -745,6 +745,10 @@
                 <span class="icon">📜</span>
                 Storico
             </button>
+            <button class="nav-btn" onclick="game.changePage('leaderboard')">
+               <span class="icon">🏆</span>
+               Classifica
+            </button>
         </nav>
 
         <div id="page-workshop" class="page active">
@@ -790,6 +794,10 @@
         <div id="page-history" class="page">
             <h2 class="section-title">📜 Storico Gare</h2>
             <div id="raceHistoryContainer"></div>
+        </div>
+        <div id="page-leaderboard" class="page">
+            <h2 class="section-title">🏆 Classifica Mondiale</h2>
+            <div id="leaderboardContainer"></div>
         </div>
     </div>
 
@@ -945,25 +953,25 @@ async function loadGameFromServer() {
         if (!response.ok) throw new Error('Errore caricamento');
         
         const data = await response.json();
-        
+       
         // Carica risorse
-        if (data.resources) {
-            Object.keys(data.resources).forEach(key => {
-                if (game.resources[key]) {
-                    game.resources[key].value = data.resources[key].value || 100;
-                }
-            });
+if (data.resources) {
+    Object.keys(data.resources).forEach(key => {
+        if (game.resources[key]) {
+            game.resources[key].value = data.resources[key].value !== undefined ? data.resources[key].value : game.resources[key].value;
         }
-        
-        // Carica workshop MA mantieni struttura locale
-        if (data.workshop) {
-            Object.keys(data.workshop).forEach(key => {
-                if (game.workshop[key]) {
-                    game.workshop[key].level = data.workshop[key].level || 0;
-                    game.workshop[key].unlocked = data.workshop[key].unlocked || false;
-                }
-            });
+    });
+}
+
+// Carica workshop MA mantieni struttura locale
+if (data.workshop) {
+    Object.keys(data.workshop).forEach(key => {
+        if (game.workshop[key]) {
+            game.workshop[key].level = data.workshop[key].level !== undefined ? data.workshop[key].level : 0;
+            game.workshop[key].unlocked = data.workshop[key].unlocked !== undefined ? data.workshop[key].unlocked : false;
         }
+    });
+}
         
         // Carica ownedCars MA mantieni le immagini dalla struttura locale
 if (data.ownedCars && Array.isArray(data.ownedCars)) {
@@ -1019,7 +1027,23 @@ if (data.ownedCars && Array.isArray(data.ownedCars)) {
         console.error('Errore caricamento:', error);
     }
 }
-
+        //carica classifica
+async function loadLeaderboard() {
+    try {
+        const response = await fetch(`${API_URL}/api/game/leaderboard`, {
+            headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        
+        if (!response.ok) throw new Error('Errore caricamento classifica');
+        
+        const data = await response.json();
+        return data;
+        
+    } catch (error) {
+        console.error('Errore caricamento classifica:', error);
+        return null;
+    }
+}
 async function saveGameToServer() {
     if (!authToken) return;
     
@@ -1976,6 +2000,8 @@ async function saveGameToServer() {
                     this.renderRace();
                 } else if (this.currentPage === 'history') {
                     this.renderHistory();
+                } else if (this.currentPage === 'leaderboard') {
+                    this.renderLeaderboard();
                 }
             },
 
@@ -2690,7 +2716,82 @@ async function saveGameToServer() {
                     `;
                 }).join('');
             },
-
+            //render classifica
+async renderLeaderboard() {
+    const container = document.getElementById('leaderboardContainer');
+    container.innerHTML = '<div style="text-align: center; padding: 40px;">⏳ Caricamento classifica...</div>';
+    
+    const data = await loadLeaderboard();
+    
+    if (!data || !data.leaderboard) {
+        container.innerHTML = `
+            <div class="empty-garage">
+                <div class="empty-garage-icon">🏆</div>
+                <div>Errore caricamento classifica</div>
+            </div>
+        `;
+        return;
+    }
+    
+    const { leaderboard, userRank } = data;
+    
+    let html = '<div style="max-width: 800px; margin: 0 auto;">';
+    
+    // Top 20
+    leaderboard.forEach((player, index) => {
+        const isCurrentUser = currentUser && player.username === currentUser.username;
+        const rankIcon = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`;
+        
+        html += `
+            <div class="championship-race ${isCurrentUser ? 'win' : ''}" style="margin: 10px 0; padding: 20px; ${isCurrentUser ? 'border: 2px solid var(--accent-green);' : ''}">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; align-items: center; gap: 20px;">
+                        <div style="font-size: 1.5rem; min-width: 50px;">${rankIcon}</div>
+                        <div>
+                            <div style="font-weight: 700; font-size: 1.2rem;">
+                                ${player.username} ${isCurrentUser ? '(Tu)' : ''}
+                            </div>
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 1.5rem; color: var(--accent-yellow);">
+                            ⭐ ${Math.floor(player.reputation)}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+    
+    // Se l'utente non è nei top 20, mostra la sua posizione
+    if (userRank && userRank.rank > 20) {
+        html += `
+            <div style="margin: 30px 0 10px 0; text-align: center; color: var(--text-secondary);">
+                • • •
+            </div>
+            <div class="championship-race win" style="margin: 10px 0; padding: 20px; border: 2px solid var(--accent-green);">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div style="display: flex; align-items: center; gap: 20px;">
+                        <div style="font-size: 1.5rem; min-width: 50px;">${userRank.rank}.</div>
+                        <div>
+                            <div style="font-weight: 700; font-size: 1.2rem;">
+                                ${userRank.username} (Tu)
+                            </div>
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <div style="font-size: 1.5rem; color: var(--accent-yellow);">
+                            ⭐ ${Math.floor(userRank.reputation)}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    html += '</div>';
+    container.innerHTML = html;
+},
             saveGame() {
     const saveData = {
         resources: this.resources,
