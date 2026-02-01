@@ -965,7 +965,19 @@ async function loadGameFromServer() {
             });
         }
         
-        game.ownedCars = data.ownedCars || [];
+        // Carica ownedCars MA mantieni le immagini dalla struttura locale
+if (data.ownedCars && Array.isArray(data.ownedCars)) {
+    game.ownedCars = data.ownedCars.map(serverCar => {
+        // Trova l'auto corrispondente in availableCars per prendere l'immagine
+        const templateCar = game.availableCars.find(c => c.name === serverCar.name);
+        return {
+            ...serverCar,
+            image: templateCar ? templateCar.image : serverCar.image
+        };
+    });
+} else {
+    game.ownedCars = [];
+}
         
         // Carica drivers MA mantieni struttura locale
         if (data.drivers && Array.isArray(data.drivers)) {
