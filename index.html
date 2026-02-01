@@ -1107,50 +1107,50 @@ async function saveGameToServer() {
 
             availableCars: [
     {
-        name: 'Honda Civic Type R',
+        name: 'Thunderclaw',
         stats: { engine: 45, body: 40, electronics: 35, aero: 30 },
         price: { money: 8000, parts: 100 },
         unlocked: true,
         image: 'https://i.imgur.com/XimKGSN.jpeg'
     },
     {
-        name: 'Ford Focus RS',
+        name: 'Blaze Reaver',
         stats: { engine: 50, body: 45, electronics: 40, aero: 35 },
         price: { money: 12000, parts: 150 },
         unlocked: true,
-        image: 'https://i.imgur.com/XimKGSN.jpeg'
+        image: 'https://i.imgur.com/fggC2VO.jpeg'
     },
     {
-        name: 'Subaru Impreza WRX',
+        name: 'Stormfang',
         stats: { engine: 60, body: 50, electronics: 45, aero: 45 },
         price: { money: 18000, parts: 200 },
         unlocked: false,
         unlockCondition: { reputation: 100 },
-        image: 'https://i.imgur.com/XimKGSN.jpeg'
+        image: 'https://i.imgur.com/jeh5oHT.png'
     },
     {
-        name: 'Mitsubishi Lancer Evo X',
+        name: 'Torque Phantom',
         stats: { engine: 65, body: 55, electronics: 50, aero: 50 },
         price: { money: 22000, parts: 250 },
         unlocked: false,
         unlockCondition: { reputation: 200 },
-        image: 'https://i.imgur.com/XimKGSN.jpeg'
+        image: 'https://i.imgur.com/I7i5ZTs.png'
     },
     {
-        name: 'Nissan GT-R R35',
+        name: 'Overdrive X7',
         stats: { engine: 80, body: 70, electronics: 75, aero: 65 },
         price: { money: 45000, parts: 400 },
         unlocked: false,
         unlockCondition: { reputation: 500, money: 50000 },
-        image: 'https://i.imgur.com/XimKGSN.jpeg'
+        image: 'https://i.imgur.com/DCBxo6w.png'
     },
     {
-        name: 'Porsche 911 GT3',
+        name: 'Razor Apex',
         stats: { engine: 90, body: 85, electronics: 85, aero: 80 },
         price: { money: 75000, parts: 600 },
         unlocked: false,
         unlockCondition: { reputation: 1000, money: 80000 },
-        image: 'https://i.imgur.com/XimKGSN.jpeg'
+        image: 'https://i.imgur.com/zEWYVCD.png'
     }
 ],
 
@@ -1211,12 +1211,17 @@ async function saveGameToServer() {
                 prizePool: 5000
             },
 
-            init() {
-                this.loadGame();
-                this.render();
-                this.startGameLoop();
-                this.checkUnlocks();
-            },
+            async init() {
+    // Prima carica dal server
+    if (authToken) {
+        await loadGameFromServer();
+    }
+    // Poi carica da localStorage solo come fallback
+    this.loadGame();
+    this.render();
+    this.startGameLoop();
+    this.checkUnlocks();
+},
 
             startGameLoop() {
                 setInterval(() => {
@@ -2779,11 +2784,11 @@ async function saveGameToServer() {
             }
         };
 
-window.addEventListener('load', () => {
+window.addEventListener('load', async () => {
     if (!authToken) {
         showAuthModal();
     } else {
-        game.init();
+        await game.init();  // ← Aspetta il caricamento dal server
     }
 });
 
