@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Garage Racing Manager v4.1</title>
+    <title>Garage Racing Manager v4.5 FINAL</title>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -58,6 +58,30 @@
             border-bottom: 2px solid var(--accent-red);
             margin-bottom: 20px;
             animation: slideDown 0.8s ease-out;
+            position: relative;
+        }
+
+        .logout-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #666, #333);
+            border: 2px solid #888;
+            color: white;
+            padding: 10px 20px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            border-color: var(--accent-red);
+            box-shadow: 0 0 20px rgba(255, 51, 51, 0.5);
         }
 
         @keyframes slideDown {
@@ -712,6 +736,7 @@
 <body>
     <div class="container">
         <header>
+            <button class="logout-btn" onclick="handleLogout()">🚪 LOGOUT</button>
             <h1>Garage Racing Manager</h1>
             <div class="resources" id="resources"></div>
         </header>
@@ -795,6 +820,7 @@
             <h2 class="section-title">📜 Storico Gare</h2>
             <div id="raceHistoryContainer"></div>
         </div>
+        
         <div id="page-leaderboard" class="page">
             <h2 class="section-title">🏆 Classifica Mondiale</h2>
             <div id="leaderboardContainer"></div>
@@ -819,14 +845,24 @@
     </div>
 
     <footer>
-        Garage Racing Manager v4.3 COMPLETO • Campionato + Piloti + Sponsor + Tecnologie • Salvataggio automatico
+        Garage Racing Manager v4.5 FINAL • Produzione Offline + Logout + Fix Caricamento
     </footer>
 
     <script>
         // ===== CONFIGURAZIONE API =====
-const API_URL = 'https://racing-game-backend-production-a5dd.up.railway.app';  // ← SOSTITUISCI CON IL TUO URL!
+const API_URL = 'https://racing-game-backend-production-a5dd.up.railway.app';
 let authToken = localStorage.getItem('authToken');
 let currentUser = JSON.parse(localStorage.getItem('user') || 'null');
+
+// Funzione Logout
+function handleLogout() {
+    if (confirm('Sei sicuro di voler uscire?')) {
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('user');
+        localStorage.removeItem('garageRacingGame');
+        location.reload();
+    }
+}
 
 // Funzioni autenticazione
 async function showAuthModal() {
@@ -1278,13 +1314,15 @@ async function saveGameToServer() {
             },
 
             async init() {
-    // Carica dal server SE loggato
+    // SE loggato, carica SOLO dal server
     if (authToken) {
+        console.log('✅ Token trovato - Carico dal server...');
         await loadGameFromServer();
     } else {
-        // Altrimenti usa localStorage
-        this.loadGame();
+        console.log('⚠️ Nessun token - Uso dati di default');
+        // Se non loggato, usa dati di default (già impostati sopra)
     }
+    
     this.render();
     this.startGameLoop();
     this.checkUnlocks();
@@ -2932,7 +2970,8 @@ window.addEventListener('load', async () => {
     if (!authToken) {
         showAuthModal();
     } else {
-        await game.init();  // ← Aspetta il caricamento dal server
+        // IMPORTANTE: game.init() ora carica dal server se loggato
+        await game.init();
     }
 });
 
