@@ -1320,12 +1320,42 @@ async function saveGameToServer() {
         await loadGameFromServer();
     } else {
         console.log('⚠️ Nessun token - Uso dati di default');
-        // Se non loggato, usa dati di default (già impostati sopra)
     }
     
     this.render();
     this.startGameLoop();
     this.checkUnlocks();
+},
+
+// NON USARE loadGame() MAI SE SEI LOGGATO!
+loadGame() {
+    // Questa funzione NON deve essere mai chiamata se sei loggato
+    if (authToken) {
+        console.error('⛔ ERRORE: loadGame() chiamato mentre sei loggato!');
+        return;
+    }
+    
+    const saved = localStorage.getItem('garageRacingGame');
+    if (saved) {
+        try {
+            const data = JSON.parse(saved);
+            this.resources = data.resources || this.resources;
+            this.workshop = data.workshop || this.workshop;
+            this.availableCars = data.availableCars || this.availableCars;
+            this.ownedCars = data.ownedCars || this.ownedCars;
+            this.races = data.races || this.races;
+            this.championship = data.championship || this.championship;
+            this.selectedCarIndex = data.selectedCarIndex || 0;
+            this.drivers = data.drivers || this.drivers;
+            this.currentDriver = data.currentDriver || null;
+            this.sponsors = data.sponsors || this.sponsors;
+            this.currentSponsor = data.currentSponsor || null;
+            this.technologies = data.technologies || this.technologies;
+            this.raceHistory = data.raceHistory || [];
+        } catch (e) {
+            console.error('Errore caricamento localStorage', e);
+        }
+    }
 },
 
             startGameLoop() {
@@ -2874,6 +2904,13 @@ async renderLeaderboard() {
     container.innerHTML = html;
 },
             saveGame() {
+    // SE sei loggato, salva SOLO sul server
+    if (authToken) {
+        saveGameToServer();
+        return; // NON salvare su localStorage
+    }
+    
+    // Se NON sei loggato, salva su localStorage
     const saveData = {
         resources: this.resources,
         workshop: this.workshop,
@@ -2891,7 +2928,6 @@ async renderLeaderboard() {
         lastSaveTime: Date.now()
     };
     localStorage.setItem('garageRacingGame', JSON.stringify(saveData));
-    saveGameToServer(); // ← AGGIUNGI QUESTA RIGA!
 },
 
             loadGame() {
@@ -2970,8 +3006,11 @@ window.addEventListener('load', async () => {
     if (!authToken) {
         showAuthModal();
     } else {
-        // IMPORTANTE: game.init() ora carica dal server se loggato
-        await game.init();
+        // PRIMA carica dal server, POI inizializza
+        await loadGameFromServer();
+        game.render();
+        game.startGameLoop();
+        game.checkUnlocks();
     }
 });
 
