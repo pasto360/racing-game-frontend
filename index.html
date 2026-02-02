@@ -3006,11 +3006,8 @@ window.addEventListener('load', async () => {
     if (!authToken) {
         showAuthModal();
     } else {
-        // PRIMA carica dal server, POI inizializza
-        await loadGameFromServer();
-        game.render();
-        game.startGameLoop();
-        game.checkUnlocks();
+        // Inizializza il gioco (che caricherà automaticamente dal server)
+        await game.init();
     }
 });
 
