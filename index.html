@@ -687,7 +687,7 @@
     <script>
 // ===== CONFIGURAZIONE CLOUD =====
 const API_URL = 'https://racing-game-backend-production-a5dd.up.railway.app';
-let authToken = localStorage.getItem('authToken'); // SOLO il token
+let authToken = localStorage.getItem('authToken');
 let currentUser = JSON.parse(localStorage.getItem('user') || 'null');
 
 console.log('🎮 Cloud Edition - Avvio applicazione');
@@ -776,7 +776,6 @@ async function handleLogin() {
         msgEl.style.color = '#00ff88';
         msgEl.textContent = 'Login riuscito! Caricamento gioco...';
         
-        // Rimuovi modale e avvia gioco
         document.querySelector('[style*="position: fixed"]').remove();
         await game.init();
         
@@ -848,7 +847,6 @@ async function loadGameFromServer() {
         const data = await response.json();
         console.log('✅ Dati caricati dal server:', data);
         
-        // Applica dati al game
         if (data.resources) {
             Object.keys(data.resources).forEach(key => {
                 if (game.resources[key]) {
@@ -967,7 +965,6 @@ async function saveGameToServer(showIndicator = true) {
 
     saveTimeout = setTimeout(async () => {
         try {
-            // Mostra indicatore SOLO se richiesto esplicitamente
             const saveIndicator = document.getElementById('saveIndicator');
             if (showIndicator && saveIndicator) {
                 saveIndicator.classList.add('show');
@@ -1190,7 +1187,6 @@ async function loadLeaderboard() {
             async init() {
     console.log('🎮 Inizializzazione gioco...');
     
-    // Carica SEMPRE dal server
     const loaded = await loadGameFromServer();
     
     if (!loaded) {
@@ -1201,42 +1197,37 @@ async function loadLeaderboard() {
     
     console.log('✅ Gioco inizializzato');
     
-    // Mostra interfaccia
     document.getElementById('gameContainer').style.display = 'block';
     
-    // Avvia render e loop
     this.render();
     this.startGameLoop();
     this.checkUnlocks();
     
-    // Salvataggio automatico ogni 3 secondi (silenzioso, senza popup)
+    // Salvataggio automatico ogni 3 secondi (silenzioso)
     setInterval(() => {
-        saveGameToServer(false);  // false = non mostrare indicatore
+        saveGameToServer(false);
     }, 3000);
 },
 
             startGameLoop() {
-        this.lastTickTime = Date.now();  // ← NUOVO: timestamp dell'ultimo tick
+        this.lastTickTime = Date.now();
 
         setInterval(() => {
             const now = Date.now();
-            const deltaSeconds = (now - this.lastTickTime) / 1000;  // tempo reale trascorso
+            const deltaSeconds = (now - this.lastTickTime) / 1000;
             this.lastTickTime = now;
 
-            // Passa il deltaTime a updateResources
             this.updateResources(deltaSeconds);
             this.render();
         }, 1000);
     },
 
             updateResources(deltaSeconds = 1) {
-        // Calcola produzione dalle officine
         Object.keys(this.workshop).forEach(key => {
             const section = this.workshop[key];
             if (section.level > 0 && section.production) {
                 Object.keys(section.production).forEach(resource => {
                     if (this.resources[resource]) {
-                        // production è "per ora", dividi per 3600 per ottenere "per secondo"
                         const perSecond = (section.production[resource] * section.level) / 3600;
                         this.resources[resource].value = Math.min(
                             this.resources[resource].value + (perSecond * deltaSeconds),
@@ -1247,17 +1238,15 @@ async function loadLeaderboard() {
             }
         });
 
-        // Energia: recupera 1 punto al minuto (= 1/60 per secondo)
+        // Energia: recupera 1 punto al minuto
         this.resources.energy.value = Math.min(
             this.resources.energy.value + (deltaSeconds / 60),
             this.resources.energy.max
         );
 
-        // Sponsor income (se hai uno sponsor attivo)
         if (this.currentSponsor !== null && this.sponsors[this.currentSponsor]) {
             const sponsor = this.sponsors[this.currentSponsor];
             if (sponsor.income) {
-                // income è "per ora"
                 const perSecond = sponsor.income / 3600;
                 this.resources.money.value = Math.min(
                     this.resources.money.value + (perSecond * deltaSeconds),
@@ -1267,6 +1256,7 @@ async function loadLeaderboard() {
         }
     },
 
+            // ===== FIX BUG 2 & 4: nomi funzioni corretti in changePage =====
             changePage(page) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
@@ -1276,15 +1266,14 @@ async function loadLeaderboard() {
             ['workshop','garage','dealer','team','tech','race','history','leaderboard'].indexOf(page)
         ].classList.add('active');
 
-        // Render della pagina specifica
         if (page === 'workshop') this.renderWorkshop();
         if (page === 'garage') this.renderOwnedCars();
-        if (page === 'dealer') this.renderDealer();
+        if (page === 'dealer') this.renderAvailableCars();       // ← FIX: era this.renderDealer()
         if (page === 'team') this.renderTeam();
         if (page === 'tech') this.renderTech();
         if (page === 'race') this.renderRace();
-        if (page === 'history') this.renderRaceHistory();
-        if (page === 'leaderboard') this.renderLeaderboard();  // ← solo QUI, non nel gameLoop
+        if (page === 'history') this.renderHistory();             // ← FIX: era this.renderRaceHistory()
+        if (page === 'leaderboard') this.renderLeaderboard();
 
         this.currentPage = page;
     },
@@ -1299,7 +1288,6 @@ async function loadLeaderboard() {
                     this.spendResources(cost);
                     section.level++;
                     
-                    // Bonus one-time reputazione per Carrozzeria e Aerodinamica
                     if (section.reputationBonus) {
                         const bonus = section.reputationBonus * section.level;
                         this.resources.reputation.value = Math.min(
@@ -1424,7 +1412,6 @@ async function loadLeaderboard() {
                 const tech = this.technologies.find(t => t.id === techId);
                 if (!tech || tech.researched) return;
 
-                // Verifica prerequisiti
                 if (tech.requires) {
                     const hasRequirements = tech.requires.every(reqId => {
                         const reqTech = this.technologies.find(t => t.id === reqId);
@@ -1478,7 +1465,6 @@ async function loadLeaderboard() {
                     cost = { money: Math.ceil(damage * 50) };
                 }
 
-                // Applica bonus riparazione
                 let discount = 0;
                 if (this.currentDriver && this.currentDriver.bonus.type === 'repair') {
                     discount = Math.abs(this.currentDriver.bonus.value);
@@ -1511,7 +1497,6 @@ async function loadLeaderboard() {
                 Object.keys(car.stats).forEach(stat => {
                     let statValue = car.stats[stat] + (car.upgrades[stat] * 10);
                     
-                    // Applica bonus tecnologie
                     this.technologies.forEach(tech => {
                         if (tech.researched) {
                             if (tech.bonus.stat === stat) {
@@ -1525,7 +1510,6 @@ async function loadLeaderboard() {
                     power += statValue;
                 });
                 
-                // Riduzione per condizione auto
                 power = power * (car.condition / 100);
                 
                 return power;
@@ -1550,7 +1534,6 @@ async function loadLeaderboard() {
                     return;
                 }
 
-                // Applica bonus energia pilota
                 const energyCost = 20 - (this.currentDriver && this.currentDriver.bonus.type === 'energy' ? Math.abs(this.currentDriver.bonus.value) : 0);
 
                 if (this.resources.energy.value < energyCost) {
@@ -1616,7 +1599,6 @@ async function loadLeaderboard() {
                         parts: Math.floor((Math.random() * 20 + 10) * difficultyBonus)
                     };
 
-                    // Applica bonus pilota
                     if (this.currentDriver) {
                         if (this.currentDriver.bonus.type === 'money') {
                             rewards.money = Math.floor(rewards.money * (1 + this.currentDriver.bonus.value));
@@ -1629,7 +1611,6 @@ async function loadLeaderboard() {
                         }
                     }
 
-                    // Applica bonus sponsor
                     if (this.currentSponsor) {
                         if (this.currentSponsor.bonus.type === 'money') {
                             rewards.money = Math.floor(rewards.money * (1 + this.currentSponsor.bonus.value));
@@ -1661,7 +1642,6 @@ async function loadLeaderboard() {
                 this.races.completed++;
                 this.races.lastRaceTime = now;
                 
-                // Aggiungi al log gare
                 this.raceHistory.unshift({
                     date: new Date().toLocaleString('it-IT'),
                     type: 'Stradale',
@@ -1673,7 +1653,6 @@ async function loadLeaderboard() {
                     rewards: win ? rewards : null
                 });
                 
-                // Mantieni solo ultime 50 gare
                 if (this.raceHistory.length > 50) {
                     this.raceHistory = this.raceHistory.slice(0, 50);
                 }
@@ -1776,7 +1755,6 @@ async function loadLeaderboard() {
                 this.championship.results.push({ win, opponent: opponent.name, rewards, damage });
                 this.championship.currentRace++;
 
-                // Aggiungi al log gare
                 this.raceHistory.unshift({
                     date: new Date().toLocaleString('it-IT'),
                     type: 'Campionato',
@@ -1814,14 +1792,16 @@ async function loadLeaderboard() {
                 this.render();
             },
 
+    // ===== FIX BUG 1 & 3: "won" → "win", rimossa riga "modal.classList.add('active')" =====
     showRaceSummary(win, playerCar, playerPower, opponent, opponentPower, rewards, damage, isChampionship) {
             const modalContent = document.querySelector('#raceModal .modal-content');
-            if (won) {
-                modalContent.classList.add('win');      // bordo verde
+            if (win) {                                  // ← FIX: era "won" (non definito)
+                modalContent.classList.add('win');
             } else {
-                modalContent.classList.remove('win');   // bordo rosso (default)
-    }
-    document.getElementById('raceModal').classList.add('active');
+                modalContent.classList.remove('win');
+            }
+            document.getElementById('raceModal').classList.add('active');   // ← unica attivazione del modale
+
                 const result = document.getElementById('raceResult');
                 const comparison = document.getElementById('raceComparison');
                 const rewardsDiv = document.getElementById('raceRewards');
@@ -1878,7 +1858,7 @@ async function loadLeaderboard() {
                     damageSection.innerHTML = '';
                 }
 
-                modal.classList.add('active');
+                // ← FIX: rimossa la riga "modal.classList.add('active')" che usava variabile inesistente
 
                 if (isChampionship && this.championship.currentRace >= this.championship.totalRaces) {
                     setTimeout(() => {
@@ -1894,7 +1874,7 @@ async function loadLeaderboard() {
 
             closeRaceModal() {
         document.getElementById('raceModal').classList.remove('active');
-        document.querySelector('#raceModal .modal-content').classList.remove('win');  // ← aggiungi
+        document.querySelector('#raceModal .modal-content').classList.remove('win');
     },
 
             getRandomOpponentName() {
@@ -1933,7 +1913,6 @@ async function loadLeaderboard() {
                     }
                 });
 
-                // Drivers unlock
                 this.drivers.forEach(driver => {
                     if (!driver.unlocked && driver.unlockCondition) {
                         const canUnlock = Object.keys(driver.unlockCondition).every(res =>
@@ -1947,7 +1926,6 @@ async function loadLeaderboard() {
                     }
                 });
 
-                // Sponsors unlock
                 this.sponsors.forEach(sponsor => {
                     if (!sponsor.unlocked && this.races.wins >= sponsor.requirement) {
                         sponsor.unlocked = true;
@@ -1969,6 +1947,7 @@ async function loadLeaderboard() {
 
             render() {
                 this.renderResources();
+                this.checkUnlocks();
                 
                 if (this.currentPage === 'workshop') {
                     this.renderWorkshop();
@@ -2021,14 +2000,12 @@ async function loadLeaderboard() {
                         }).join(' ');
                     }
 
-                    // Bonus reputazione one-time
                     let reputationInfo = '';
                     if (section.reputationBonus && section.level > 0) {
                         const totalRep = section.reputationBonus * section.level;
                         reputationInfo = `⭐ +${totalRep} reputazione totale guadagnata`;
                     }
 
-                    // Calcola cosa si ottiene con il prossimo upgrade
                     let nextLevelBonus = '';
                     if (section.level < section.maxLevel) {
                         if (section.production) {
@@ -2345,7 +2322,6 @@ async function loadLeaderboard() {
                 const moneyCost = Math.ceil(damage * 50);
                 const partsCost = Math.ceil(damage * 2);
 
-                // Calcola sconti
                 let discount = 0;
                 if (this.currentDriver && this.currentDriver.bonus.type === 'repair') {
                     discount += Math.abs(this.currentDriver.bonus.value);
@@ -2391,7 +2367,6 @@ async function loadLeaderboard() {
             },
 
             renderTeam() {
-                // Piloti
                 const driversContainer = document.getElementById('driversSection');
                 driversContainer.innerHTML = this.drivers.map((driver, index) => {
                     const locked = !driver.unlocked;
@@ -2446,7 +2421,6 @@ async function loadLeaderboard() {
                     `;
                 }).join('');
 
-                // Sponsor
                 const sponsorsContainer = document.getElementById('sponsorsSection');
                 sponsorsContainer.innerHTML = this.sponsors.map((sponsor, index) => {
                     const locked = !sponsor.unlocked;
@@ -2494,38 +2468,7 @@ async function loadLeaderboard() {
                 }).join('');
             },
 
-            showRepairModal(carIndex) {
-                const car = this.ownedCars[carIndex];
-                const damage = 100 - car.condition;
-                
-                const moneyCost = Math.ceil(damage * 50);
-                const partsCost = Math.ceil(damage * 2);
-
-                document.getElementById('repairContent').innerHTML = `
-                    <div style="text-align: center; margin: 20px 0;">
-                        <div style="font-size: 1.5rem; margin-bottom: 20px;">
-                            ${car.name}
-                        </div>
-                        <div style="font-size: 1.2rem; color: var(--accent-red); margin-bottom: 20px;">
-                            Danno: ${damage.toFixed(1)}%
-                        </div>
-                    </div>
-                    <button class="btn" onclick="game.repairCar(${carIndex}, false)">
-                        Ripara con Denaro (${moneyCost}€)
-                    </button>
-                    <button class="btn" onclick="game.repairCar(${carIndex}, true)">
-                        Ripara con Parti (${partsCost} 🔩)
-                    </button>
-                    <button class="btn" onclick="document.getElementById('repairModal').classList.remove('active')" style="background: #666;">
-                        Annulla
-                    </button>
-                `;
-
-                document.getElementById('repairModal').classList.add('active');
-            },
-
             renderRace() {
-                // Car selector
                 const selectorContainer = document.getElementById('carSelector');
                 if (this.ownedCars.length > 0) {
                     selectorContainer.innerHTML = this.ownedCars.map((car, index) => {
@@ -2548,7 +2491,6 @@ async function loadLeaderboard() {
                     selectorContainer.innerHTML = '<div style="text-align: center; color: var(--text-secondary);">Nessuna auto posseduta</div>';
                 }
 
-                // Race info
                 const container = document.getElementById('raceInfo');
                 const now = Date.now();
                 const timeUntilNextRace = Math.max(0, this.races.cooldown - (now - this.races.lastRaceTime));
@@ -2579,7 +2521,6 @@ async function loadLeaderboard() {
                     </div>
                 `;
 
-                // Championship
                 const champContainer = document.getElementById('championshipSection');
                 if (this.championship.active) {
                     let html = `
@@ -2698,122 +2639,56 @@ async function loadLeaderboard() {
                     `;
                 }).join('');
             },
-            //render classifica
-async renderLeaderboard() {
-        const container = document.getElementById('leaderboardContainer');
-        
-        // Se non ha ancora dati, mostra "Caricamento..."
-        if (!this._leaderboardCache) {
-            container.innerHTML = '<p style="color: #a0a0a0; text-align: center; padding: 40px;">⏳ Caricamento classifica...</p>';
-        }
 
-        const data = await loadLeaderboard();
-        if (!data) {
-            container.innerHTML = '<p style="color: #ff3333; text-align: center; padding: 40px;">❌ Errore caricamento classifica</p>';
-            return;
-        }
-
-        this._leaderboardCache = data;  // cache per uso futuro
-
-        const { leaderboard, userRank } = data;
-        let html = '<div style="max-width: 700px; margin: 0 auto;">';
-
-        // Header
-        html += `<div style="display: grid; grid-template-columns: 60px 1fr 150px; gap: 10px; padding: 15px; border-bottom: 2px solid #ff3333; margin-bottom: 10px;">
-            <div style="text-align: center; font-weight: 700; color: #ffd700;">#</div>
-            <div style="font-weight: 700; color: #ffd700;">Pilota</div>
-            <div style="text-align: center; font-weight: 700; color: #ffd700;">Reputazione</div>
-        </div>`;
-
-        leaderboard.forEach((player, i) => {
-            const isMe = currentUser && player.username === currentUser.username;
-            const rankColor = i === 0 ? '#ffd700' : i === 1 ? '#c0c0c0' : i === 2 ? '#cd7f32' : '#a0a0a0';
-            const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}`;
-            
-            html += `<div style="display: grid; grid-template-columns: 60px 1fr 150px; gap: 10px; padding: 12px; 
-                     background: ${isMe ? 'rgba(0,255,136,0.1)' : 'rgba(255,255,255,0.03)'}; 
-                     border: ${isMe ? '2px solid #00ff88' : '1px solid rgba(255,255,255,0.05)'};
-                     border-radius: 8px; margin-bottom: 5px; align-items: center;">
-                <div style="text-align: center; font-size: 1.2rem; color: ${rankColor}; font-weight: 700;">${medal}</div>
-                <div style="font-size: 1.1rem; ${isMe ? 'color: #00ff88; font-weight: 700;' : ''}">${player.username} ${isMe ? '(Tu)' : ''}</div>
-                <div style="text-align: center; color: #00d9ff; font-weight: 700; font-size: 1.1rem;">${Number(player.reputation).toLocaleString()}</div>
-            </div>`;
-        });
-
-        // Se l'utente non è nei top 20, mostra il suo rank separato
-        if (userRank) {
-            html += `<div style="margin-top: 20px; padding: 15px; background: rgba(0,255,136,0.1); border: 2px solid #00ff88; border-radius: 8px; display: grid; grid-template-columns: 60px 1fr 150px; gap: 10px; align-items: center;">
-                <div style="text-align: center; font-weight: 700; color: #00ff88;">${userRank.rank}</div>
-                <div style="color: #00ff88; font-weight: 700;">${userRank.username} (Tu)</div>
-                <div style="text-align: center; color: #00d9ff; font-weight: 700;">${Number(userRank.reputation).toLocaleString()}</div>
-            </div>`;
-        }
-
-        html += '</div>';
-        container.innerHTML = html;
-    },
-            loadGame() {
-                const saved = localStorage.getItem('garageRacingGame');
-                if (saved) {
-                    try {
-                        const data = JSON.parse(saved);
-                        this.resources = data.resources || this.resources;
-                        this.workshop = data.workshop || this.workshop;
-                        this.availableCars = data.availableCars || this.availableCars;
-                        this.ownedCars = data.ownedCars || this.ownedCars;
-                        this.races = data.races || this.races;
-                        this.championship = data.championship || this.championship;
-                        this.selectedCarIndex = data.selectedCarIndex || 0;
-                        this.drivers = data.drivers || this.drivers;
-                        this.currentDriver = data.currentDriver || null;
-                        this.sponsors = data.sponsors || this.sponsors;
-                        this.currentSponsor = data.currentSponsor || null;
-                        this.technologies = data.technologies || this.technologies;
-                        this.raceHistory = data.raceHistory || [];
-                        
-                        // Calcola produzione offline
-                        const lastSaveTime = data.lastSaveTime || Date.now();
-                        const now = Date.now();
-                        const offlineTime = (now - lastSaveTime) / 1000; // secondi
-                        
-                        if (offlineTime > 60) { // Solo se è passato almeno 1 minuto
-                            const offlineHours = offlineTime / 3600;
-                            
-                            // Calcola produzione offline per ogni reparto
-                            Object.keys(this.workshop).forEach(key => {
-                                const section = this.workshop[key];
-                                if (section.level > 0 && section.production) {
-                                    Object.keys(section.production).forEach(resource => {
-                                        if (this.resources[resource]) {
-                                            const productionPerHour = section.production[resource] * section.level;
-                                            const offlineProduction = productionPerHour * offlineHours;
-                                            
-                                            this.resources[resource].value = Math.min(
-                                                this.resources[resource].value + offlineProduction,
-                                                this.resources[resource].max
-                                            );
-                                        }
-                                    });
-                                }
-                            });
-                            
-                            // Recupero energia offline (1 al minuto)
-                            const energyRecovered = offlineTime / 60; // 1 energia per minuto
-                            this.resources.energy.value = Math.min(
-                                this.resources.energy.value + energyRecovered,
-                                this.resources.energy.max
-                            );
-                            
-                            // Mostra notifica produzione offline
-                            const hours = Math.floor(offlineHours);
-                            const minutes = Math.floor((offlineHours - hours) * 60);
-                            let timeMsg = hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
-                            this.showUnlockNotification(`⏰ Produzione offline: ${timeMsg}`);
-                        }
-                    } catch (e) {
-                        console.error('Errore caricamento', e);
-                    }
+            async renderLeaderboard() {
+                const container = document.getElementById('leaderboardContainer');
+                
+                if (!this._leaderboardCache) {
+                    container.innerHTML = '<p style="color: #a0a0a0; text-align: center; padding: 40px;">⏳ Caricamento classifica...</p>';
                 }
+
+                const data = await loadLeaderboard();
+                if (!data) {
+                    container.innerHTML = '<p style="color: #ff3333; text-align: center; padding: 40px;">❌ Errore caricamento classifica</p>';
+                    return;
+                }
+
+                this._leaderboardCache = data;
+
+                const { leaderboard, userRank } = data;
+                let html = '<div style="max-width: 700px; margin: 0 auto;">';
+
+                html += `<div style="display: grid; grid-template-columns: 60px 1fr 150px; gap: 10px; padding: 15px; border-bottom: 2px solid #ff3333; margin-bottom: 10px;">
+                    <div style="text-align: center; font-weight: 700; color: #ffd700;">#</div>
+                    <div style="font-weight: 700; color: #ffd700;">Pilota</div>
+                    <div style="text-align: center; font-weight: 700; color: #ffd700;">Reputazione</div>
+                </div>`;
+
+                leaderboard.forEach((player, i) => {
+                    const isMe = currentUser && player.username === currentUser.username;
+                    const rankColor = i === 0 ? '#ffd700' : i === 1 ? '#c0c0c0' : i === 2 ? '#cd7f32' : '#a0a0a0';
+                    const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}`;
+                    
+                    html += `<div style="display: grid; grid-template-columns: 60px 1fr 150px; gap: 10px; padding: 12px; 
+                             background: ${isMe ? 'rgba(0,255,136,0.1)' : 'rgba(255,255,255,0.03)'}; 
+                             border: ${isMe ? '2px solid #00ff88' : '1px solid rgba(255,255,255,0.05)'};
+                             border-radius: 8px; margin-bottom: 5px; align-items: center;">
+                        <div style="text-align: center; font-size: 1.2rem; color: ${rankColor}; font-weight: 700;">${medal}</div>
+                        <div style="font-size: 1.1rem; ${isMe ? 'color: #00ff88; font-weight: 700;' : ''}">${player.username} ${isMe ? '(Tu)' : ''}</div>
+                        <div style="text-align: center; color: #00d9ff; font-weight: 700; font-size: 1.1rem;">${Number(player.reputation).toLocaleString()}</div>
+                    </div>`;
+                });
+
+                if (userRank) {
+                    html += `<div style="margin-top: 20px; padding: 15px; background: rgba(0,255,136,0.1); border: 2px solid #00ff88; border-radius: 8px; display: grid; grid-template-columns: 60px 1fr 150px; gap: 10px; align-items: center;">
+                        <div style="text-align: center; font-weight: 700; color: #00ff88;">${userRank.rank}</div>
+                        <div style="color: #00ff88; font-weight: 700;">${userRank.username} (Tu)</div>
+                        <div style="text-align: center; color: #00d9ff; font-weight: 700;">${Number(userRank.reputation).toLocaleString()}</div>
+                    </div>`;
+                }
+
+                html += '</div>';
+                container.innerHTML = html;
             },
 
             resetGame() {
@@ -2823,6 +2698,7 @@ async renderLeaderboard() {
                 }
             }
         };
+
 // ===== AVVIO APPLICAZIONE =====
 window.addEventListener('load', async () => {
     console.log('🚀 Applicazione caricata');
@@ -2838,4 +2714,3 @@ window.addEventListener('load', async () => {
     </script>
 </body>
 </html>
-        
