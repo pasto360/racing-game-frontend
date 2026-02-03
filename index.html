@@ -1814,12 +1814,12 @@ async function loadLeaderboard() {
                 this.render();
             },
 
-            showRaceSummary(win, playerCar, playerPower, opponent, opponentPower, rewards, damage, isChampionship) {
-                const modalContent = document.querySelector('#raceModal .modal-content');
-    if (won) {
-        modalContent.classList.add('win');      // bordo verde
-    } else {
-        modalContent.classList.remove('win');   // bordo rosso (default)
+    showRaceSummary(win, playerCar, playerPower, opponent, opponentPower, rewards, damage, isChampionship) {
+            const modalContent = document.querySelector('#raceModal .modal-content');
+            if (won) {
+                modalContent.classList.add('win');      // bordo verde
+            } else {
+                modalContent.classList.remove('win');   // bordo rosso (default)
     }
     document.getElementById('raceModal').classList.add('active');
                 const result = document.getElementById('raceResult');
