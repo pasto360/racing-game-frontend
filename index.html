@@ -548,6 +548,15 @@
             background: linear-gradient(135deg, rgba(0, 255, 136, 0.05), transparent);
         }
 
+        .modal-content.win {
+            border-color: var(--accent-green) !important;
+            box-shadow: 0 0 100px rgba(0, 255, 136, 0.5) !important;
+        }
+
+        .modal-content.win .modal-title {
+            color: var(--accent-green) !important;
+        }
+
         footer {
             text-align: center;
             padding: 30px;
@@ -951,24 +960,19 @@ async function loadGameFromServer() {
 }
 
 let saveTimeout = null;
-async function saveGameToServer() {
-    if (!authToken) {
-        console.warn('⚠️ Impossibile salvare: nessun token');
-        return;
-    }
-    
-    // Debounce per evitare troppi salvataggi
-    if (saveTimeout) {
-        clearTimeout(saveTimeout);
-    }
-    
+async function saveGameToServer(showIndicator = true) {
+    if (!authToken) return;
+
+    if (saveTimeout) clearTimeout(saveTimeout);
+
     saveTimeout = setTimeout(async () => {
         try {
+            // Mostra indicatore SOLO se richiesto esplicitamente
             const saveIndicator = document.getElementById('saveIndicator');
-            if (saveIndicator) {
+            if (showIndicator && saveIndicator) {
                 saveIndicator.classList.add('show');
             }
-            
+
             const response = await fetch(`${API_URL}/api/game/state`, {
                 method: 'POST',
                 headers: {
@@ -991,23 +995,19 @@ async function saveGameToServer() {
                     }
                 })
             });
-            
-            if (!response.ok) {
-                throw new Error('Errore salvataggio');
-            }
-            
+
+            if (!response.ok) throw new Error('Errore salvataggio');
+
             console.log('💾 Salvataggio completato');
-            
-            setTimeout(() => {
-                if (saveIndicator) {
-                    saveIndicator.classList.remove('show');
-                }
-            }, 1000);
-            
+
+            if (showIndicator && saveIndicator) {
+                setTimeout(() => saveIndicator.classList.remove('show'), 1500);
+            }
+
         } catch (error) {
             console.error('❌ Errore salvataggio:', error);
         }
-    }, 500); // Debounce di 500ms
+    }, 500);
 }
 
 async function loadLeaderboard() {
@@ -1209,76 +1209,85 @@ async function loadLeaderboard() {
     this.startGameLoop();
     this.checkUnlocks();
     
-    // Salvataggio automatico ogni 3 secondi
+    // Salvataggio automatico ogni 3 secondi (silenzioso, senza popup)
     setInterval(() => {
-        saveGameToServer();
+        saveGameToServer(false);  // false = non mostrare indicatore
     }, 3000);
 },
 
             startGameLoop() {
-                setInterval(() => {
-                    this.updateResources();
-                    this.render();
-                    this.saveGame();
-                    this.checkUnlocks();
-                }, 1000);
-            },
+        this.lastTickTime = Date.now();  // ← NUOVO: timestamp dell'ultimo tick
 
-            updateResources() {
-                Object.keys(this.workshop).forEach(key => {
-                    const section = this.workshop[key];
-                    if (section.level > 0 && section.production) {
-                        Object.keys(section.production).forEach(resource => {
-                            if (this.resources[resource]) {
-                                // Produzione oraria = base * livello
-                                const productionPerHour = section.production[resource] * section.level;
-                                const productionPerSecond = productionPerHour / 3600;
-                                
-                                this.resources[resource].value = Math.min(
-                                    this.resources[resource].value + productionPerSecond,
-                                    this.resources[resource].max
-                                );
-                            }
-                        });
+        setInterval(() => {
+            const now = Date.now();
+            const deltaSeconds = (now - this.lastTickTime) / 1000;  // tempo reale trascorso
+            this.lastTickTime = now;
+
+            // Passa il deltaTime a updateResources
+            this.updateResources(deltaSeconds);
+            this.render();
+        }, 1000);
+    },
+
+            updateResources(deltaSeconds = 1) {
+        // Calcola produzione dalle officine
+        Object.keys(this.workshop).forEach(key => {
+            const section = this.workshop[key];
+            if (section.level > 0 && section.production) {
+                Object.keys(section.production).forEach(resource => {
+                    if (this.resources[resource]) {
+                        // production è "per ora", dividi per 3600 per ottenere "per secondo"
+                        const perSecond = (section.production[resource] * section.level) / 3600;
+                        this.resources[resource].value = Math.min(
+                            this.resources[resource].value + (perSecond * deltaSeconds),
+                            this.resources[resource].max
+                        );
                     }
                 });
+            }
+        });
 
-                Object.keys(this.resources).forEach(key => {
-                    this.resources[key].rate = 0;
-                });
+        // Energia: recupera 1 punto al minuto (= 1/60 per secondo)
+        this.resources.energy.value = Math.min(
+            this.resources.energy.value + (deltaSeconds / 60),
+            this.resources.energy.max
+        );
 
-                Object.keys(this.workshop).forEach(key => {
-                    const section = this.workshop[key];
-                    if (section.level > 0 && section.production) {
-                        Object.keys(section.production).forEach(resource => {
-                            if (this.resources[resource]) {
-                                // Rate orario = base * livello
-                                const rate = section.production[resource] * section.level;
-                                this.resources[resource].rate += rate;
-                            }
-                        });
-                    }
-                });
-
-                if (this.resources.energy.value < this.resources.energy.max) {
-                    this.resources.energy.value = Math.min(
-                        this.resources.energy.value + (1 / 60),
-                        this.resources.energy.max
-                    );
-                }
-            },
+        // Sponsor income (se hai uno sponsor attivo)
+        if (this.currentSponsor !== null && this.sponsors[this.currentSponsor]) {
+            const sponsor = this.sponsors[this.currentSponsor];
+            if (sponsor.income) {
+                // income è "per ora"
+                const perSecond = sponsor.income / 3600;
+                this.resources.money.value = Math.min(
+                    this.resources.money.value + (perSecond * deltaSeconds),
+                    this.resources.money.max
+                );
+            }
+        }
+    },
 
             changePage(page) {
-                this.currentPage = page;
-                
-                document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-                document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
-                
-                document.getElementById('page-' + page).classList.add('active');
-                event.target.closest('.nav-btn').classList.add('active');
-                
-                this.render();
-            },
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+
+        document.getElementById(`page-${page}`).classList.add('active');
+        document.querySelectorAll('.nav-btn')[
+            ['workshop','garage','dealer','team','tech','race','history','leaderboard'].indexOf(page)
+        ].classList.add('active');
+
+        // Render della pagina specifica
+        if (page === 'workshop') this.renderWorkshop();
+        if (page === 'garage') this.renderOwnedCars();
+        if (page === 'dealer') this.renderDealer();
+        if (page === 'team') this.renderTeam();
+        if (page === 'tech') this.renderTech();
+        if (page === 'race') this.renderRace();
+        if (page === 'history') this.renderRaceHistory();
+        if (page === 'leaderboard') this.renderLeaderboard();  // ← solo QUI, non nel gameLoop
+
+        this.currentPage = page;
+    },
 
             upgradeWorkshop(sectionKey) {
                 const section = this.workshop[sectionKey];
@@ -1806,7 +1815,13 @@ async function loadLeaderboard() {
             },
 
             showRaceSummary(win, playerCar, playerPower, opponent, opponentPower, rewards, damage, isChampionship) {
-                const modal = document.getElementById('raceModal');
+                const modalContent = document.querySelector('#raceModal .modal-content');
+    if (won) {
+        modalContent.classList.add('win');      // bordo verde
+    } else {
+        modalContent.classList.remove('win');   // bordo rosso (default)
+    }
+    document.getElementById('raceModal').classList.add('active');
                 const result = document.getElementById('raceResult');
                 const comparison = document.getElementById('raceComparison');
                 const rewardsDiv = document.getElementById('raceRewards');
@@ -1878,8 +1893,9 @@ async function loadLeaderboard() {
             },
 
             closeRaceModal() {
-                document.getElementById('raceModal').classList.remove('active');
-            },
+        document.getElementById('raceModal').classList.remove('active');
+        document.querySelector('#raceModal .modal-content').classList.remove('win');  // ← aggiungi
+    },
 
             getRandomOpponentName() {
                 const names = [
@@ -1968,9 +1984,7 @@ async function loadLeaderboard() {
                     this.renderRace();
                 } else if (this.currentPage === 'history') {
                     this.renderHistory();
-                } else if (this.currentPage === 'leaderboard') {
-                    this.renderLeaderboard();
-                }
+                } 
             },
 
             renderResources() {
@@ -2686,80 +2700,58 @@ async function loadLeaderboard() {
             },
             //render classifica
 async renderLeaderboard() {
-    const container = document.getElementById('leaderboardContainer');
-    container.innerHTML = '<div style="text-align: center; padding: 40px;">⏳ Caricamento classifica...</div>';
-    
-    const data = await loadLeaderboard();
-    
-    if (!data || !data.leaderboard) {
-        container.innerHTML = `
-            <div class="empty-garage">
-                <div class="empty-garage-icon">🏆</div>
-                <div>Errore caricamento classifica</div>
-            </div>
-        `;
-        return;
-    }
-    
-    const { leaderboard, userRank } = data;
-    
-    let html = '<div style="max-width: 800px; margin: 0 auto;">';
-    
-    // Top 20
-    leaderboard.forEach((player, index) => {
-        const isCurrentUser = currentUser && player.username === currentUser.username;
-        const rankIcon = index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}.`;
+        const container = document.getElementById('leaderboardContainer');
         
-        html += `
-            <div class="championship-race ${isCurrentUser ? 'win' : ''}" style="margin: 10px 0; padding: 20px; ${isCurrentUser ? 'border: 2px solid var(--accent-green);' : ''}">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <div style="display: flex; align-items: center; gap: 20px;">
-                        <div style="font-size: 1.5rem; min-width: 50px;">${rankIcon}</div>
-                        <div>
-                            <div style="font-weight: 700; font-size: 1.2rem;">
-                                ${player.username} ${isCurrentUser ? '(Tu)' : ''}
-                            </div>
-                        </div>
-                    </div>
-                    <div style="text-align: right;">
-                        <div style="font-size: 1.5rem; color: var(--accent-yellow);">
-                            ⭐ ${Math.floor(player.reputation)}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-    });
-    
-    // Se l'utente non è nei top 20, mostra la sua posizione
-    if (userRank && userRank.rank > 20) {
-        html += `
-            <div style="margin: 30px 0 10px 0; text-align: center; color: var(--text-secondary);">
-                • • •
-            </div>
-            <div class="championship-race win" style="margin: 10px 0; padding: 20px; border: 2px solid var(--accent-green);">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <div style="display: flex; align-items: center; gap: 20px;">
-                        <div style="font-size: 1.5rem; min-width: 50px;">${userRank.rank}.</div>
-                        <div>
-                            <div style="font-weight: 700; font-size: 1.2rem;">
-                                ${userRank.username} (Tu)
-                            </div>
-                        </div>
-                    </div>
-                    <div style="text-align: right;">
-                        <div style="font-size: 1.5rem; color: var(--accent-yellow);">
-                            ⭐ ${Math.floor(userRank.reputation)}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-    
-    html += '</div>';
-    container.innerHTML = html;
-},
+        // Se non ha ancora dati, mostra "Caricamento..."
+        if (!this._leaderboardCache) {
+            container.innerHTML = '<p style="color: #a0a0a0; text-align: center; padding: 40px;">⏳ Caricamento classifica...</p>';
+        }
+
+        const data = await loadLeaderboard();
+        if (!data) {
+            container.innerHTML = '<p style="color: #ff3333; text-align: center; padding: 40px;">❌ Errore caricamento classifica</p>';
+            return;
+        }
+
+        this._leaderboardCache = data;  // cache per uso futuro
+
+        const { leaderboard, userRank } = data;
+        let html = '<div style="max-width: 700px; margin: 0 auto;">';
+
+        // Header
+        html += `<div style="display: grid; grid-template-columns: 60px 1fr 150px; gap: 10px; padding: 15px; border-bottom: 2px solid #ff3333; margin-bottom: 10px;">
+            <div style="text-align: center; font-weight: 700; color: #ffd700;">#</div>
+            <div style="font-weight: 700; color: #ffd700;">Pilota</div>
+            <div style="text-align: center; font-weight: 700; color: #ffd700;">Reputazione</div>
+        </div>`;
+
+        leaderboard.forEach((player, i) => {
+            const isMe = currentUser && player.username === currentUser.username;
+            const rankColor = i === 0 ? '#ffd700' : i === 1 ? '#c0c0c0' : i === 2 ? '#cd7f32' : '#a0a0a0';
+            const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}`;
+            
+            html += `<div style="display: grid; grid-template-columns: 60px 1fr 150px; gap: 10px; padding: 12px; 
+                     background: ${isMe ? 'rgba(0,255,136,0.1)' : 'rgba(255,255,255,0.03)'}; 
+                     border: ${isMe ? '2px solid #00ff88' : '1px solid rgba(255,255,255,0.05)'};
+                     border-radius: 8px; margin-bottom: 5px; align-items: center;">
+                <div style="text-align: center; font-size: 1.2rem; color: ${rankColor}; font-weight: 700;">${medal}</div>
+                <div style="font-size: 1.1rem; ${isMe ? 'color: #00ff88; font-weight: 700;' : ''}">${player.username} ${isMe ? '(Tu)' : ''}</div>
+                <div style="text-align: center; color: #00d9ff; font-weight: 700; font-size: 1.1rem;">${Number(player.reputation).toLocaleString()}</div>
+            </div>`;
+        });
+
+        // Se l'utente non è nei top 20, mostra il suo rank separato
+        if (userRank) {
+            html += `<div style="margin-top: 20px; padding: 15px; background: rgba(0,255,136,0.1); border: 2px solid #00ff88; border-radius: 8px; display: grid; grid-template-columns: 60px 1fr 150px; gap: 10px; align-items: center;">
+                <div style="text-align: center; font-weight: 700; color: #00ff88;">${userRank.rank}</div>
+                <div style="color: #00ff88; font-weight: 700;">${userRank.username} (Tu)</div>
+                <div style="text-align: center; color: #00d9ff; font-weight: 700;">${Number(userRank.reputation).toLocaleString()}</div>
+            </div>`;
+        }
+
+        html += '</div>';
+        container.innerHTML = html;
+    },
             loadGame() {
                 const saved = localStorage.getItem('garageRacingGame');
                 if (saved) {
