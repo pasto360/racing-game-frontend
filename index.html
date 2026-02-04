@@ -730,10 +730,14 @@
             display: none;
         }
 
+        .mobile-overflow-menu {
+            display: none;
+        }
+
         @media (max-width: 768px) {
             /* Nascondi navigazione desktop su mobile */
             .navigation {
-                display: none;
+                display: none !important;
             }
 
             /* Mostra tab bar mobile */
@@ -795,7 +799,7 @@
                 left: 0;
                 right: 0;
                 bottom: 0;
-                z-index: 2000;
+                z-index: 2500;
             }
 
             .mobile-overflow-menu.active {
@@ -1703,26 +1707,36 @@ async function loadLeaderboard() {
 
         document.getElementById(`page-${page}`).classList.add('active');
         
-        // Attiva pulsante corrispondente in navigazione desktop
-        const navButtons = document.querySelectorAll('.nav-btn');
         const pageIndex = ['workshop','garage','dealer','team','tech','race','history','leaderboard'].indexOf(page);
+        
+        // Attiva pulsante in navigazione desktop
+        const navButtons = document.querySelectorAll('.nav-btn');
         if (navButtons[pageIndex]) {
             navButtons[pageIndex].classList.add('active');
         }
         
-        // Attiva pulsante corrispondente in tab bar mobile
+        // Attiva pulsante in tab bar mobile
+        // Mappatura: workshop=0, garage=1, race=2, team=3, altro=4
+        const mobileMapping = {
+            'workshop': 0,
+            'garage': 1,
+            'race': 2,
+            'team': 3,
+            // dealer, tech, history, leaderboard vengono dal menu overflow
+        };
+        
         const mobileButtons = document.querySelectorAll('.mobile-tab-btn');
-        if (mobileButtons[pageIndex]) {
-            mobileButtons[pageIndex].classList.add('active');
+        if (mobileMapping[page] !== undefined && mobileButtons[mobileMapping[page]]) {
+            mobileButtons[mobileMapping[page]].classList.add('active');
         }
 
         if (page === 'workshop') this.renderWorkshop();
         if (page === 'garage') this.renderOwnedCars();
-        if (page === 'dealer') this.renderAvailableCars();       // ← FIX: era this.renderDealer()
+        if (page === 'dealer') this.renderAvailableCars();
         if (page === 'team') this.renderTeam();
         if (page === 'tech') this.renderTech();
         if (page === 'race') this.renderRace();
-        if (page === 'history') this.renderHistory();             // ← FIX: era this.renderRaceHistory()
+        if (page === 'history') this.renderHistory();
         if (page === 'leaderboard') this.renderLeaderboard();
 
         this.currentPage = page;
