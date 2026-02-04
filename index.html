@@ -978,7 +978,7 @@
                 <span class="icon">🏁</span>
                 <span>Gare</span>
             </button>
-            <button class="mobile-tab-btn" onclick="document.getElementById('mobileMenu').classList.toggle('active')">
+            <button class="mobile-tab-btn" onclick="toggleMobileMenu()">
                 <span class="icon">⋮</span>
                 <span>Altro</span>
             </button>
@@ -986,17 +986,17 @@
 
         <!-- Menu overflow mobile -->
         <div id="mobileMenu" class="mobile-overflow-menu">
-            <div class="mobile-menu-backdrop" onclick="document.getElementById('mobileMenu').classList.remove('active')"></div>
+            <div class="mobile-menu-backdrop" onclick="closeMobileMenu()"></div>
             <div class="mobile-menu-content">
-                <button class="mobile-menu-item" onclick="game.changePage('dealer'); document.getElementById('mobileMenu').classList.remove('active')">
+                <button class="mobile-menu-item" onclick="game.changePage('dealer'); closeMobileMenu()">
                     <span class="icon">🏪</span>
                     <span>Concessionario</span>
                 </button>
-                <button class="mobile-menu-item" onclick="game.changePage('tech'); document.getElementById('mobileMenu').classList.remove('active')">
+                <button class="mobile-menu-item" onclick="game.changePage('tech'); closeMobileMenu()">
                     <span class="icon">🔬</span>
                     <span>Tecnologie</span>
                 </button>
-                <button class="mobile-menu-item" onclick="game.changePage('leaderboard'); document.getElementById('mobileMenu').classList.remove('active')">
+                <button class="mobile-menu-item" onclick="game.changePage('leaderboard'); closeMobileMenu()">
                     <span class="icon">🏆</span>
                     <span>Classifica</span>
                 </button>
@@ -1701,6 +1701,8 @@ async function loadLeaderboard() {
 
             // ===== FIX BUG 2 & 4: nomi funzioni corretti in changePage =====
             changePage(page) {
+        console.log('🔄 Cambio pagina:', page);
+        
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
         document.querySelectorAll('.mobile-tab-btn').forEach(b => b.classList.remove('active'));
@@ -1739,7 +1741,12 @@ async function loadLeaderboard() {
         if (page === 'tech') this.renderTech();
         if (page === 'race') {
             this.renderRace();
-            this.renderHistoryInline(); // Storico ultime 10 gare inline
+            try {
+                this.renderHistoryInline(); // Storico ultime 10 gare inline
+            } catch (error) {
+                console.error('Errore renderHistoryInline:', error);
+                // Non bloccare il gioco se lo storico fallisce
+            }
         }
         if (page === 'leaderboard') this.renderLeaderboard();
 
@@ -2436,7 +2443,11 @@ async function loadLeaderboard() {
                     this.renderTech();
                 } else if (this.currentPage === 'race') {
                     this.renderRace();
-                    this.renderHistoryInline();
+                    try {
+                        this.renderHistoryInline();
+                    } catch (error) {
+                        console.error('Errore renderHistoryInline:', error);
+                    }
                 } else if (this.currentPage === 'leaderboard') {
                     this.renderLeaderboard();
                 }
@@ -3294,6 +3305,31 @@ async function loadLeaderboard() {
         };
 
 // ===== AVVIO APPLICAZIONE =====
+function toggleMobileMenu() {
+    try {
+        const menu = document.getElementById('mobileMenu');
+        if (menu) {
+            menu.classList.toggle('active');
+            console.log('Menu mobile toggled');
+        } else {
+            console.error('Menu mobile non trovato');
+        }
+    } catch (error) {
+        console.error('Errore toggle menu:', error);
+    }
+}
+
+function closeMobileMenu() {
+    try {
+        const menu = document.getElementById('mobileMenu');
+        if (menu) {
+            menu.classList.remove('active');
+        }
+    } catch (error) {
+        console.error('Errore chiusura menu:', error);
+    }
+}
+
 window.addEventListener('load', async () => {
     console.log('🚀 Applicazione caricata');
     
