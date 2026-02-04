@@ -869,9 +869,27 @@
             /* Riduci dimensioni card su mobile */
             .workshop-section,
             .car-card,
-            .team-card,
             .tech-card {
                 padding: 15px;
+            }
+            
+            .team-card {
+                padding: 15px;
+            }
+            
+            .team-grid {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                gap: 15px;
+            }
+            
+            .team-card .icon,
+            .team-card > div:first-child {
+                font-size: 2rem !important;
+                margin-bottom: 8px !important;
+            }
+            
+            .team-card > div {
+                font-size: 0.9rem;
             }
 
             .section-title {
@@ -926,15 +944,11 @@
             </button>
             <button class="nav-btn" onclick="game.changePage('garage')">
                 <span class="icon">🏎️</span>
-                Garage
+                Garage + Team
             </button>
             <button class="nav-btn" onclick="game.changePage('dealer')">
                 <span class="icon">🏪</span>
                 Concessionario
-            </button>
-            <button class="nav-btn" onclick="game.changePage('team')">
-                <span class="icon">👥</span>
-                Team
             </button>
             <button class="nav-btn" onclick="game.changePage('tech')">
                 <span class="icon">🔬</span>
@@ -942,11 +956,7 @@
             </button>
             <button class="nav-btn" onclick="game.changePage('race')">
                 <span class="icon">🏁</span>
-                Gare
-            </button>
-            <button class="nav-btn" onclick="game.changePage('history')">
-                <span class="icon">📜</span>
-                Storico
+                Gare + Log
             </button>
             <button class="nav-btn" onclick="game.changePage('leaderboard')">
                <span class="icon">🏆</span>
@@ -968,10 +978,6 @@
                 <span class="icon">🏁</span>
                 <span>Gare</span>
             </button>
-            <button class="mobile-tab-btn" onclick="game.changePage('team')">
-                <span class="icon">👥</span>
-                <span>Team</span>
-            </button>
             <button class="mobile-tab-btn" onclick="document.getElementById('mobileMenu').classList.toggle('active')">
                 <span class="icon">⋮</span>
                 <span>Altro</span>
@@ -990,10 +996,6 @@
                     <span class="icon">🔬</span>
                     <span>Tecnologie</span>
                 </button>
-                <button class="mobile-menu-item" onclick="game.changePage('history'); document.getElementById('mobileMenu').classList.remove('active')">
-                    <span class="icon">📜</span>
-                    <span>Storico Gare</span>
-                </button>
                 <button class="mobile-menu-item" onclick="game.changePage('leaderboard'); document.getElementById('mobileMenu').classList.remove('active')">
                     <span class="icon">🏆</span>
                     <span>Classifica</span>
@@ -1009,19 +1011,18 @@
         <div id="page-garage" class="page">
             <h2 class="section-title">🏎️ Le Mie Auto</h2>
             <div id="myGarage"></div>
+            
+            <h2 class="section-title">👤 Il Mio Team</h2>
+            <h3 style="font-family: Orbitron; font-size: 1.3rem; margin: 20px 0 15px 0; color: var(--accent-purple);">Pilota</h3>
+            <div class="team-grid" id="driversSection"></div>
+            
+            <h3 style="font-family: Orbitron; font-size: 1.3rem; margin: 30px 0 15px 0; color: var(--accent-yellow);">Sponsor</h3>
+            <div class="team-grid" id="sponsorsSection"></div>
         </div>
 
         <div id="page-dealer" class="page">
             <h2 class="section-title">🏪 Auto Disponibili</h2>
             <div class="dealer-grid" id="dealerCars"></div>
-        </div>
-
-        <div id="page-team" class="page">
-            <h2 class="section-title">👤 Pilota</h2>
-            <div class="team-grid" id="driversSection"></div>
-            
-            <h2 class="section-title">🏢 Sponsor</h2>
-            <div class="team-grid" id="sponsorsSection"></div>
         </div>
 
         <div id="page-tech" class="page">
@@ -1039,12 +1040,11 @@
             
             <h2 class="section-title">🏆 Campionato (5 Gare)</h2>
             <div id="championshipSection"></div>
+            
+            <h2 class="section-title">📜 Log Ultime Gare</h2>
+            <div id="raceHistoryInline"></div>
         </div>
 
-        <div id="page-history" class="page">
-            <h2 class="section-title">📜 Storico Gare</h2>
-            <div id="raceHistoryContainer"></div>
-        </div>
         
         <div id="page-leaderboard" class="page">
             <h2 class="section-title">🏆 Classifica Mondiale</h2>
@@ -1707,22 +1707,22 @@ async function loadLeaderboard() {
 
         document.getElementById(`page-${page}`).classList.add('active');
         
-        const pageIndex = ['workshop','garage','dealer','team','tech','race','history','leaderboard'].indexOf(page);
+        // Nuova mappatura: workshop, garage, dealer, tech, race, leaderboard (6 pulsanti desktop)
+        const desktopPages = ['workshop','garage','dealer','tech','race','leaderboard'];
+        const pageIndex = desktopPages.indexOf(page);
         
         // Attiva pulsante in navigazione desktop
         const navButtons = document.querySelectorAll('.nav-btn');
-        if (navButtons[pageIndex]) {
+        if (pageIndex >= 0 && navButtons[pageIndex]) {
             navButtons[pageIndex].classList.add('active');
         }
         
-        // Attiva pulsante in tab bar mobile
-        // Mappatura: workshop=0, garage=1, race=2, team=3, altro=4
+        // Attiva pulsante in tab bar mobile (4 pulsanti: workshop=0, garage=1, race=2, altro=3)
         const mobileMapping = {
             'workshop': 0,
             'garage': 1,
             'race': 2,
-            'team': 3,
-            // dealer, tech, history, leaderboard vengono dal menu overflow
+            // dealer, tech, leaderboard sono nel menu overflow
         };
         
         const mobileButtons = document.querySelectorAll('.mobile-tab-btn');
@@ -1731,12 +1731,16 @@ async function loadLeaderboard() {
         }
 
         if (page === 'workshop') this.renderWorkshop();
-        if (page === 'garage') this.renderOwnedCars();
+        if (page === 'garage') {
+            this.renderOwnedCars();
+            this.renderTeam(); // Team integrato in garage
+        }
         if (page === 'dealer') this.renderAvailableCars();
-        if (page === 'team') this.renderTeam();
         if (page === 'tech') this.renderTech();
-        if (page === 'race') this.renderRace();
-        if (page === 'history') this.renderHistory();
+        if (page === 'race') {
+            this.renderRace();
+            this.renderHistoryInline(); // Storico ultime 10 gare inline
+        }
         if (page === 'leaderboard') this.renderLeaderboard();
 
         this.currentPage = page;
@@ -2425,17 +2429,17 @@ async function loadLeaderboard() {
                     this.renderWorkshop();
                 } else if (this.currentPage === 'garage') {
                     this.renderOwnedCars();
+                    this.renderTeam();
                 } else if (this.currentPage === 'dealer') {
                     this.renderAvailableCars();
-                } else if (this.currentPage === 'team') {
-                    this.renderTeam();
                 } else if (this.currentPage === 'tech') {
                     this.renderTech();
                 } else if (this.currentPage === 'race') {
                     this.renderRace();
-                } else if (this.currentPage === 'history') {
-                    this.renderHistory();
-                } 
+                    this.renderHistoryInline();
+                } else if (this.currentPage === 'leaderboard') {
+                    this.renderLeaderboard();
+                }
             },
 
             renderResources() {
@@ -3063,6 +3067,65 @@ async function loadLeaderboard() {
                         </div>
                     `;
                 }
+                
+                // Renderizza ultime 10 gare inline
+                this.renderHistoryInline();
+            },
+            
+            renderHistoryInline() {
+                const container = document.getElementById('raceHistoryInline');
+                
+                if (this.raceHistory.length === 0) {
+                    container.innerHTML = `
+                        <div style="text-align: center; padding: 40px; color: var(--text-secondary);">
+                            <div style="font-size: 2rem; margin-bottom: 10px;">📜</div>
+                            <div>Nessuna gara completata</div>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Prendi solo le ultime 10 gare
+                const last10Races = this.raceHistory.slice(0, 10);
+                
+                container.innerHTML = last10Races.map((race, index) => {
+                    const winClass = race.win ? 'win' : 'lose';
+                    return `
+                        <div class="championship-race ${winClass}" style="margin: 10px 0; padding: 15px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                                <div style="flex: 1; min-width: 200px;">
+                                    <div style="font-size: 0.8rem; color: var(--text-secondary);">${race.date}</div>
+                                    <div style="font-weight: 700; margin: 5px 0;">${race.type}</div>
+                                </div>
+                                <div style="flex: 2; min-width: 300px;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                        <div style="text-align: left;">
+                                            <div>${race.playerCar}</div>
+                                            <div style="color: var(--accent-cyan);">${race.playerPower} HP</div>
+                                        </div>
+                                        <div style="font-size: 1.5rem; margin: 0 15px;">
+                                            ${race.win ? '🏆' : '💥'}
+                                        </div>
+                                        <div style="text-align: right;">
+                                            <div>${race.opponentName}</div>
+                                            <div style="color: var(--accent-red);">${race.opponentPower} HP</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style="flex: 1; min-width: 150px; text-align: right;">
+                                    ${race.win && race.rewards ? `
+                                        <div style="font-size: 0.85rem;">
+                                            <div>💰 +${race.rewards.money || 0}</div>
+                                            <div>⭐ +${race.rewards.reputation || 0}</div>
+                                            <div>🔩 +${race.rewards.parts || 0}</div>
+                                        </div>
+                                    ` : ''}
+                                    ${race.damage ? `<div style="color: var(--accent-red); font-size: 0.85rem;">⚠️ -${race.damage}%</div>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
             },
 
             renderHistory() {
@@ -3113,6 +3176,58 @@ async function loadLeaderboard() {
                                     ` : ''}
                                     ${race.damage ? `<div style="color: var(--accent-red); font-size: 0.85rem;">⚠️ -${race.damage}%</div>` : ''}
                                 </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            },
+
+            renderHistoryInline() {
+                const container = document.getElementById('raceHistoryInline');
+                
+                if (this.raceHistory.length === 0) {
+                    container.innerHTML = `
+                        <div style="text-align: center; padding: 30px; color: var(--text-secondary);">
+                            <div style="font-size: 2rem; margin-bottom: 10px;">📜</div>
+                            <div>Nessuna gara ancora completata</div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Mostra solo le ultime 10 gare
+                const recentRaces = this.raceHistory.slice(0, 10);
+                
+                container.innerHTML = recentRaces.map((race, index) => {
+                    const winClass = race.win ? 'win' : 'lose';
+                    return `
+                        <div class="championship-race ${winClass}" style="margin: 10px 0; padding: 12px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                                <div style="flex: 1; min-width: 150px;">
+                                    <div style="font-size: 0.75rem; color: var(--text-secondary);">${race.date}</div>
+                                    <div style="font-weight: 600; font-size: 0.9rem;">${race.type}</div>
+                                </div>
+                                <div style="flex: 2; min-width: 250px;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                        <div style="text-align: left; font-size: 0.85rem;">
+                                            <div>${race.playerCar}</div>
+                                            <div style="color: var(--accent-cyan);">${race.playerPower} HP</div>
+                                        </div>
+                                        <div style="font-size: 1.3rem; margin: 0 10px;">
+                                            ${race.win ? '🏆' : '💥'}
+                                        </div>
+                                        <div style="text-align: right; font-size: 0.85rem;">
+                                            <div>${race.opponentName}</div>
+                                            <div style="color: var(--accent-red);">${race.opponentPower} HP</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                ${race.win && race.rewards ? `
+                                    <div style="flex: 1; min-width: 120px; text-align: right; font-size: 0.75rem;">
+                                        <div>💰 +${race.rewards.money || 0}</div>
+                                        <div>⭐ +${race.rewards.reputation || 0}</div>
+                                    </div>
+                                ` : ''}
                             </div>
                         </div>
                     `;
