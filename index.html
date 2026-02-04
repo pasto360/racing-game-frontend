@@ -724,6 +724,115 @@
             font-size: 0.9rem;
             color: var(--text-secondary);
         }
+
+        /* ===== MOBILE TAB BAR ===== */
+        .mobile-tab-bar {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            /* Nascondi navigazione desktop su mobile */
+            .navigation {
+                display: none;
+            }
+
+            /* Mostra tab bar mobile */
+            .mobile-tab-bar {
+                display: flex;
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                background: linear-gradient(180deg, rgba(26, 26, 26, 0.98) 0%, rgba(10, 10, 10, 0.98) 100%);
+                border-top: 2px solid var(--accent-red);
+                padding: 8px 0 max(8px, env(safe-area-inset-bottom));
+                z-index: 1000;
+                justify-content: space-around;
+                box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.5);
+            }
+
+            .mobile-tab-btn {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                background: none;
+                border: none;
+                color: var(--text-secondary);
+                padding: 6px 8px;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                flex: 1;
+                max-width: 80px;
+            }
+
+            .mobile-tab-btn .icon {
+                font-size: 1.5rem;
+                margin-bottom: 2px;
+            }
+
+            .mobile-tab-btn span:not(.icon) {
+                font-size: 0.65rem;
+                font-family: 'Rajdhani', sans-serif;
+                font-weight: 600;
+                text-transform: uppercase;
+                letter-spacing: 0.5px;
+            }
+
+            .mobile-tab-btn.active {
+                color: var(--accent-red);
+            }
+
+            .mobile-tab-btn.active .icon {
+                transform: scale(1.1);
+            }
+
+            /* Aggiungi padding bottom al container per non far coprire contenuto dalla tab bar */
+            .container {
+                padding-bottom: 80px;
+            }
+
+            /* Riduci dimensioni card su mobile */
+            .workshop-section,
+            .car-card,
+            .team-card,
+            .tech-card {
+                padding: 15px;
+            }
+
+            .section-title {
+                font-size: 1.3rem;
+                margin: 20px 0 15px 0;
+            }
+
+            /* Riduci dimensioni pulsanti su mobile */
+            .btn {
+                padding: 10px 20px;
+                font-size: 0.9rem;
+            }
+
+            /* Header più compatto */
+            header {
+                padding: 15px 10px;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+                letter-spacing: 3px;
+            }
+
+            .resource-card {
+                min-width: 110px;
+                padding: 6px 12px;
+            }
+
+            .logout-btn {
+                padding: 8px 15px;
+                font-size: 0.8rem;
+                top: 15px;
+                right: 15px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -768,6 +877,42 @@
             <button class="nav-btn" onclick="game.changePage('leaderboard')">
                <span class="icon">🏆</span>
                Classifica
+            </button>
+        </nav>
+
+        <!-- Mobile Tab Bar (visibile solo su mobile) -->
+        <nav class="mobile-tab-bar">
+            <button class="mobile-tab-btn active" onclick="game.changePage('workshop')">
+                <span class="icon">🔧</span>
+                <span>Officina</span>
+            </button>
+            <button class="mobile-tab-btn" onclick="game.changePage('garage')">
+                <span class="icon">🏎️</span>
+                <span>Garage</span>
+            </button>
+            <button class="mobile-tab-btn" onclick="game.changePage('dealer')">
+                <span class="icon">🏪</span>
+                <span>Dealer</span>
+            </button>
+            <button class="mobile-tab-btn" onclick="game.changePage('team')">
+                <span class="icon">👥</span>
+                <span>Team</span>
+            </button>
+            <button class="mobile-tab-btn" onclick="game.changePage('tech')">
+                <span class="icon">🔬</span>
+                <span>Tech</span>
+            </button>
+            <button class="mobile-tab-btn" onclick="game.changePage('race')">
+                <span class="icon">🏁</span>
+                <span>Gare</span>
+            </button>
+            <button class="mobile-tab-btn" onclick="game.changePage('history')">
+                <span class="icon">📜</span>
+                <span>Log</span>
+            </button>
+            <button class="mobile-tab-btn" onclick="game.changePage('leaderboard')">
+                <span class="icon">🏆</span>
+                <span>Top</span>
             </button>
         </nav>
 
@@ -1419,11 +1564,22 @@ async function loadLeaderboard() {
             changePage(page) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.mobile-tab-btn').forEach(b => b.classList.remove('active'));
 
         document.getElementById(`page-${page}`).classList.add('active');
-        document.querySelectorAll('.nav-btn')[
-            ['workshop','garage','dealer','team','tech','race','history','leaderboard'].indexOf(page)
-        ].classList.add('active');
+        
+        // Attiva pulsante corrispondente in navigazione desktop
+        const navButtons = document.querySelectorAll('.nav-btn');
+        const pageIndex = ['workshop','garage','dealer','team','tech','race','history','leaderboard'].indexOf(page);
+        if (navButtons[pageIndex]) {
+            navButtons[pageIndex].classList.add('active');
+        }
+        
+        // Attiva pulsante corrispondente in tab bar mobile
+        const mobileButtons = document.querySelectorAll('.mobile-tab-btn');
+        if (mobileButtons[pageIndex]) {
+            mobileButtons[pageIndex].classList.add('active');
+        }
 
         if (page === 'workshop') this.renderWorkshop();
         if (page === 'garage') this.renderOwnedCars();
