@@ -1611,6 +1611,14 @@ async function loadLeaderboard() {
                         );
                     }
                     
+                    if (section.oneTimeBonus && section.oneTimeBonus.reputation) {
+                        const bonus = section.oneTimeBonus.reputation;
+                        this.resources.reputation.value = Math.min(
+                            this.resources.reputation.value + bonus,
+                            this.resources.reputation.max
+                        );
+                    }
+                    
                     this.render();
                 } else {
                     alert('Risorse insufficienti!');
@@ -2320,6 +2328,10 @@ async function loadLeaderboard() {
                         const totalRep = section.reputationBonus * section.level;
                         reputationInfo = `⭐ +${totalRep} reputazione totale guadagnata`;
                     }
+                    if (section.oneTimeBonus && section.level > 0) {
+                        const totalRep = section.oneTimeBonus.reputation * section.level;
+                        reputationInfo = `⭐ +${totalRep} reputazione totale guadagnata`;
+                    }
 
                     let nextLevelBonus = '';
                     if (section.level < section.maxLevel) {
@@ -2332,6 +2344,9 @@ async function loadLeaderboard() {
                         } else if (section.reputationBonus) {
                             const nextRep = section.reputationBonus * (section.level + 1);
                             nextLevelBonus = `⭐ +${section.reputationBonus} reputazione (totale: ${nextRep})`;
+                        } else if (section.oneTimeBonus && section.oneTimeBonus.reputation) {
+                            const nextRep = section.oneTimeBonus.reputation * (section.level + 1);
+                            nextLevelBonus = `⭐ +${section.oneTimeBonus.reputation} reputazione (totale: ${nextRep})`;
                         }
                     }
 
