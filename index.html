@@ -565,6 +565,165 @@
             font-size: 0.9rem;
             border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
+
+        /* ===== CSS PER POPUP GARE ===== */
+        .race-car {
+            background: rgba(0, 0, 0, 0.3);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .race-car-name {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 15px;
+            text-align: center;
+            color: var(--accent-cyan);
+        }
+
+        .race-car-stat {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .race-car-stat:last-child {
+            border-bottom: none;
+        }
+
+        .reward-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            margin: 5px 0;
+            background: rgba(0, 255, 136, 0.1);
+            border-radius: 5px;
+            border: 1px solid rgba(0, 255, 136, 0.3);
+        }
+
+        .damage-indicator {
+            background: rgba(255, 51, 51, 0.1);
+            border: 2px solid var(--accent-red);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 15px 0;
+            text-align: center;
+        }
+
+        .damage-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--accent-red);
+            margin: 10px 0;
+        }
+
+        /* ===== CSS PER STORICO GARE ===== */
+        .championship-race {
+            background: var(--bg-card);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+            transition: all 0.3s ease;
+        }
+
+        .championship-race:hover {
+            border-color: var(--accent-cyan);
+            transform: translateY(-2px);
+        }
+
+        .championship-race.win {
+            border-color: var(--accent-green);
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.05), transparent);
+        }
+
+        .championship-race.lose {
+            border-color: var(--accent-red);
+            background: linear-gradient(135deg, rgba(255, 51, 51, 0.05), transparent);
+        }
+
+        .championship-race.completed {
+            opacity: 0.9;
+        }
+
+        .championship-progress {
+            background: var(--bg-card);
+            border: 2px solid var(--accent-purple);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        /* ===== CSS PER SELEZIONE AUTO GARE ===== */
+        .car-select-btn {
+            background: var(--bg-card);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            padding: 15px 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            min-width: 150px;
+        }
+
+        .car-select-btn:hover {
+            border-color: var(--accent-cyan);
+            transform: translateY(-2px);
+        }
+
+        .car-select-btn.active {
+            border-color: var(--accent-green);
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), transparent);
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+        }
+
+        .car-select-btn.damaged {
+            border-color: var(--accent-red);
+        }
+
+        /* ===== CSS PER STATISTICHE GARE ===== */
+        .race-stat {
+            background: var(--bg-card);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .race-stat:hover {
+            border-color: var(--accent-cyan);
+            transform: scale(1.05);
+        }
+
+        .race-stat-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            font-weight: 900;
+            color: var(--accent-yellow);
+            margin-bottom: 10px;
+        }
+
+        .race-stat-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* ===== CSS PER COSTI ===== */
+        .cost-display {
+            text-align: center;
+            margin-top: 10px;
+            padding: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 5px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
     </style>
 </head>
 <body>
