@@ -787,6 +787,76 @@
                 transform: scale(1.1);
             }
 
+            /* Menu overflow mobile */
+            .mobile-overflow-menu {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                z-index: 2000;
+            }
+
+            .mobile-overflow-menu.active {
+                display: block;
+            }
+
+            .mobile-menu-backdrop {
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background: rgba(0, 0, 0, 0.8);
+            }
+
+            .mobile-menu-content {
+                position: absolute;
+                bottom: 70px;
+                left: 0;
+                right: 0;
+                background: linear-gradient(180deg, rgba(26, 26, 26, 0.98) 0%, rgba(10, 10, 10, 0.98) 100%);
+                border-top: 2px solid var(--accent-red);
+                padding: 10px;
+                animation: slideUp 0.3s ease-out;
+            }
+
+            @keyframes slideUp {
+                from { transform: translateY(100%); }
+                to { transform: translateY(0); }
+            }
+
+            .mobile-menu-item {
+                display: flex;
+                align-items: center;
+                gap: 15px;
+                width: 100%;
+                background: none;
+                border: none;
+                color: var(--text-primary);
+                padding: 15px 20px;
+                font-family: 'Rajdhani', sans-serif;
+                font-size: 1.1rem;
+                font-weight: 600;
+                text-align: left;
+                cursor: pointer;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+                transition: all 0.3s ease;
+            }
+
+            .mobile-menu-item:last-child {
+                border-bottom: none;
+            }
+
+            .mobile-menu-item:active {
+                background: rgba(255, 51, 51, 0.2);
+            }
+
+            .mobile-menu-item .icon {
+                font-size: 1.8rem;
+            }
+
             /* Aggiungi padding bottom al container per non far coprire contenuto dalla tab bar */
             .container {
                 padding-bottom: 80px;
@@ -884,37 +954,48 @@
         <nav class="mobile-tab-bar">
             <button class="mobile-tab-btn active" onclick="game.changePage('workshop')">
                 <span class="icon">🔧</span>
-                <span>Officina</span>
+                <span>Shop</span>
             </button>
             <button class="mobile-tab-btn" onclick="game.changePage('garage')">
                 <span class="icon">🏎️</span>
-                <span>Garage</span>
-            </button>
-            <button class="mobile-tab-btn" onclick="game.changePage('dealer')">
-                <span class="icon">🏪</span>
-                <span>Dealer</span>
-            </button>
-            <button class="mobile-tab-btn" onclick="game.changePage('team')">
-                <span class="icon">👥</span>
-                <span>Team</span>
-            </button>
-            <button class="mobile-tab-btn" onclick="game.changePage('tech')">
-                <span class="icon">🔬</span>
-                <span>Tech</span>
+                <span>Auto</span>
             </button>
             <button class="mobile-tab-btn" onclick="game.changePage('race')">
                 <span class="icon">🏁</span>
                 <span>Gare</span>
             </button>
-            <button class="mobile-tab-btn" onclick="game.changePage('history')">
-                <span class="icon">📜</span>
-                <span>Log</span>
+            <button class="mobile-tab-btn" onclick="game.changePage('team')">
+                <span class="icon">👥</span>
+                <span>Team</span>
             </button>
-            <button class="mobile-tab-btn" onclick="game.changePage('leaderboard')">
-                <span class="icon">🏆</span>
-                <span>Top</span>
+            <button class="mobile-tab-btn" onclick="document.getElementById('mobileMenu').classList.toggle('active')">
+                <span class="icon">⋮</span>
+                <span>Altro</span>
             </button>
         </nav>
+
+        <!-- Menu overflow mobile -->
+        <div id="mobileMenu" class="mobile-overflow-menu">
+            <div class="mobile-menu-backdrop" onclick="document.getElementById('mobileMenu').classList.remove('active')"></div>
+            <div class="mobile-menu-content">
+                <button class="mobile-menu-item" onclick="game.changePage('dealer'); document.getElementById('mobileMenu').classList.remove('active')">
+                    <span class="icon">🏪</span>
+                    <span>Concessionario</span>
+                </button>
+                <button class="mobile-menu-item" onclick="game.changePage('tech'); document.getElementById('mobileMenu').classList.remove('active')">
+                    <span class="icon">🔬</span>
+                    <span>Tecnologie</span>
+                </button>
+                <button class="mobile-menu-item" onclick="game.changePage('history'); document.getElementById('mobileMenu').classList.remove('active')">
+                    <span class="icon">📜</span>
+                    <span>Storico Gare</span>
+                </button>
+                <button class="mobile-menu-item" onclick="game.changePage('leaderboard'); document.getElementById('mobileMenu').classList.remove('active')">
+                    <span class="icon">🏆</span>
+                    <span>Classifica</span>
+                </button>
+            </div>
+        </div>
 
         <div id="page-workshop" class="page active">
             <h2 class="section-title">🔧 Reparti Officina</h2>
@@ -1007,24 +1088,57 @@ function handleLogout() {
 }
 
 async function showAuthModal() {
+    // Controlla stato server prima di mostrare form
+    let serverStatus = 'aperto';
+    let userCount = 0;
+    
+    try {
+        const statusRes = await fetch(`${API_URL}/api/auth/status`);
+        if (statusRes.ok) {
+            const data = await statusRes.json();
+            serverStatus = data.registrationOpen ? 'aperto' : 'chiuso';
+            userCount = data.userCount || 0;
+        }
+    } catch (err) {
+        console.log('Impossibile verificare stato server, assumo aperto');
+    }
+    
+    const statusBadge = serverStatus === 'aperto' 
+        ? `<div style="background: linear-gradient(135deg, #00ff88, #00cc66); color: #000; padding: 8px 20px; border-radius: 20px; font-weight: 700; display: inline-block; margin-bottom: 20px;">✓ SERVER APERTO (${userCount}/300)</div>`
+        : `<div style="background: linear-gradient(135deg, #ff3333, #cc0000); color: #fff; padding: 8px 20px; border-radius: 20px; font-weight: 700; display: inline-block; margin-bottom: 20px;">✗ SERVER CHIUSO (300/300)</div>`;
+    
     const html = `
         <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 9999; display: flex; justify-content: center; align-items: center;">
             <div style="background: #1a1a1a; padding: 40px; border-radius: 20px; border: 3px solid #ff3333; max-width: 400px; width: 90%;">
-                <h2 style="font-family: Orbitron; text-align: center; margin-bottom: 30px; color: #ff3333;">🏁 RACING GAME CLOUD</h2>
+                <h2 style="font-family: Orbitron; text-align: center; margin-bottom: 10px; color: #ff3333;">🏁 RACING GAME CLOUD</h2>
+                <div style="text-align: center; margin-bottom: 20px;">
+                    ${statusBadge}
+                </div>
                 
                 <div id="loginForm">
                     <input type="text" id="loginUsername" placeholder="Username" style="width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 2px solid #333; background: #0a0a0a; color: white; font-size: 1rem;">
                     <input type="password" id="loginPassword" placeholder="Password" style="width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 2px solid #333; background: #0a0a0a; color: white; font-size: 1rem;">
                     <button onclick="handleLogin()" style="width: 100%; padding: 15px; margin: 10px 0; background: linear-gradient(135deg, #ff3333, #cc0000); border: none; border-radius: 8px; color: white; font-weight: 700; cursor: pointer; font-size: 1rem;">LOGIN</button>
-                    <button onclick="showRegisterForm()" style="width: 100%; padding: 15px; margin: 10px 0; background: #333; border: none; border-radius: 8px; color: white; cursor: pointer;">Registrati</button>
+                    <button onclick="showRegisterForm()" style="width: 100%; padding: 15px; margin: 10px 0; background: #333; border: none; border-radius: 8px; color: white; cursor: pointer;" ${serverStatus === 'chiuso' ? 'disabled' : ''}>
+                        ${serverStatus === 'chiuso' ? 'Registrazioni chiuse' : 'Registrati'}
+                    </button>
                 </div>
                 
                 <div id="registerForm" style="display: none;">
-                    <input type="text" id="regUsername" placeholder="Username" style="width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 2px solid #333; background: #0a0a0a; color: white; font-size: 1rem;">
-                    <input type="email" id="regEmail" placeholder="Email" style="width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 2px solid #333; background: #0a0a0a; color: white; font-size: 1rem;">
-                    <input type="password" id="regPassword" placeholder="Password (min 6 caratteri)" style="width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 2px solid #333; background: #0a0a0a; color: white; font-size: 1rem;">
-                    <button onclick="handleRegister()" style="width: 100%; padding: 15px; margin: 10px 0; background: linear-gradient(135deg, #00ff88, #00cc66); border: none; border-radius: 8px; color: white; font-weight: 700; cursor: pointer; font-size: 1rem;">REGISTRATI</button>
-                    <button onclick="showLoginForm()" style="width: 100%; padding: 15px; margin: 10px 0; background: #333; border: none; border-radius: 8px; color: white; cursor: pointer;">Torna al Login</button>
+                    ${serverStatus === 'chiuso' ? `
+                        <div style="text-align: center; padding: 30px; color: #ff3333;">
+                            <div style="font-size: 3rem; margin-bottom: 15px;">🔒</div>
+                            <div style="font-size: 1.2rem; font-weight: 700; margin-bottom: 10px;">Server al completo</div>
+                            <div style="font-size: 0.9rem; color: #a0a0a0;">Il server ha raggiunto il limite massimo di 300 utenti. Nuovi server saranno disponibili presto!</div>
+                            <button onclick="showLoginForm()" style="width: 100%; padding: 15px; margin: 20px 0 0 0; background: #333; border: none; border-radius: 8px; color: white; cursor: pointer;">Torna al Login</button>
+                        </div>
+                    ` : `
+                        <input type="text" id="regUsername" placeholder="Username" style="width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 2px solid #333; background: #0a0a0a; color: white; font-size: 1rem;">
+                        <input type="email" id="regEmail" placeholder="Email" style="width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 2px solid #333; background: #0a0a0a; color: white; font-size: 1rem;">
+                        <input type="password" id="regPassword" placeholder="Password (min 6 caratteri)" style="width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 2px solid #333; background: #0a0a0a; color: white; font-size: 1rem;">
+                        <button onclick="handleRegister()" style="width: 100%; padding: 15px; margin: 10px 0; background: linear-gradient(135deg, #00ff88, #00cc66); border: none; border-radius: 8px; color: white; font-weight: 700; cursor: pointer; font-size: 1rem;">REGISTRATI</button>
+                        <button onclick="showLoginForm()" style="width: 100%; padding: 15px; margin: 10px 0; background: #333; border: none; border-radius: 8px; color: white; cursor: pointer;">Torna al Login</button>
+                    `}
                 </div>
                 
                 <div id="authMessage" style="margin-top: 20px; text-align: center; color: #ff3333;"></div>
@@ -1136,13 +1250,25 @@ async function handleRegister() {
 }
 
 // ===== API CLOUD =====
-async function loadGameFromServer() {
+async function loadGameFromServer(retryCount = 0) {
     try {
         console.log('📥 Caricamento dati dal server...');
         
         const response = await fetch(`${API_URL}/api/game/state`, {
             headers: { 'Authorization': `Bearer ${authToken}` }
         });
+        
+        // Gestione errore 429 (Too Many Requests)
+        if (response.status === 429) {
+            if (retryCount < 3) {
+                const delay = Math.pow(2, retryCount) * 1000; // 1s, 2s, 4s
+                console.log(`⏳ Rate limit raggiunto. Riprovo tra ${delay/1000}s...`);
+                await new Promise(resolve => setTimeout(resolve, delay));
+                return loadGameFromServer(retryCount + 1);
+            } else {
+                throw new Error('Troppe richieste al server. Riprova tra un minuto.');
+            }
+        }
         
         if (!response.ok) {
             throw new Error('Errore caricamento');
@@ -1296,6 +1422,15 @@ async function saveGameToServer(showIndicator = true) {
                     }
                 })
             });
+
+            // Se rate limit, fallisce silenziosamente (riproverà al prossimo salvataggio automatico)
+            if (response.status === 429) {
+                console.log('⏳ Rate limit durante salvataggio. Riproverà automaticamente.');
+                if (showIndicator && saveIndicator) {
+                    saveIndicator.classList.remove('show');
+                }
+                return;
+            }
 
             if (!response.ok) throw new Error('Errore salvataggio');
 
@@ -1495,7 +1630,7 @@ async function loadLeaderboard() {
     
     if (!loaded) {
         console.error('❌ Errore caricamento dati');
-        alert('Errore caricamento dati dal server');
+        alert('⚠️ Impossibile caricare i dati dal server.\n\nSe vedi questo messaggio ripetutamente, aspetta 1 minuto e ricarica la pagina (F5).\n\nProblema: troppe richieste al server.');
         return;
     }
     
@@ -1507,10 +1642,10 @@ async function loadLeaderboard() {
     this.startGameLoop();
     this.checkUnlocks();
     
-    // Salvataggio automatico ogni 3 secondi (silenzioso)
+    // Salvataggio automatico ogni 10 secondi (silenzioso)
     setInterval(() => {
         saveGameToServer(false);
-    }, 3000);
+    }, 10000);
 },
 
             startGameLoop() {
