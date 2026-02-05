@@ -2706,7 +2706,20 @@ async function loadLeaderboard() {
                                     ${Object.keys(car.stats).map(stat => {
                                         const baseValue = car.stats[stat];
                                         const upgradeValue = car.upgrades[stat] * 10;
-                                        const totalValue = baseValue + upgradeValue;
+                                        
+                                        // Calcola bonus tecnologie per questa stat
+                                        let techBonus = 0;
+                                        this.technologies.forEach(tech => {
+                                            if (tech.researched) {
+                                                if (tech.bonus.stat === stat) {
+                                                    techBonus += tech.bonus.value;
+                                                } else if (tech.bonus.type === 'allStats') {
+                                                    techBonus += tech.bonus.value;
+                                                }
+                                            }
+                                        });
+                                        
+                                        const totalValue = baseValue + upgradeValue + techBonus;
                                         const maxValue = 150;
                                         const percentage = (totalValue / maxValue) * 100;
                                         const cost = {
@@ -2736,10 +2749,17 @@ async function loadLeaderboard() {
                                                                    align-items: center;
                                                                    justify-content: center;
                                                                    transition: all 0.2s;"
-                                                            ${!canUpgrade ? 'disabled' : ''}
-                                                            title="💰 ${cost.money} • 🔩 ${cost.parts}">
+                                                            ${!canUpgrade ? 'disabled' : ''}>
                                                             +
                                                         </button>
+                                                    </div>
+                                                </div>
+                                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px;">
+                                                    <div style="font-size: 0.7rem; color: var(--text-secondary);">
+                                                        💰 ${cost.money} • 🔩 ${cost.parts}
+                                                    </div>
+                                                    <div style="font-size: 0.7rem; color: var(--accent-green);">
+                                                        +10
                                                     </div>
                                                 </div>
                                                 <div class="progress-bar" style="height: 6px; border-radius: 3px;">
