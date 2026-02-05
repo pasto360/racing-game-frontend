@@ -235,8 +235,8 @@
 
         .workshop-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 25px;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
             margin-bottom: 40px;
         }
 
@@ -244,7 +244,7 @@
             background: var(--bg-card);
             border: 2px solid rgba(255, 255, 255, 0.1);
             border-radius: 15px;
-            padding: 25px;
+            padding: 15px;
             transition: all 0.3s ease;
         }
 
@@ -301,12 +301,12 @@
             background: linear-gradient(135deg, var(--accent-red), #cc0000);
             border: none;
             color: white;
-            padding: 12px 30px;
+            padding: 10px 24px;
             font-family: 'Orbitron', sans-serif;
-            font-size: 1rem;
+            font-size: 0.9rem;
             font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 2px;
+            letter-spacing: 1.5px;
             border-radius: 8px;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -497,14 +497,14 @@
 
         .dealer-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: 25px;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
         }
 
         .team-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 25px;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
             margin-bottom: 40px;
         }
 
@@ -512,7 +512,7 @@
             background: var(--bg-card);
             border: 2px solid rgba(255, 255, 255, 0.1);
             border-radius: 15px;
-            padding: 25px;
+            padding: 15px;
             transition: all 0.3s ease;
             text-align: center;
         }
@@ -2676,112 +2676,91 @@ async function loadLeaderboard() {
                     return;
                 }
 
-                container.innerHTML = this.ownedCars.map((car, index) => {
-                    const power = this.getCarPower(car);
-                    const needsRepair = car.condition < 100;
+                container.innerHTML = `
+                    <div class="dealer-grid">
+                        ${this.ownedCars.map((car, index) => {
+                            const power = this.getCarPower(car);
+                            const needsRepair = car.condition < 100;
 
-                    return `
-                        <div class="car-card ${needsRepair ? 'damaged' : ''}">
-                            ${car.image ? `
-                                <div style="width: 100%; height: 150px; overflow: hidden; border-radius: 10px; margin-bottom: 15px;">
-                                    <img src="${car.image}" alt="${car.name}" style="width: 100%; height: 100%; object-fit: cover;">
-                                </div>
-                            ` : ''}
-                            <div class="car-header">
-                                <div class="car-name">${car.name}</div>
-                                <div style="font-size: 1.8rem; color: var(--accent-yellow);">
-                                    ${power.toFixed(0)} HP
-                                </div>
-                            </div>
-                            ${needsRepair ? `
-                                <div class="damage-indicator">
-                                    <div>⚠️ Condizione: ${car.condition.toFixed(0)}%</div>
-                                    <div style="margin: 10px 0; font-size: 0.9rem;">
-                                        Costi riparazione:
-                                        <div style="margin-top: 5px;">
-                                            💰 ${(() => {
-                                                const damage = 100 - car.condition;
-                                                let discount = 0;
-                                                if (this.currentDriver && this.currentDriver.bonus.type === 'repair') {
-                                                    discount += Math.abs(this.currentDriver.bonus.value);
-                                                }
-                                                if (this.currentSponsor && this.currentSponsor.bonus.type === 'repair') {
-                                                    discount += Math.abs(this.currentSponsor.bonus.value);
-                                                }
-                                                this.technologies.forEach(tech => {
-                                                    if (tech.researched && tech.bonus.type === 'repair') {
-                                                        discount += Math.abs(tech.bonus.value);
-                                                    }
-                                                });
-                                                return Math.ceil(damage * 50 * (1 - discount));
-                                            })()}€ 
-                                            o 
-                                            🔩 ${(() => {
-                                                const damage = 100 - car.condition;
-                                                let discount = 0;
-                                                if (this.currentDriver && this.currentDriver.bonus.type === 'repair') {
-                                                    discount += Math.abs(this.currentDriver.bonus.value);
-                                                }
-                                                if (this.currentSponsor && this.currentSponsor.bonus.type === 'repair') {
-                                                    discount += Math.abs(this.currentSponsor.bonus.value);
-                                                }
-                                                this.technologies.forEach(tech => {
-                                                    if (tech.researched && tech.bonus.type === 'repair') {
-                                                        discount += Math.abs(tech.bonus.value);
-                                                    }
-                                                });
-                                                return Math.ceil(damage * 2 * (1 - discount));
-                                            })()} parti
+                            return `
+                                <div class="car-card ${needsRepair ? 'damaged' : ''}">
+                                    ${car.image ? `
+                                        <div style="width: 100%; height: 140px; overflow: hidden; border-radius: 10px; margin-bottom: 12px;">
+                                            <img src="${car.image}" alt="${car.name}" style="width: 100%; height: 100%; object-fit: cover;">
+                                        </div>
+                                    ` : ''}
+                                    
+                                    <div style="text-align: center; margin-bottom: 10px;">
+                                        <div class="car-name" style="font-size: 1.2rem; margin-bottom: 3px;">${car.name}</div>
+                                        <div style="font-size: 1.3rem; color: var(--accent-yellow);">
+                                            ${power.toFixed(0)} HP
+                                        </div>
+                                        <div style="font-size: 0.8rem; margin-top: 3px; color: ${car.condition < 50 ? 'var(--accent-red)' : 'var(--accent-green)'};">
+                                            ${needsRepair ? '⚠️' : '✓'} ${car.condition.toFixed(0)}%
                                         </div>
                                     </div>
-                                    <button class="btn btn-small" onclick="game.showRepairModal(${index})">Ripara</button>
-                                </div>
-                            ` : `
-                                <div style="text-align: center; color: var(--accent-green); margin: 10px 0;">
-                                    ✓ Condizione: ${car.condition}%
-                                </div>
-                            `}
-                            <div class="car-stats">
-                                ${Object.keys(car.stats).map(stat => {
-                                    const baseValue = car.stats[stat];
-                                    const upgradeValue = car.upgrades[stat] * 10;
-                                    const totalValue = baseValue + upgradeValue;
-                                    const maxValue = 100 + (car.upgrades[stat] * 10);
-                                    const percentage = (totalValue / maxValue) * 100;
-                                    const cost = {
-                                        money: 500 * (car.upgrades[stat] + 1),
-                                        parts: 50 * (car.upgrades[stat] + 1)
-                                    };
-                                    const canUpgrade = this.canAfford(cost);
 
-                                    return `
-                                        <div style="margin-bottom: 10px;">
-                                            <div class="stat-label">
-                                                <span>${stat.charAt(0).toUpperCase() + stat.slice(1)}</span>
-                                                <span>${totalValue} (Lv.${car.upgrades[stat]})</span>
+                                    ${Object.keys(car.stats).map(stat => {
+                                        const baseValue = car.stats[stat];
+                                        const upgradeValue = car.upgrades[stat] * 10;
+                                        const totalValue = baseValue + upgradeValue;
+                                        const maxValue = 150;
+                                        const percentage = (totalValue / maxValue) * 100;
+                                        const cost = {
+                                            money: 500 * (car.upgrades[stat] + 1),
+                                            parts: 50 * (car.upgrades[stat] + 1)
+                                        };
+                                        const canUpgrade = this.canAfford(cost);
+
+                                        return `
+                                            <div style="margin-bottom: 6px;">
+                                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;">
+                                                    <span style="font-size: 0.8rem; text-transform: capitalize;">${stat}</span>
+                                                    <div style="display: flex; align-items: center; gap: 6px;">
+                                                        <span style="font-size: 0.8rem; font-weight: 600;">${totalValue}</span>
+                                                        <button 
+                                                            onclick="game.upgradeCar(${index}, '${stat}')"
+                                                            style="background: ${canUpgrade ? 'linear-gradient(135deg, var(--accent-green), #00cc66)' : '#444'}; 
+                                                                   border: none; 
+                                                                   color: ${canUpgrade ? 'white' : '#666'}; 
+                                                                   width: 24px; 
+                                                                   height: 24px; 
+                                                                   border-radius: 4px; 
+                                                                   cursor: ${canUpgrade ? 'pointer' : 'not-allowed'}; 
+                                                                   font-weight: 700; 
+                                                                   font-size: 1rem;
+                                                                   display: flex;
+                                                                   align-items: center;
+                                                                   justify-content: center;
+                                                                   transition: all 0.2s;"
+                                                            ${!canUpgrade ? 'disabled' : ''}
+                                                            title="💰 ${cost.money} • 🔩 ${cost.parts}">
+                                                            +
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <div class="progress-bar" style="height: 6px; border-radius: 3px;">
+                                                    <div class="progress-fill" style="width: ${percentage}%; border-radius: 3px;"></div>
+                                                </div>
                                             </div>
-                                            <div class="progress-bar">
-                                                <div class="progress-fill" style="width: ${percentage}%"></div>
-                                            </div>
-                                            <button 
-                                                class="btn" 
-                                                onclick="game.upgradeCar(${index}, '${stat}')"
-                                                ${!canUpgrade ? 'disabled' : ''}>
-                                                Migliora (+10)
+                                        `;
+                                    }).join('')}
+
+                                    <div style="display: flex; gap: 5px; margin-top: 10px;">
+                                        ${needsRepair ? `
+                                            <button class="btn btn-small" onclick="game.showRepairModal(${index})" style="flex: 1; font-size: 0.75rem; padding: 6px;">
+                                                🔧 Ripara
                                             </button>
-                                            <div class="cost-display">
-                                                💰 ${cost.money} • 🔩 ${cost.parts}
-                                            </div>
-                                        </div>
-                                    `;
-                                }).join('')}
-                            </div>
-                            <button class="btn btn-small" onclick="game.sellCar(${index})" style="background: #666; margin-top: 15px;">
-                                Vendi (60% valore)
-                            </button>
-                        </div>
-                    `;
-                }).join('');
+                                        ` : ''}
+                                        <button class="btn btn-small" onclick="game.sellCar(${index})" style="flex: 1; background: #666; font-size: 0.75rem; padding: 6px;">
+                                            💰 Vendi
+                                        </button>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                `;
             },
 
             renderTech() {
