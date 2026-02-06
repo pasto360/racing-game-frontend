@@ -1460,8 +1460,21 @@ async function saveGameToServer(showIndicator = true) {
     }, 500);
 }
 
+// Cache leaderboard per evitare rate limiting
+let leaderboardCache = null;
+let leaderboardCacheTime = 0;
+const LEADERBOARD_CACHE_DURATION = 30000; // 30 secondi
+
 async function loadLeaderboard() {
     try {
+        // Usa cache se disponibile e recente
+        const now = Date.now();
+        if (leaderboardCache && (now - leaderboardCacheTime) < LEADERBOARD_CACHE_DURATION) {
+            console.log('📊 Usando cache classifica');
+            return leaderboardCache;
+        }
+        
+        console.log('📊 Caricando classifica dal server...');
         const response = await fetch(`${API_URL}/api/game/leaderboard`, {
             headers: { 'Authorization': `Bearer ${authToken}` }
         });
@@ -1469,10 +1482,20 @@ async function loadLeaderboard() {
         if (!response.ok) throw new Error('Errore caricamento classifica');
         
         const data = await response.json();
+        
+        // Salva in cache
+        leaderboardCache = data;
+        leaderboardCacheTime = now;
+        
         return data;
         
     } catch (error) {
         console.error('Errore caricamento classifica:', error);
+        // Se c'è cache vecchia, usala comunque
+        if (leaderboardCache) {
+            console.log('⚠️ Usando cache classifica (vecchia)');
+            return leaderboardCache;
+        }
         return null;
     }
 }
@@ -3492,8 +3515,10 @@ async function loadLeaderboard() {
                     
                     alert(message);
                     
-                    // Ricarica classifica
+                    // Ricarica classifica (invalida entrambe le cache)
                     this._leaderboardCache = null;
+                    leaderboardCache = null;
+                    leaderboardCacheTime = 0;
                     this.render();
 
                 } catch (error) {
