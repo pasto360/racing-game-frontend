@@ -2386,10 +2386,10 @@ async function loadLeaderboard() {
                 </div>
                 
                 <!-- SEZIONE 3: DUE AUTO AFFIANCATE -->
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px;">
+                <div style="display: grid; grid-template-columns: 50% 50%; gap: 0;">
                     
                     <!-- COLONNA SINISTRA: AUTO TUA -->
-                    <div class="race-car">
+                    <div class="race-car" style="padding-right: 12px;">
                         <div class="race-car-name" style="color: var(--accent-cyan); margin-bottom: 15px; font-size: 1.2rem;">${playerCar.name}</div>
                         <div class="race-car-stat"><span>Motore:</span> <span>${getStatWithTech(playerCar.stats.engine, playerCar.upgrades.engine, 'engine')}</span></div>
                         <div class="race-car-stat"><span>Carrozzeria:</span> <span>${getStatWithTech(playerCar.stats.body, playerCar.upgrades.body, 'body')}</span></div>
@@ -2409,7 +2409,7 @@ async function loadLeaderboard() {
                     </div>
                     
                     <!-- COLONNA DESTRA: AUTO AVVERSARIO -->
-                    <div class="race-car">
+                    <div class="race-car" style="padding-left: 12px;">
                         <div class="race-car-name" style="color: var(--accent-red); margin-bottom: 15px; font-size: 1.2rem;">${opponent.name}</div>
                         <div class="race-car-stat"><span>Motore:</span> <span>${opponent.stats.engine}</span></div>
                         <div class="race-car-stat"><span>Carrozzeria:</span> <span>${opponent.stats.body}</span></div>
