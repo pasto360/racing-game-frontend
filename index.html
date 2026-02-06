@@ -964,7 +964,7 @@
             </button>
             <button class="nav-btn" onclick="game.changePage('race')">
                 <span class="icon">🏁</span>
-                Gare + Log
+                Gare
             </button>
             <button class="nav-btn" onclick="game.changePage('leaderboard')">
                <span class="icon">🏆</span>
@@ -2371,18 +2371,20 @@ async function loadLeaderboard() {
             };
 
             comparison.innerHTML = `
-                <!-- IMMAGINE + STORIA (FULL WIDTH) -->
-                <div style="width: 100%; margin-bottom: 25px;">
+                <!-- RIGA 1: IMMAGINE LARGA -->
+                <div style="width: 100%; margin-bottom: 15px;">
                     <img src="${imagePath}" 
                          alt="${win ? 'Vittoria' : 'Sconfitta'}" 
                          onerror="this.style.display='none';"
-                         style="width: 100%; height: 220px; object-fit: cover; border-radius: 12px; margin-bottom: 15px; display: block;">
-                    <div style="font-size: 1rem; line-height: 1.6; color: var(--text-secondary); text-align: center; font-style: italic; padding: 0 20px;">
-                        "${randomStory}"
-                    </div>
+                         style="width: 100%; height: 220px; object-fit: cover; border-radius: 12px; display: block;">
                 </div>
                 
-                <!-- CONFRONTO AUTO (2 COLONNE) -->
+                <!-- RIGA 2: STORIA SOTTO IMMAGINE -->
+                <div style="width: 100%; margin-bottom: 25px; font-size: 1rem; line-height: 1.6; color: var(--text-secondary); text-align: center; font-style: italic; padding: 0 20px;">
+                    "${randomStory}"
+                </div>
+                
+                <!-- RIGA 3: DUE AUTO AFFIANCATE -->
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px;">
                     <!-- AUTO TUA -->
                     <div class="race-car">
