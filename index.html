@@ -3363,13 +3363,30 @@ async function loadLeaderboard() {
 
                 this._leaderboardCache = data;
 
-                const { leaderboard, userRank } = data;
-                let html = '<div style="max-width: 700px; margin: 0 auto;">';
+                // Controlla se può sfidare oggi
+                const canChallengeData = await this.checkCanChallenge();
+                const canChallenge = canChallengeData ? canChallengeData.canChallenge : false;
 
-                html += `<div style="display: grid; grid-template-columns: 60px 1fr 150px; gap: 10px; padding: 15px; border-bottom: 2px solid #ff3333; margin-bottom: 10px;">
+                const { leaderboard, userRank } = data;
+                let html = '<div style="max-width: 800px; margin: 0 auto;">';
+
+                // Messaggio status sfide
+                if (!canChallenge && canChallengeData) {
+                    const nextTime = new Date(canChallengeData.nextChallengeTime);
+                    const hours = Math.floor((nextTime - new Date()) / (1000 * 60 * 60));
+                    const minutes = Math.floor(((nextTime - new Date()) % (1000 * 60 * 60)) / (1000 * 60));
+                    
+                    html += `<div style="background: rgba(255,51,51,0.2); border: 2px solid var(--accent-red); padding: 15px; border-radius: 10px; margin-bottom: 20px; text-align: center;">
+                        ⏰ Hai già sfidato un giocatore oggi<br>
+                        <span style="font-size: 0.9rem; color: #a0a0a0;">Prossima sfida disponibile tra ${hours}h ${minutes}m</span>
+                    </div>`;
+                }
+
+                html += `<div style="display: grid; grid-template-columns: 60px 1fr 150px 120px; gap: 10px; padding: 15px; border-bottom: 2px solid #ff3333; margin-bottom: 10px;">
                     <div style="text-align: center; font-weight: 700; color: #ffd700;">#</div>
                     <div style="font-weight: 700; color: #ffd700;">Pilota</div>
                     <div style="text-align: center; font-weight: 700; color: #ffd700;">Reputazione</div>
+                    <div style="text-align: center; font-weight: 700; color: #ffd700;">Azione</div>
                 </div>`;
 
                 leaderboard.forEach((player, i) => {
@@ -3377,26 +3394,112 @@ async function loadLeaderboard() {
                     const rankColor = i === 0 ? '#ffd700' : i === 1 ? '#c0c0c0' : i === 2 ? '#cd7f32' : '#a0a0a0';
                     const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}`;
                     
-                    html += `<div style="display: grid; grid-template-columns: 60px 1fr 150px; gap: 10px; padding: 12px; 
+                    html += `<div style="display: grid; grid-template-columns: 60px 1fr 150px 120px; gap: 10px; padding: 12px; 
                              background: ${isMe ? 'rgba(0,255,136,0.1)' : 'rgba(255,255,255,0.03)'}; 
                              border: ${isMe ? '2px solid #00ff88' : '1px solid rgba(255,255,255,0.05)'};
                              border-radius: 8px; margin-bottom: 5px; align-items: center;">
                         <div style="text-align: center; font-size: 1.2rem; color: ${rankColor}; font-weight: 700;">${medal}</div>
                         <div style="font-size: 1.1rem; ${isMe ? 'color: #00ff88; font-weight: 700;' : ''}">${player.username} ${isMe ? '(Tu)' : ''}</div>
                         <div style="text-align: center; color: #00d9ff; font-weight: 700; font-size: 1.1rem;">${Number(player.reputation).toLocaleString()}</div>
+                        <div style="text-align: center;">
+                            ${!isMe ? `
+                                <button 
+                                    onclick="game.challengePlayer(${player.user_id}, '${player.username}')" 
+                                    class="btn btn-small" 
+                                    style="font-size: 0.8rem; padding: 6px 12px; ${!canChallenge ? 'opacity: 0.5; cursor: not-allowed;' : ''}"
+                                    ${!canChallenge ? 'disabled' : ''}>
+                                    ⚔️ Sfida
+                                </button>
+                            ` : '<span style="color: #00ff88; font-size: 0.85rem;">—</span>'}
+                        </div>
                     </div>`;
                 });
 
                 if (userRank) {
-                    html += `<div style="margin-top: 20px; padding: 15px; background: rgba(0,255,136,0.1); border: 2px solid #00ff88; border-radius: 8px; display: grid; grid-template-columns: 60px 1fr 150px; gap: 10px; align-items: center;">
+                    html += `<div style="margin-top: 20px; padding: 15px; background: rgba(0,255,136,0.1); border: 2px solid #00ff88; border-radius: 8px; display: grid; grid-template-columns: 60px 1fr 150px 120px; gap: 10px; align-items: center;">
                         <div style="text-align: center; font-weight: 700; color: #00ff88;">${userRank.rank}</div>
                         <div style="color: #00ff88; font-weight: 700;">${userRank.username} (Tu)</div>
                         <div style="text-align: center; color: #00d9ff; font-weight: 700;">${Number(userRank.reputation).toLocaleString()}</div>
+                        <div style="text-align: center;"><span style="color: #00ff88; font-size: 0.85rem;">—</span></div>
                     </div>`;
                 }
 
                 html += '</div>';
                 container.innerHTML = html;
+            },
+
+            async checkCanChallenge() {
+                try {
+                    const token = localStorage.getItem('authToken');
+                    const response = await fetch(`${API_BASE_URL}/api/pvp/can-challenge`, {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    
+                    if (!response.ok) return null;
+                    return await response.json();
+                } catch (error) {
+                    console.error('Errore controllo sfida:', error);
+                    return null;
+                }
+            },
+
+            async challengePlayer(defenderId, defenderUsername) {
+                if (this.resources.energy.value < 20) {
+                    alert('⚡ Energia insufficiente!\n\nServono 20 energia per sfidare un giocatore.');
+                    return;
+                }
+
+                if (!confirm(`⚔️ Sfidare ${defenderUsername}?\n\n💰 Se vinci: +5% delle sue risorse\n💀 Se perdi: -10% delle tue risorse\n⚡ Costo: 20 energia`)) {
+                    return;
+                }
+
+                try {
+                    const token = localStorage.getItem('authToken');
+                    const response = await fetch(`${API_BASE_URL}/api/pvp/challenge`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ defenderId: defenderId })
+                    });
+
+                    const result = await response.json();
+
+                    if (!response.ok) {
+                        alert(`❌ ${result.error || 'Errore durante la sfida'}`);
+                        return;
+                    }
+
+                    // Aggiorna stato locale con quello dal server
+                    Object.keys(result.newState).forEach(key => {
+                        if (this.hasOwnProperty(key)) {
+                            this[key] = result.newState[key];
+                        }
+                    });
+
+                    // Mostra risultato
+                    const win = result.win;
+                    const rewards = result.rewards;
+                    
+                    let message = win 
+                        ? `🏆 HAI VINTO LA SFIDA!\n\nHai sconfitto ${defenderUsername}!\n\n💰 +${rewards.money}\n🔩 +${rewards.parts}\n⭐ +${rewards.reputation}`
+                        : `💥 HAI PERSO LA SFIDA!\n\n${defenderUsername} ti ha sconfitto!\n\n💰 -${rewards.money}\n🔩 -${rewards.parts}\n⭐ -${rewards.reputation}`;
+                    
+                    message += `\n\n${result.attacker.car} (${result.attacker.power} HP) vs ${result.defender.car} (${result.defender.power} HP)`;
+                    
+                    alert(message);
+                    
+                    // Ricarica classifica
+                    this._leaderboardCache = null;
+                    this.render();
+
+                } catch (error) {
+                    console.error('Errore sfida:', error);
+                    alert('❌ Errore di connessione durante la sfida');
+                }
             },
 
             resetGame() {
