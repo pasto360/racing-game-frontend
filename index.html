@@ -1460,17 +1460,19 @@ async function saveGameToServer(showIndicator = true) {
     }, 500);
 }
 
-// Cache leaderboard per evitare rate limiting
+// Cache leaderboard - 3 aggiornamenti al giorno (ogni 8 ore)
 let leaderboardCache = null;
 let leaderboardCacheTime = 0;
-const LEADERBOARD_CACHE_DURATION = 30000; // 30 secondi
+const LEADERBOARD_CACHE_DURATION = 8 * 60 * 60 * 1000; // 8 ore
 
 async function loadLeaderboard() {
     try {
         // Usa cache se disponibile e recente
         const now = Date.now();
         if (leaderboardCache && (now - leaderboardCacheTime) < LEADERBOARD_CACHE_DURATION) {
-            console.log('📊 Usando cache classifica');
+            const hoursLeft = Math.floor((LEADERBOARD_CACHE_DURATION - (now - leaderboardCacheTime)) / (1000 * 60 * 60));
+            const minutesLeft = Math.floor(((LEADERBOARD_CACHE_DURATION - (now - leaderboardCacheTime)) % (1000 * 60 * 60)) / (1000 * 60));
+            console.log(`📊 Usando cache classifica (prossimo aggiornamento tra ${hoursLeft}h ${minutesLeft}m)`);
             return leaderboardCache;
         }
         
@@ -1487,13 +1489,15 @@ async function loadLeaderboard() {
         leaderboardCache = data;
         leaderboardCacheTime = now;
         
+        console.log('✅ Classifica aggiornata! Prossimo aggiornamento tra 8 ore');
+        
         return data;
         
     } catch (error) {
         console.error('Errore caricamento classifica:', error);
         // Se c'è cache vecchia, usala comunque
         if (leaderboardCache) {
-            console.log('⚠️ Usando cache classifica (vecchia)');
+            console.log('⚠️ Usando cache classifica (vecchia) - Server non disponibile');
             return leaderboardCache;
         }
         return null;
@@ -3392,6 +3396,18 @@ async function loadLeaderboard() {
 
                 const { leaderboard, userRank } = data;
                 let html = '<div style="max-width: 800px; margin: 0 auto;">';
+
+                // Indicatore prossimo aggiornamento classifica
+                if (leaderboardCache && leaderboardCacheTime) {
+                    const now = Date.now();
+                    const nextUpdateIn = LEADERBOARD_CACHE_DURATION - (now - leaderboardCacheTime);
+                    const hoursLeft = Math.floor(nextUpdateIn / (1000 * 60 * 60));
+                    const minutesLeft = Math.floor((nextUpdateIn % (1000 * 60 * 60)) / (1000 * 60));
+                    
+                    html += `<div style="background: rgba(0,217,255,0.1); border: 1px solid var(--accent-cyan); padding: 10px; border-radius: 8px; margin-bottom: 15px; text-align: center; font-size: 0.85rem;">
+                        🔄 Classifica aggiornata ogni 8 ore • Prossimo aggiornamento tra <strong>${hoursLeft}h ${minutesLeft}m</strong>
+                    </div>`;
+                }
 
                 // Messaggio status sfide
                 if (!canChallenge && canChallengeData) {
