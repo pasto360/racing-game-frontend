@@ -2370,27 +2370,6 @@ async function loadLeaderboard() {
                 return value;
             };
 
-            // Scelta casuale immagine (1-10) e storia
-            const imageNum = Math.floor(Math.random() * 10) + 1;
-            const imagePath = win ? `victory_${imageNum}.jpg` : `defeat_${imageNum}.jpg`;
-            const stories = win ? this.victoryStories : this.defeatStories;
-            const randomStory = stories[Math.floor(Math.random() * stories.length)] || (win ? "Ottima gara!" : "Riprova!");
-
-            // Calcola stat con tecnologie per visualizzazione corretta
-            const getStatWithTech = (baseStat, upgrades, statName) => {
-                let value = baseStat + (upgrades * 10);
-                this.technologies.forEach(tech => {
-                    if (tech.researched) {
-                        if (tech.bonus.stat === statName) {
-                            value += tech.bonus.value;
-                        } else if (tech.bonus.type === 'allStats') {
-                            value += tech.bonus.value;
-                        }
-                    }
-                });
-                return value;
-            };
-
             comparison.innerHTML = `
                 <!-- BLOCCO 1: SOLO IMMAGINE -->
                 <div style="width: 100%; margin-bottom: 15px;">
