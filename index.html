@@ -3470,17 +3470,25 @@ async function loadLeaderboard() {
             async checkCanChallenge() {
                 try {
                     const token = localStorage.getItem('authToken');
-                    const response = await fetch(`${API_BASE_URL}/api/pvp/can-challenge`, {
+                    const response = await fetch(`${API_URL}/api/pvp/can-challenge`, {
                         headers: {
                             'Authorization': `Bearer ${token}`
                         }
                     });
                     
-                    if (!response.ok) return null;
-                    return await response.json();
+                    if (!response.ok) {
+                        console.log(`⚠️ Endpoint can-challenge: ${response.status} - Sfide abilitate di default`);
+                        // Se endpoint non esiste, abilita sfide comunque
+                        return { canChallenge: true, nextChallengeTime: null, lastChallengeTime: null };
+                    }
+                    
+                    const data = await response.json();
+                    console.log('✅ Check sfida:', data);
+                    return data;
                 } catch (error) {
                     console.error('Errore controllo sfida:', error);
-                    return null;
+                    // In caso di errore, abilita sfide
+                    return { canChallenge: true, nextChallengeTime: null, lastChallengeTime: null };
                 }
             },
 
@@ -3496,7 +3504,7 @@ async function loadLeaderboard() {
 
                 try {
                     const token = localStorage.getItem('authToken');
-                    const response = await fetch(`${API_BASE_URL}/api/pvp/challenge`, {
+                    const response = await fetch(`${API_URL}/api/pvp/challenge`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
