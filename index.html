@@ -1077,6 +1077,37 @@
         </div>
     </div>
 
+    <!-- Modal Conferma Sfida PvP -->
+    <div class="modal" id="challengeModal">
+        <div class="modal-content" style="max-width: 500px;">
+            <h2 style="font-family: Orbitron; font-size: 2rem; text-align: center; color: var(--accent-yellow); margin-bottom: 20px;">⚔️ SFIDA PVP</h2>
+            <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 10px; margin-bottom: 25px;">
+                <div style="text-align: center; font-size: 1.3rem; margin-bottom: 20px; color: var(--text-primary);">
+                    <strong id="challengeOpponentName"></strong>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                    <div style="text-align: center; padding: 15px; background: rgba(0,255,136,0.1); border: 2px solid var(--accent-green); border-radius: 8px;">
+                        <div style="font-size: 0.85rem; color: #a0a0a0; margin-bottom: 5px;">SE VINCI</div>
+                        <div style="font-size: 1.1rem; font-weight: 700; color: var(--accent-green);">+5%</div>
+                        <div style="font-size: 0.8rem; margin-top: 5px;">delle sue risorse</div>
+                    </div>
+                    <div style="text-align: center; padding: 15px; background: rgba(255,51,51,0.1); border: 2px solid var(--accent-red); border-radius: 8px;">
+                        <div style="font-size: 0.85rem; color: #a0a0a0; margin-bottom: 5px;">SE PERDI</div>
+                        <div style="font-size: 1.1rem; font-weight: 700; color: var(--accent-red);">-10%</div>
+                        <div style="font-size: 0.8rem; margin-top: 5px;">delle tue risorse</div>
+                    </div>
+                </div>
+                <div style="text-align: center; padding: 12px; background: rgba(0,217,255,0.1); border: 1px solid var(--accent-cyan); border-radius: 8px; font-size: 0.9rem;">
+                    ⚡ Costo: <strong>20 Energia</strong>
+                </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <button class="btn" style="background: rgba(255,255,255,0.1); color: #a0a0a0;" onclick="game.closeChallengeModal()">Annulla</button>
+                <button class="btn" onclick="game.confirmChallenge()">⚔️ Sfida!</button>
+            </div>
+        </div>
+    </div>
+
     <footer>
         Garage Racing Manager - Cloud Edition v5.0 • 100% Online
     </footer>
@@ -3498,12 +3529,33 @@ async function loadLeaderboard() {
                     return;
                 }
 
-                if (!confirm(`⚔️ Sfidare ${defenderUsername}?\n\n💰 Se vinci: +5% delle sue risorse\n💀 Se perdi: -10% delle tue risorse\n⚡ Costo: 20 energia`)) {
-                    return;
-                }
+                // Salva dati sfida per confirmChallenge
+                this._pendingChallenge = { defenderId, defenderUsername };
+                
+                // Mostra modal conferma
+                document.getElementById('challengeOpponentName').textContent = defenderUsername;
+                document.getElementById('challengeModal').classList.add('active');
+            },
+
+            closeChallengeModal() {
+                document.getElementById('challengeModal').classList.remove('active');
+                this._pendingChallenge = null;
+            },
+
+            async confirmChallenge() {
+                if (!this._pendingChallenge) return;
+                
+                const { defenderId, defenderUsername } = this._pendingChallenge;
+                
+                // Chiudi modal
+                this.closeChallengeModal();
 
                 try {
                     const token = localStorage.getItem('authToken');
+                    
+                    console.log('🎮 Invio sfida a:', defenderUsername, 'ID:', defenderId);
+                    console.log('🔗 URL:', `${API_URL}/api/pvp/challenge`);
+                    
                     const response = await fetch(`${API_URL}/api/pvp/challenge`, {
                         method: 'POST',
                         headers: {
@@ -3513,7 +3565,10 @@ async function loadLeaderboard() {
                         body: JSON.stringify({ defenderId: defenderId })
                     });
 
+                    console.log('📡 Response status:', response.status);
+                    
                     const result = await response.json();
+                    console.log('📦 Response data:', result);
 
                     if (!response.ok) {
                         alert(`❌ ${result.error || 'Errore durante la sfida'}`);
@@ -3546,8 +3601,8 @@ async function loadLeaderboard() {
                     this.render();
 
                 } catch (error) {
-                    console.error('Errore sfida:', error);
-                    alert('❌ Errore di connessione durante la sfida');
+                    console.error('❌ Errore sfida:', error);
+                    alert('❌ Errore di connessione durante la sfida\n\nDettagli: ' + error.message);
                 }
             },
 
