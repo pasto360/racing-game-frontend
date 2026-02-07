@@ -3407,23 +3407,36 @@ async function loadLeaderboard() {
             },
 
             async renderLeaderboard() {
-                const container = document.getElementById('leaderboardContainer');
-                
-                if (!this._leaderboardCache) {
-                    container.innerHTML = '<p style="color: #a0a0a0; text-align: center; padding: 40px;">⏳ Caricamento classifica...</p>';
-                }
-
-                const data = await loadLeaderboard();
-                if (!data) {
-                    container.innerHTML = '<p style="color: #ff3333; text-align: center; padding: 40px;">❌ Errore caricamento classifica</p>';
+                // GUARD: Previeni loop infinito
+                if (this._isRenderingLeaderboard) {
+                    console.log('⚠️ Render leaderboard già in corso, skip');
                     return;
                 }
+                
+                this._isRenderingLeaderboard = true;
+                
+                try {
+                    const container = document.getElementById('leaderboardContainer');
+                    
+                    if (!this._leaderboardCache) {
+                        container.innerHTML = '<p style="color: #a0a0a0; text-align: center; padding: 40px;">⏳ Caricamento classifica...</p>';
+                    }
 
-                this._leaderboardCache = data;
+                    const data = await loadLeaderboard();
+                    if (!data) {
+                        container.innerHTML = '<p style="color: #ff3333; text-align: center; padding: 40px;">❌ Errore caricamento classifica</p>';
+                        return;
+                    }
 
-                // Controlla se può sfidare oggi
-                const canChallengeData = await this.checkCanChallenge();
-                const canChallenge = canChallengeData ? canChallengeData.canChallenge : false;
+                    this._leaderboardCache = data;
+
+                    // Controlla se può sfidare oggi (con cache)
+                    if (!this._canChallengeCache || (Date.now() - this._canChallengeCacheTime > 60000)) {
+                        this._canChallengeCache = await this.checkCanChallenge();
+                        this._canChallengeCacheTime = Date.now();
+                    }
+                    const canChallengeData = this._canChallengeCache;
+                    const canChallenge = canChallengeData ? canChallengeData.canChallenge : false;
 
                 const { leaderboard, userRank } = data;
                 let html = '<div style="max-width: 800px; margin: 0 auto;">';
@@ -3494,8 +3507,13 @@ async function loadLeaderboard() {
                     </div>`;
                 }
 
-                html += '</div>';
-                container.innerHTML = html;
+                    html += '</div>';
+                    container.innerHTML = html;
+                    
+                } finally {
+                    // Rilascia flag anche in caso di errore
+                    this._isRenderingLeaderboard = false;
+                }
             },
 
             async checkCanChallenge() {
