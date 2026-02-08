@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+        <!DOCTYPE html>
 <html lang="it">
 <head>
     <meta charset="UTF-8">
@@ -3616,7 +3616,11 @@ async function loadLeaderboard() {
                     this._leaderboardCache = null;
                     leaderboardCache = null;
                     leaderboardCacheTime = 0;
-                    this.render();
+    
+                    // Ricarica SOLO se sei nella pagina classifica
+                    if (this.currentPage === 'leaderboard') {
+                    this.renderLeaderboard();
+                    }
 
                 } catch (error) {
                     console.error('❌ Errore sfida:', error);
