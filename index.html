@@ -1,4 +1,4 @@
-        <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="it">
 <head>
     <meta charset="UTF-8">
@@ -1109,7 +1109,7 @@
     </div>
 
     <footer>
-        Garage Racing Manager • CI/CD
+        Garage Racing Manager - Cloud Edition v5.0 • 100% Online
     </footer>
 
     <script>
@@ -1493,17 +1493,61 @@ async function saveGameToServer(showIndicator = true) {
 
 // Cache leaderboard - 3 aggiornamenti al giorno (ogni 8 ore)
 let leaderboardCache = null;
-let leaderboardCacheTime = 0;
-const LEADERBOARD_CACHE_DURATION = 8 * 60 * 60 * 1000; // 8 ore
+let leaderboardCacheSlot = null; // Slot corrente (es: "2026-02-09-08")
+
+function getLeaderboardSlot() {
+    const now = new Date();
+    const date = now.toISOString().split('T')[0]; // "2026-02-09"
+    const hour = now.getHours();
+    
+    // Determina slot: 0-7 → 00, 8-15 → 08, 16-23 → 16
+    let slotHour;
+    if (hour < 8) {
+        slotHour = '00';
+    } else if (hour < 16) {
+        slotHour = '08';
+    } else {
+        slotHour = '16';
+    }
+    
+    return `${date}-${slotHour}`;
+}
+
+function getNextLeaderboardUpdate() {
+    const now = new Date();
+    const hour = now.getHours();
+    
+    let nextHour;
+    if (hour < 8) {
+        nextHour = 8;
+    } else if (hour < 16) {
+        nextHour = 16;
+    } else {
+        nextHour = 24; // Mezzanotte
+    }
+    
+    const next = new Date(now);
+    if (nextHour === 24) {
+        next.setDate(next.getDate() + 1);
+        next.setHours(0, 0, 0, 0);
+    } else {
+        next.setHours(nextHour, 0, 0, 0);
+    }
+    
+    const diff = next - now;
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    
+    return `${hours}h ${minutes}m`;
+}
 
 async function loadLeaderboard() {
     try {
-        // Usa cache se disponibile e recente
-        const now = Date.now();
-        if (leaderboardCache && (now - leaderboardCacheTime) < LEADERBOARD_CACHE_DURATION) {
-            const hoursLeft = Math.floor((LEADERBOARD_CACHE_DURATION - (now - leaderboardCacheTime)) / (1000 * 60 * 60));
-            const minutesLeft = Math.floor(((LEADERBOARD_CACHE_DURATION - (now - leaderboardCacheTime)) % (1000 * 60 * 60)) / (1000 * 60));
-            console.log(`📊 Usando cache classifica (prossimo aggiornamento tra ${hoursLeft}h ${minutesLeft}m)`);
+        const currentSlot = getLeaderboardSlot();
+        
+        // Se cache valida per questo slot, usa quella
+        if (leaderboardCache && leaderboardCacheSlot === currentSlot) {
+            console.log(`📊 Cache classifica valida (slot ${currentSlot}), prossimo aggiornamento tra ${getNextLeaderboardUpdate()}`);
             return leaderboardCache;
         }
         
@@ -1516,11 +1560,11 @@ async function loadLeaderboard() {
         
         const data = await response.json();
         
-        // Salva in cache
+        // Salva in cache con slot corrente
         leaderboardCache = data;
-        leaderboardCacheTime = now;
+        leaderboardCacheSlot = currentSlot;
         
-        console.log('✅ Classifica aggiornata! Prossimo aggiornamento tra 8 ore');
+        console.log(`✅ Classifica aggiornata (slot ${currentSlot})! Prossimo aggiornamento tra ${getNextLeaderboardUpdate()}`);
         
         return data;
         
@@ -3442,14 +3486,11 @@ async function loadLeaderboard() {
                 let html = '<div style="max-width: 800px; margin: 0 auto;">';
 
                 // Indicatore prossimo aggiornamento classifica
-                if (leaderboardCache && leaderboardCacheTime) {
-                    const now = Date.now();
-                    const nextUpdateIn = LEADERBOARD_CACHE_DURATION - (now - leaderboardCacheTime);
-                    const hoursLeft = Math.floor(nextUpdateIn / (1000 * 60 * 60));
-                    const minutesLeft = Math.floor((nextUpdateIn % (1000 * 60 * 60)) / (1000 * 60));
+                if (leaderboardCache && leaderboardCacheSlot) {
+                    const nextUpdate = getNextLeaderboardUpdate();
                     
                     html += `<div style="background: rgba(0,217,255,0.1); border: 1px solid var(--accent-cyan); padding: 10px; border-radius: 8px; margin-bottom: 15px; text-align: center; font-size: 0.85rem;">
-                        🔄 Classifica aggiornata ogni 8 ore • Prossimo aggiornamento tra <strong>${hoursLeft}h ${minutesLeft}m</strong>
+                        🔄 Classifica aggiornata alle <strong>00:00, 08:00, 16:00</strong> • Prossimo aggiornamento tra <strong>${nextUpdate}</strong>
                     </div>`;
                 }
 
@@ -3571,9 +3612,6 @@ async function loadLeaderboard() {
                 try {
                     const token = localStorage.getItem('authToken');
                     
-                    console.log('🎮 Invio sfida a:', defenderUsername, 'ID:', defenderId);
-                    console.log('🔗 URL:', `${API_URL}/api/pvp/challenge`);
-                    
                     const response = await fetch(`${API_URL}/api/pvp/challenge`, {
                         method: 'POST',
                         headers: {
@@ -3582,11 +3620,8 @@ async function loadLeaderboard() {
                         },
                         body: JSON.stringify({ defenderId: defenderId })
                     });
-
-                    console.log('📡 Response status:', response.status);
                     
                     const result = await response.json();
-                    console.log('📦 Response data:', result);
 
                     if (!response.ok) {
                         alert(`❌ ${result.error || 'Errore durante la sfida'}`);
@@ -3600,32 +3635,82 @@ async function loadLeaderboard() {
                         }
                     });
 
-                    // Mostra risultato
-                    const win = result.win;
-                    const rewards = result.rewards;
+                    // Mostra risultato PvP con modal
+                    this.showPvPResult(result, defenderUsername);
                     
-                    let message = win 
-                        ? `🏆 HAI VINTO LA SFIDA!\n\nHai sconfitto ${defenderUsername}!\n\n💰 +${rewards.money}\n🔩 +${rewards.parts}\n⭐ +${rewards.reputation}`
-                        : `💥 HAI PERSO LA SFIDA!\n\n${defenderUsername} ti ha sconfitto!\n\n💰 -${rewards.money}\n🔩 -${rewards.parts}\n⭐ -${rewards.reputation}`;
-                    
-                    message += `\n\n${result.attacker.car} (${result.attacker.power} HP) vs ${result.defender.car} (${result.defender.power} HP)`;
-                    
-                    alert(message);
-                    
-                    // Ricarica classifica (invalida entrambe le cache)
+                    // Ricarica classifica SOLO se sei in quella pagina
                     this._leaderboardCache = null;
                     leaderboardCache = null;
-                    leaderboardCacheTime = 0;
-    
-                    // Ricarica SOLO se sei nella pagina classifica
+                    leaderboardCacheSlot = null;
                     if (this.currentPage === 'leaderboard') {
-                    this.renderLeaderboard();
+                        this.renderLeaderboard();
                     }
 
                 } catch (error) {
                     console.error('❌ Errore sfida:', error);
                     alert('❌ Errore di connessione durante la sfida\n\nDettagli: ' + error.message);
                 }
+            },
+
+            showPvPResult(result, opponentName) {
+                const modal = document.getElementById('raceModal');
+                const title = document.getElementById('raceResult');
+                const comparison = document.getElementById('raceComparison');
+                const rewardsDiv = document.getElementById('raceRewards');
+                const damageDiv = document.getElementById('damageSection');
+                
+                const win = result.win;
+                const rewards = result.rewards;
+                
+                // Titolo
+                title.textContent = win ? '⚔️ VITTORIA PVP!' : '💥 SCONFITTA PVP';
+                title.style.color = win ? 'var(--accent-green)' : 'var(--accent-red)';
+                
+                // Modal styling
+                const modalContent = modal.querySelector('.modal-content');
+                modalContent.className = 'modal-content ' + (win ? 'win' : '');
+                
+                // Confronto auto
+                comparison.innerHTML = `
+                    <div style="text-align: center;">
+                        <h3 style="color: var(--accent-cyan); margin-bottom: 10px;">🏎️ TUA AUTO</h3>
+                        <p style="font-size: 1.2rem; font-weight: 700;">${result.attacker.car}</p>
+                        <p style="color: var(--accent-yellow); font-size: 1.5rem; font-weight: 900;">${result.attacker.power} HP</p>
+                    </div>
+                    <div style="text-align: center;">
+                        <h3 style="color: var(--accent-red); margin-bottom: 10px;">🏎️ ${opponentName.toUpperCase()}</h3>
+                        <p style="font-size: 1.2rem; font-weight: 700;">${result.defender.car}</p>
+                        <p style="color: var(--accent-yellow); font-size: 1.5rem; font-weight: 900;">${result.defender.power} HP</p>
+                    </div>
+                `;
+                
+                // Rewards
+                const sign = win ? '+' : '-';
+                const color = win ? 'var(--accent-green)' : 'var(--accent-red)';
+                rewardsDiv.innerHTML = `
+                    <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 10px; margin: 20px 0;">
+                        <h3 style="text-align: center; margin-bottom: 15px; color: ${color};">${win ? 'BOTTINO' : 'PERDITE'}</h3>
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; text-align: center;">
+                            <div>
+                                <div style="font-size: 0.85rem; color: #a0a0a0;">Denaro</div>
+                                <div style="font-size: 1.5rem; font-weight: 900; color: ${color};">${sign}${rewards.money}</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.85rem; color: #a0a0a0;">Parti</div>
+                                <div style="font-size: 1.5rem; font-weight: 900; color: ${color};">${sign}${rewards.parts}</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 0.85rem; color: #a0a0a0;">Reputazione</div>
+                                <div style="font-size: 1.5rem; font-weight: 900; color: ${color};">${sign}${rewards.reputation}</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                // No damage section per PvP
+                damageDiv.innerHTML = '';
+                
+                modal.classList.add('active');
             },
 
             resetGame() {
