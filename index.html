@@ -2849,90 +2849,153 @@ async function loadLeaderboard() {
 
             renderWorkshop() {
                 const container = document.getElementById('workshop');
-                container.innerHTML = Object.keys(this.workshop).map(key => {
+                
+                // Calcola stats totali
+                const totalProduction = Object.keys(this.workshop).reduce((acc, key) => {
                     const section = this.workshop[key];
-                    const cost = this.getUpgradeCost(section);
-                    const canUpgrade = this.canAfford(cost) && section.level < section.maxLevel;
-                    const locked = !section.unlocked;
-
-                    let production = '';
                     if (section.production && section.level > 0) {
-                        production = Object.keys(section.production).map(res => {
-                            const icon = this.resources[res]?.icon || '';
-                            const amount = section.production[res] * section.level;
-                            return `${icon} +${amount.toFixed(0)}/h`;
-                        }).join(' ');
+                        Object.keys(section.production).forEach(res => {
+                            acc[res] = (acc[res] || 0) + (section.production[res] * section.level);
+                        });
                     }
-
-                    let reputationInfo = '';
-                    if (section.reputationBonus && section.level > 0) {
-                        const totalRep = section.reputationBonus * section.level;
-                        reputationInfo = `⭐ +${totalRep} reputazione totale guadagnata`;
-                    }
-                    if (section.oneTimeBonus && section.level > 0) {
-                        const totalRep = section.oneTimeBonus.reputation * section.level;
-                        reputationInfo = `⭐ +${totalRep} reputazione totale guadagnata`;
-                    }
-
-                    let nextLevelBonus = '';
-                    if (section.level < section.maxLevel) {
-                        if (section.production) {
-                            nextLevelBonus = Object.keys(section.production).map(res => {
-                                const icon = this.resources[res]?.icon || '';
-                                const amount = section.production[res] * (section.level + 1);
-                                return `${icon} +${amount.toFixed(0)}/h`;
-                            }).join(' ');
-                        } else if (section.reputationBonus) {
-                            const nextRep = section.reputationBonus * (section.level + 1);
-                            nextLevelBonus = `⭐ +${section.reputationBonus} reputazione (totale: ${nextRep})`;
-                        } else if (section.oneTimeBonus && section.oneTimeBonus.reputation) {
-                            const nextRep = section.oneTimeBonus.reputation * (section.level + 1);
-                            nextLevelBonus = `⭐ +${section.oneTimeBonus.reputation} reputazione (totale: ${nextRep})`;
-                        }
-                    }
-
-                    return `
-                        <div class="workshop-section ${locked ? 'locked' : ''}">
-                            <div class="workshop-header">
-                                <div class="workshop-icon">${section.icon}</div>
-                                <div class="workshop-name">${section.name}</div>
+                    return acc;
+                }, {});
+                
+                const workshopSections = Object.keys(this.workshop);
+                
+                container.innerHTML = `
+                    <div class="page-container">
+                        <div class="section-layout">
+                            <!-- Menu laterale SX -->
+                            <div class="side-menu">
+                                ${workshopSections.map((key, idx) => {
+                                    const section = this.workshop[key];
+                                    return `
+                                        <button class="side-menu-btn ${idx === 0 ? 'active' : ''}" 
+                                                onclick="document.querySelectorAll('.workshop-detail').forEach(d => d.style.display='none'); 
+                                                         document.getElementById('workshop-${key}').style.display='block';
+                                                         document.querySelectorAll('.side-menu-btn').forEach(b => b.classList.remove('active'));
+                                                         this.classList.add('active');">
+                                            ${section.icon} ${section.name}
+                                        </button>
+                                    `;
+                                }).join('')}
                             </div>
-                            <div class="workshop-level">
-                                <span>Livello ${section.level}/${section.maxLevel}</span>
-                            </div>
-                            ${section.level > 0 && (production || reputationInfo) ? `
-                                <div class="workshop-stats">
-                                    ${production ? `<div><strong>Produzione:</strong> ${production}</div>` : ''}
-                                    ${reputationInfo ? `<div><strong>Bonus:</strong> ${reputationInfo}</div>` : ''}
+
+                            <!-- Immagine centrale -->
+                            <div class="section-image-container">
+                                <img src="images/sections/workshop.svg" class="section-image" alt="Officina">
+                                <div class="section-image-overlay">
+                                    <h2 class="section-title-overlay">🔧 OFFICINA</h2>
                                 </div>
-                            ` : ''}
-                            ${!locked ? `
-                                <button 
-                                    class="btn" 
-                                    onclick="game.upgradeWorkshop('${key}')"
-                                    ${!canUpgrade ? 'disabled' : ''}>
-                                    ${section.level < section.maxLevel ? 'Upgrade' : 'MAX'}
-                                </button>
-                                ${section.level < section.maxLevel && nextLevelBonus ? `
-                                    <div style="color: var(--accent-cyan); margin-top: 10px; font-size: 0.85rem;">
-                                        ➜ Prossimo livello: ${nextLevelBonus}
-                                    </div>
-                                    <div class="cost-display">
-                                        ${Object.keys(cost).map(res => 
-                                            `${this.resources[res].icon} ${cost[res]}`
-                                        ).join(' • ')}
+                            </div>
+
+                            <!-- Stats laterale DX -->
+                            <div class="side-stats">
+                                <div class="stat-box">
+                                    <div class="stat-label">LIVELLI TOTALI</div>
+                                    <div class="stat-value">${workshopSections.reduce((sum, k) => sum + this.workshop[k].level, 0)}</div>
+                                </div>
+                                ${Object.keys(totalProduction).length > 0 ? `
+                                    <div class="stat-box">
+                                        <div class="stat-label">PRODUZIONE/H</div>
+                                        <div class="stat-value" style="font-size: 0.9rem;">
+                                            ${Object.keys(totalProduction).map(res => 
+                                                `${this.resources[res].icon}${totalProduction[res].toFixed(0)}`
+                                            ).join('<br>')}
+                                        </div>
                                     </div>
                                 ` : ''}
-                            ` : `
-                                <div style="margin-top: 15px; color: var(--text-secondary); font-size: 0.9rem; text-align: center;">
-                                    🔒 Richiede: ${Object.keys(section.unlockCondition).map(res =>
-                                        `${this.resources[res].icon} ${section.unlockCondition[res]}`
-                                    ).join(', ')}
-                                </div>
-                            `}
+                            </div>
                         </div>
-                    `;
-                }).join('');
+
+                        <!-- Dettagli sezioni -->
+                        ${workshopSections.map((key, idx) => {
+                            const section = this.workshop[key];
+                            const cost = this.getUpgradeCost(section);
+                            const canUpgrade = this.canAfford(cost) && section.level < section.maxLevel;
+                            const locked = !section.unlocked;
+
+                            let production = '';
+                            if (section.production && section.level > 0) {
+                                production = Object.keys(section.production).map(res => {
+                                    const icon = this.resources[res]?.icon || '';
+                                    const amount = section.production[res] * section.level;
+                                    return `${icon} +${amount.toFixed(0)}/h`;
+                                }).join(' ');
+                            }
+
+                            let nextLevelBonus = '';
+                            if (section.level < section.maxLevel) {
+                                if (section.production) {
+                                    nextLevelBonus = Object.keys(section.production).map(res => {
+                                        const icon = this.resources[res]?.icon || '';
+                                        const amount = section.production[res];
+                                        return `${icon} +${amount.toFixed(0)}/h`;
+                                    }).join(' ');
+                                }
+                            }
+
+                            return `
+                                <div class="workshop-detail" id="workshop-${key}" style="display: ${idx === 0 ? 'block' : 'none'}; margin-top: 20px;">
+                                    <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 10px; border: 2px solid var(--accent-cyan);">
+                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                            <div>
+                                                <h3 style="font-family: Orbitron; font-size: 1.5rem; color: var(--accent-cyan); margin-bottom: 5px;">
+                                                    ${section.icon} ${section.name}
+                                                </h3>
+                                                <div style="font-size: 1.2rem; font-weight: 700; color: var(--accent-yellow);">
+                                                    Livello ${section.level}/${section.maxLevel}
+                                                </div>
+                                            </div>
+                                            ${!locked ? `
+                                                <button 
+                                                    class="upgrade-btn-compact" 
+                                                    onclick="game.upgradeWorkshop('${key}')"
+                                                    style="min-width: 150px; height: 50px;"
+                                                    ${!canUpgrade ? 'disabled' : ''}>
+                                                    ${section.level < section.maxLevel ? '⬆️ UPGRADE' : '✓ MAX'}
+                                                </button>
+                                            ` : ''}
+                                        </div>
+
+                                        ${section.level > 0 && production ? `
+                                            <div style="background: rgba(0,255,136,0.1); padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid var(--accent-green);">
+                                                <strong style="color: var(--accent-green);">📊 Produzione attuale:</strong> ${production}
+                                            </div>
+                                        ` : ''}
+
+                                        ${!locked && section.level < section.maxLevel ? `
+                                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                                                <div style="background: rgba(0,217,255,0.1); padding: 12px; border-radius: 8px; border: 1px solid var(--accent-cyan);">
+                                                    <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 5px;">Prossimo livello:</div>
+                                                    <div style="font-weight: 700; color: var(--accent-cyan);">${nextLevelBonus || 'Bonus speciale'}</div>
+                                                </div>
+                                                <div style="background: rgba(255,215,0,0.1); padding: 12px; border-radius: 8px; border: 1px solid var(--accent-yellow);">
+                                                    <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 5px;">Costo:</div>
+                                                    <div style="font-weight: 700; color: var(--accent-yellow);">
+                                                        ${Object.keys(cost).map(res => 
+                                                            `${this.resources[res].icon} ${cost[res]}`
+                                                        ).join(' • ')}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ` : locked ? `
+                                            <div style="text-align: center; padding: 20px; background: rgba(255,51,51,0.1); border-radius: 8px; border: 1px solid var(--accent-red);">
+                                                <div style="font-size: 1.2rem; margin-bottom: 10px;">🔒 BLOCCATO</div>
+                                                <div style="color: var(--text-secondary);">
+                                                    Richiede: ${Object.keys(section.unlockCondition).map(res =>
+                                                        `${this.resources[res].icon} ${section.unlockCondition[res]}`
+                                                    ).join(', ')}
+                                                </div>
+                                            </div>
+                                        ` : ''}
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                `;
             },
 
             renderAvailableCars() {
@@ -3663,16 +3726,57 @@ async function loadLeaderboard() {
                     const canChallenge = canChallengeData ? canChallengeData.canChallenge : false;
 
                 const { leaderboard, userRank } = data;
-                let html = '<div style="max-width: 800px; margin: 0 auto;">';
+                
+                let html = `
+                    <div class="page-container">
+                        <div class="section-layout">
+                            <!-- Menu laterale SX -->
+                            <div class="side-menu">
+                                <div class="stat-box" style="cursor: default;">
+                                    <div class="stat-label">GIOCATORI</div>
+                                    <div class="stat-value">${leaderboard.length}</div>
+                                </div>
+                                <div class="stat-box" style="cursor: default;">
+                                    <div class="stat-label">TUA POS.</div>
+                                    <div class="stat-value">${userRank ? userRank.rank : leaderboard.findIndex(p => p.username === currentUser?.username) + 1}</div>
+                                </div>
+                                <div class="stat-box" style="cursor: default;">
+                                    <div class="stat-label">TOP 3</div>
+                                    <div class="stat-value" style="font-size: 1.5rem;">🏆</div>
+                                </div>
+                            </div>
+
+                            <!-- Immagine centrale -->
+                            <div class="section-image-container">
+                                <img src="images/sections/leaderboard.svg" class="section-image" alt="Classifica">
+                                <div class="section-image-overlay">
+                                    <h2 class="section-title-overlay">🏆 CLASSIFICA</h2>
+                                </div>
+                            </div>
+
+                            <!-- Stats laterale DX -->
+                            <div class="side-stats">`;
 
                 // Indicatore prossimo aggiornamento classifica
                 if (leaderboardCache && leaderboardCacheSlot) {
                     const nextUpdate = getNextLeaderboardUpdate();
-                    
-                    html += `<div style="background: rgba(0,217,255,0.1); border: 1px solid var(--accent-cyan); padding: 10px; border-radius: 8px; margin-bottom: 15px; text-align: center; font-size: 0.85rem;">
-                        🔄 Classifica aggiornata alle <strong>00:00, 08:00, 16:00</strong> • Prossimo aggiornamento tra <strong>${nextUpdate}</strong>
-                    </div>`;
+                    html += `
+                                <div class="stat-box" style="cursor: default;">
+                                    <div class="stat-label" style="font-size: 0.7rem;">PROSS. AGG.</div>
+                                    <div class="stat-value" style="font-size: 0.9rem;">${nextUpdate}</div>
+                                </div>`;
                 }
+
+                html += `
+                                <div class="stat-box" style="cursor: default; ${!canChallenge ? 'background: rgba(255,51,51,0.1); border-color: var(--accent-red);' : 'background: rgba(0,255,136,0.1); border-color: var(--accent-green);'}">
+                                    <div class="stat-label" style="font-size: 0.7rem;">SFIDA PVP</div>
+                                    <div class="stat-value" style="font-size: 0.9rem;">${canChallenge ? '✅ OK' : '⏰ NO'}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Info banner -->
+                        <div style="margin-bottom: 15px;">`;
 
                 // Messaggio status sfide
                 if (!canChallenge && canChallengeData) {
@@ -3680,37 +3784,40 @@ async function loadLeaderboard() {
                     const hours = Math.floor((nextTime - new Date()) / (1000 * 60 * 60));
                     const minutes = Math.floor(((nextTime - new Date()) % (1000 * 60 * 60)) / (1000 * 60));
                     
-                    html += `<div style="background: rgba(255,51,51,0.2); border: 2px solid var(--accent-red); padding: 15px; border-radius: 10px; margin-bottom: 20px; text-align: center;">
-                        ⏰ Hai già sfidato un giocatore oggi<br>
-                        <span style="font-size: 0.9rem; color: #a0a0a0;">Prossima sfida disponibile tra ${hours}h ${minutes}m</span>
+                    html += `<div style="background: rgba(255,51,51,0.2); border: 2px solid var(--accent-red); padding: 12px; border-radius: 10px; text-align: center;">
+                        ⏰ Hai già sfidato un giocatore oggi - Prossima sfida tra <strong>${hours}h ${minutes}m</strong>
                     </div>`;
                 }
 
-                html += `<div style="display: grid; grid-template-columns: 60px 1fr 150px 120px; gap: 10px; padding: 15px; border-bottom: 2px solid #ff3333; margin-bottom: 10px;">
-                    <div style="text-align: center; font-weight: 700; color: #ffd700;">#</div>
-                    <div style="font-weight: 700; color: #ffd700;">Pilota</div>
-                    <div style="text-align: center; font-weight: 700; color: #ffd700;">Reputazione</div>
-                    <div style="text-align: center; font-weight: 700; color: #ffd700;">Azione</div>
-                </div>`;
+                html += `</div>
+
+                        <!-- Tabella classifica -->
+                        <div style="background: rgba(255,255,255,0.02); padding: 15px; border-radius: 10px; border: 1px solid var(--accent-cyan);">
+                            <div style="display: grid; grid-template-columns: 60px 1fr 150px 120px; gap: 10px; padding: 12px; border-bottom: 2px solid var(--accent-yellow); margin-bottom: 10px;">
+                                <div style="text-align: center; font-weight: 700; color: var(--accent-yellow);">#</div>
+                                <div style="font-weight: 700; color: var(--accent-yellow);">Pilota</div>
+                                <div style="text-align: center; font-weight: 700; color: var(--accent-yellow);">Reputazione</div>
+                                <div style="text-align: center; font-weight: 700; color: var(--accent-yellow);">Azione</div>
+                            </div>`;
 
                 leaderboard.forEach((player, i) => {
                     const isMe = currentUser && player.username === currentUser.username;
                     const rankColor = i === 0 ? '#ffd700' : i === 1 ? '#c0c0c0' : i === 2 ? '#cd7f32' : '#a0a0a0';
                     const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}`;
                     
-                    html += `<div style="display: grid; grid-template-columns: 60px 1fr 150px 120px; gap: 10px; padding: 12px; 
+                    html += `<div style="display: grid; grid-template-columns: 60px 1fr 150px 120px; gap: 10px; padding: 10px; 
                              background: ${isMe ? 'rgba(0,255,136,0.1)' : 'rgba(255,255,255,0.03)'}; 
                              border: ${isMe ? '2px solid #00ff88' : '1px solid rgba(255,255,255,0.05)'};
                              border-radius: 8px; margin-bottom: 5px; align-items: center;">
                         <div style="text-align: center; font-size: 1.2rem; color: ${rankColor}; font-weight: 700;">${medal}</div>
-                        <div style="font-size: 1.1rem; ${isMe ? 'color: #00ff88; font-weight: 700;' : ''}">${player.username} ${isMe ? '(Tu)' : ''}</div>
-                        <div style="text-align: center; color: #00d9ff; font-weight: 700; font-size: 1.1rem;">${Number(player.reputation).toLocaleString()}</div>
+                        <div style="font-size: 1rem; ${isMe ? 'color: #00ff88; font-weight: 700;' : ''}">${player.username} ${isMe ? '(Tu)' : ''}</div>
+                        <div style="text-align: center; color: #00d9ff; font-weight: 700;">${Number(player.reputation).toLocaleString()}</div>
                         <div style="text-align: center;">
                             ${!isMe ? `
                                 <button 
                                     onclick="game.challengePlayer(${player.user_id}, '${player.username}')" 
                                     class="btn btn-small" 
-                                    style="font-size: 0.8rem; padding: 6px 12px; ${!canChallenge ? 'opacity: 0.5; cursor: not-allowed;' : ''}"
+                                    style="font-size: 0.75rem; padding: 5px 10px; ${!canChallenge ? 'opacity: 0.5; cursor: not-allowed;' : ''}"
                                     ${!canChallenge ? 'disabled' : ''}>
                                     ⚔️ Sfida
                                 </button>
@@ -3720,7 +3827,7 @@ async function loadLeaderboard() {
                 });
 
                 if (userRank) {
-                    html += `<div style="margin-top: 20px; padding: 15px; background: rgba(0,255,136,0.1); border: 2px solid #00ff88; border-radius: 8px; display: grid; grid-template-columns: 60px 1fr 150px 120px; gap: 10px; align-items: center;">
+                    html += `<div style="margin-top: 15px; padding: 12px; background: rgba(0,255,136,0.1); border: 2px solid #00ff88; border-radius: 8px; display: grid; grid-template-columns: 60px 1fr 150px 120px; gap: 10px; align-items: center;">
                         <div style="text-align: center; font-weight: 700; color: #00ff88;">${userRank.rank}</div>
                         <div style="color: #00ff88; font-weight: 700;">${userRank.username} (Tu)</div>
                         <div style="text-align: center; color: #00d9ff; font-weight: 700;">${Number(userRank.reputation).toLocaleString()}</div>
@@ -3728,7 +3835,7 @@ async function loadLeaderboard() {
                     </div>`;
                 }
 
-                    html += '</div>';
+                    html += '</div></div>';
                     container.innerHTML = html;
                     
                 } finally {
