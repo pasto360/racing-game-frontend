@@ -38,6 +38,186 @@
 
         .container { max-width: 1600px; margin: 0 auto; padding: 20px; position: relative; z-index: 2; }
 
+        /* ===== NUOVO LAYOUT COMPATTO CON IMMAGINI ===== */
+        .page-container {
+            max-width: 920px;
+            margin: 0 auto;
+            padding: 15px;
+        }
+
+        .section-layout {
+            display: grid;
+            grid-template-columns: 120px 650px 130px;
+            gap: 10px;
+            margin-bottom: 15px;
+            align-items: start;
+        }
+
+        .side-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .side-menu-btn {
+            padding: 10px 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--accent-cyan);
+            border-radius: 6px;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .side-menu-btn:hover {
+            background: var(--accent-cyan);
+            color: var(--bg-dark);
+            transform: translateX(3px);
+        }
+
+        .side-menu-btn.active {
+            background: var(--accent-yellow);
+            color: var(--bg-dark);
+            border-color: var(--accent-yellow);
+        }
+
+        .section-image-container {
+            position: relative;
+            width: 650px;
+            height: 300px;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 2px solid var(--accent-cyan);
+            box-shadow: 0 0 20px rgba(0, 217, 255, 0.3);
+        }
+
+        .section-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .section-image-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(180deg, transparent 0%, rgba(10, 10, 10, 0.7) 100%);
+            display: flex;
+            align-items: flex-end;
+            padding: 20px;
+        }
+
+        .section-title-overlay {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            font-weight: 900;
+            color: var(--accent-cyan);
+            text-shadow: 0 0 10px rgba(0, 217, 255, 0.5);
+        }
+
+        .side-stats {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .stat-box {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--accent-cyan);
+            border-radius: 6px;
+            padding: 10px;
+            text-align: center;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+
+        .stat-value {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--accent-yellow);
+        }
+
+        .upgrade-buttons-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .upgrade-btn-compact {
+            padding: 12px 10px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            background: rgba(255, 215, 0, 0.1);
+            border: 2px solid var(--accent-yellow);
+            border-radius: 8px;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .upgrade-btn-compact:hover {
+            background: var(--accent-yellow);
+            color: var(--bg-dark);
+            transform: translateY(-2px);
+        }
+
+        .upgrade-btn-compact:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* Mobile responsive */
+        @media (max-width: 1024px) {
+            .section-layout {
+                grid-template-columns: 1fr;
+                gap: 10px;
+            }
+
+            .section-image-container {
+                width: 100%;
+                height: 250px;
+            }
+
+            .side-menu {
+                flex-direction: row;
+                overflow-x: auto;
+                padding-bottom: 5px;
+            }
+
+            .side-menu-btn {
+                min-width: 100px;
+            }
+
+            .side-stats {
+                flex-direction: row;
+                overflow-x: auto;
+            }
+
+            .stat-box {
+                min-width: 100px;
+            }
+
+            .upgrade-buttons-row {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .section-title-overlay {
+                font-size: 1.5rem;
+            }
+        }
+
         header {
             text-align: center;
             padding: 20px;
