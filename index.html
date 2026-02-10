@@ -2889,6 +2889,15 @@ async function loadLeaderboard() {
                             <div class="side-menu">
                                 ${workshopSections.map((key, idx) => {
                                     const section = this.workshop[key];
+                                    // Mappa immagini per reparto
+                                    const imageMap = {
+                                        'engine': 'engine.jpg',
+                                        'electronics': 'electronics.jpg',
+                                        'body': 'body.jpg',
+                                        'aerodynamics': 'aero.jpg'
+                                    };
+                                    const imageName = imageMap[key] || 'workshop.jpg';
+                                    
                                     return `
                                         <button class="side-menu-btn ${idx === activeSection ? 'active' : ''}" 
                                                 onclick="
@@ -2896,6 +2905,11 @@ async function loadLeaderboard() {
                                                     document.getElementById('workshop-${key}').style.display='block';
                                                     document.querySelectorAll('.side-menu-btn').forEach(b => b.classList.remove('active'));
                                                     this.classList.add('active');
+                                                    
+                                                    // Cambia immagine
+                                                    const img = document.getElementById('workshop-image');
+                                                    img.src = 'images/sections/${imageName}';
+                                                    img.alt = '${section.name}';
                                                 ">
                                             ${section.icon}<br>${section.name.split(' ').pop()}
                                         </button>
@@ -2905,14 +2919,12 @@ async function loadLeaderboard() {
 
                             <!-- Immagine centrale -->
                             <div class="section-image-container">
-                                <img src="images/sections/workshop.jpg" 
+                                <img id="workshop-image"
+                                     src="images/sections/${workshopSections[activeSection] ? (workshopSections[activeSection] === 'engine' ? 'engine.jpg' : workshopSections[activeSection] === 'electronics' ? 'electronics.jpg' : workshopSections[activeSection] === 'body' ? 'body.jpg' : workshopSections[activeSection] === 'aerodynamics' ? 'aero.jpg' : 'workshop.jpg') : 'workshop.jpg'}" 
                                      class="section-image" 
                                      alt="Officina"
                                      onload="console.log('✅ Immagine workshop caricata!');"
-                                     onerror="console.error('❌ Immagine workshop non trovata:', this.src); this.style.display='none'; this.nextElementSibling.style.background='linear-gradient(135deg, #1a1a1a, #0a0a0a)'; this.nextElementSibling.innerHTML='<div style=text-align:center;padding-top:100px><div style=font-size:4rem>🔧</div><h2 style=font-family:Orbitron;font-size:2rem;color:#ffd700;margin-top:15px>OFFICINA</h2></div>'">
-                                <div class="section-image-overlay">
-                                    <h2 class="section-title-overlay">🔧 OFFICINA</h2>
-                                </div>
+                                     onerror="console.error('❌ Immagine non trovata:', this.src); this.style.display='none'; this.parentElement.style.background='linear-gradient(135deg, #1a1a1a, #0a0a0a)'; this.parentElement.innerHTML='<div style=text-align:center;padding-top:100px><div style=font-size:4rem>🔧</div></div>'">
                             </div>
 
                             <!-- Stats laterale DX -->
@@ -2956,8 +2968,12 @@ async function loadLeaderboard() {
                                     nextLevelBonus = Object.keys(section.production).map(res => {
                                         const icon = this.resources[res]?.icon || '';
                                         const amount = section.production[res];
-                                        return `${icon} +${amount.toFixed(0)}/h`;
+                                        return `${icon}+${amount.toFixed(0)}/h`;
                                     }).join(' ');
+                                } else if (section.oneTimeBonus && section.oneTimeBonus.reputation) {
+                                    nextLevelBonus = `⭐+${section.oneTimeBonus.reputation} reputazione`;
+                                } else if (section.reputationBonus) {
+                                    nextLevelBonus = `⭐+${section.reputationBonus} reputazione`;
                                 }
                             }
 
@@ -3777,24 +3793,17 @@ async function loadLeaderboard() {
                                      class="section-image" 
                                      alt="Classifica"
                                      onload="console.log('✅ Immagine leaderboard caricata!');"
-                                     onerror="console.error('❌ Immagine leaderboard non trovata:', this.src); this.style.display='none'; this.nextElementSibling.style.background='linear-gradient(135deg, #1a1a1a, #0a0a0a)'; this.nextElementSibling.innerHTML='<div style=text-align:center;padding-top:100px><div style=font-size:4rem>🏆</div><h2 style=font-family:Orbitron;font-size:2rem;color:#ffd700;margin-top:15px>CLASSIFICA</h2></div>'">
-                                <div class="section-image-overlay">
-                                    <h2 class="section-title-overlay">🏆 CLASSIFICA</h2>
-                                </div>
+                                     onerror="console.error('❌ Immagine leaderboard non trovata:', this.src); this.style.display='none'; this.parentElement.style.background='linear-gradient(135deg, #1a1a1a, #0a0a0a)'; this.parentElement.innerHTML='<div style=text-align:center;padding-top:100px><div style=font-size:4rem>🏆</div></div>'">
                             </div>
 
                             <!-- Stats laterale DX -->
                             <div class="side-stats">`;
 
-                // Indicatore prossimo aggiornamento classifica
-                if (leaderboardCache && leaderboardCacheSlot) {
-                    const nextUpdate = getNextLeaderboardUpdate();
-                    html += `
+                html += `
                                 <div class="stat-box" style="cursor: default;">
-                                    <div class="stat-label" style="font-size: 0.7rem;">PROSS. AGG.</div>
-                                    <div class="stat-value" style="font-size: 0.9rem;">${nextUpdate}</div>
-                                </div>`;
-                }
+                                    <div class="stat-label" style="font-size: 0.65rem;">AGGIORNAMENTO</div>
+                                    <div class="stat-value" style="font-size: 0.75rem; line-height: 1.2;">00:00<br>08:00<br>16:00</div>
+                                </div>
 
                 html += `
                                 <div class="stat-box" style="cursor: default; ${!canChallenge ? 'background: rgba(255,51,51,0.1); border-color: var(--accent-red);' : 'background: rgba(0,255,136,0.1); border-color: var(--accent-green);'}">
