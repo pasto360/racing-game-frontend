@@ -2889,6 +2889,16 @@ async function loadLeaderboard() {
                 
                 const workshopSections = Object.keys(this.workshop);
                 
+                // ✅ Calcola quale immagine mostrare in base alla sezione attiva
+                const imageMap = {
+                    'engine': 'engine.jpg',
+                    'electronics': 'electronics.jpg',
+                    'body': 'body.jpg',
+                    'aerodynamics': 'aero.jpg'
+                };
+                const currentSectionKey = workshopSections[activeSection] || 'engine';
+                const initialImage = imageMap[currentSectionKey] || 'engine.jpg';
+                
                 container.innerHTML = `
                     <div class="page-container">
                         <div class="section-layout">
@@ -2927,10 +2937,9 @@ async function loadLeaderboard() {
                             <!-- Immagine centrale -->
                             <div class="section-image-container">
                                 <img id="workshop-image"
-                                     src="images/sections/engine.jpg" 
+                                     src="images/sections/${initialImage}" 
                                      class="section-image" 
                                      alt="Officina"
-                                     onload="console.log('✅ Immagine workshop caricata!');"
                                      onerror="console.error('❌ Immagine non trovata:', this.src); this.style.display='none'; this.parentElement.style.background='linear-gradient(135deg, #1a1a1a, #0a0a0a)'; this.parentElement.innerHTML='<div style=text-align:center;padding-top:100px><div style=font-size:4rem>🔧</div></div>'">
                             </div>
 
@@ -3044,24 +3053,6 @@ async function loadLeaderboard() {
                         }).join('')}
                     </div>
                 `;
-                
-                // ✅ IMPORTANTE: Ripristina immagine corretta dopo render
-                setTimeout(() => {
-                    const workshopSections = Object.keys(this.workshop);
-                    const imageMap = {
-                        'engine': 'engine.jpg',
-                        'electronics': 'electronics.jpg',
-                        'body': 'body.jpg',
-                        'aerodynamics': 'aero.jpg'
-                    };
-                    const currentSectionKey = workshopSections[activeSection];
-                    const correctImage = imageMap[currentSectionKey] || 'engine.jpg';
-                    
-                    const img = document.getElementById('workshop-image');
-                    if (img && img.src.indexOf(correctImage) === -1) {
-                        img.src = 'images/sections/' + correctImage;
-                    }
-                }, 10);
             },
 
             renderAvailableCars() {
