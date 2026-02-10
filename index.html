@@ -97,12 +97,15 @@
             overflow: hidden;
             border: 2px solid var(--accent-cyan);
             box-shadow: 0 0 15px rgba(0, 217, 255, 0.3);
+            background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%);
         }
 
         .section-image {
             width: 100%;
             height: 100%;
             object-fit: cover;
+            object-position: center;
+            display: block;
         }
 
         .section-image-overlay {
@@ -2905,7 +2908,8 @@ async function loadLeaderboard() {
                                 <img src="images/sections/workshop.jpg" 
                                      class="section-image" 
                                      alt="Officina"
-                                     onerror="this.style.display='none'; this.nextElementSibling.style.background='linear-gradient(135deg, #1a1a1a, #0a0a0a)'; this.nextElementSibling.innerHTML='<div style=text-align:center;padding-top:100px><div style=font-size:4rem>🔧</div><h2 style=font-family:Orbitron;font-size:2rem;color:#ffd700;margin-top:15px>OFFICINA</h2></div>'">
+                                     onload="console.log('✅ Immagine workshop caricata!');"
+                                     onerror="console.error('❌ Immagine workshop non trovata:', this.src); this.style.display='none'; this.nextElementSibling.style.background='linear-gradient(135deg, #1a1a1a, #0a0a0a)'; this.nextElementSibling.innerHTML='<div style=text-align:center;padding-top:100px><div style=font-size:4rem>🔧</div><h2 style=font-family:Orbitron;font-size:2rem;color:#ffd700;margin-top:15px>OFFICINA</h2></div>'">
                                 <div class="section-image-overlay">
                                     <h2 class="section-title-overlay">🔧 OFFICINA</h2>
                                 </div>
@@ -3772,7 +3776,8 @@ async function loadLeaderboard() {
                                 <img src="images/sections/leaderboard.jpg" 
                                      class="section-image" 
                                      alt="Classifica"
-                                     onerror="this.style.display='none'; this.nextElementSibling.style.background='linear-gradient(135deg, #1a1a1a, #0a0a0a)'; this.nextElementSibling.innerHTML='<div style=text-align:center;padding-top:100px><div style=font-size:4rem>🏆</div><h2 style=font-family:Orbitron;font-size:2rem;color:#ffd700;margin-top:15px>CLASSIFICA</h2></div>'">
+                                     onload="console.log('✅ Immagine leaderboard caricata!');"
+                                     onerror="console.error('❌ Immagine leaderboard non trovata:', this.src); this.style.display='none'; this.nextElementSibling.style.background='linear-gradient(135deg, #1a1a1a, #0a0a0a)'; this.nextElementSibling.innerHTML='<div style=text-align:center;padding-top:100px><div style=font-size:4rem>🏆</div><h2 style=font-family:Orbitron;font-size:2rem;color:#ffd700;margin-top:15px>CLASSIFICA</h2></div>'">
                                 <div class="section-image-overlay">
                                     <h2 class="section-title-overlay">🏆 CLASSIFICA</h2>
                                 </div>
