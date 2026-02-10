@@ -1964,10 +1964,7 @@ async function loadLeaderboard() {
     this.startGameLoop();
     this.checkUnlocks();
     
-    // Salvataggio automatico ogni 10 secondi (silenzioso)
-    setInterval(() => {
-        saveGameToServer(false);
-    }, 10000);
+    // ✅ Salvataggio rimosso - salva solo dopo azioni importanti
 },
 
             startGameLoop() {
@@ -2100,6 +2097,9 @@ async function loadLeaderboard() {
                     // ✅ FIX: Aggiorna solo workshop invece di tutto
                     this.updateResourcesDisplay();
                     this.renderWorkshop();
+                    
+                    // ✅ Salva dopo upgrade
+                    saveGameToServer(true);
                 } else {
                     alert('Risorse insufficienti!');
                 }
@@ -2147,6 +2147,7 @@ async function loadLeaderboard() {
                     });
                     this.showUnlockNotification(`🏎️ Acquistata: ${car.name}!`);
                     this.render();
+                    saveGameToServer(true); // ✅ Salva dopo acquisto
                 } else {
                     alert('Fondi insufficienti!');
                 }
@@ -2253,6 +2254,7 @@ async function loadLeaderboard() {
                     tech.researched = true;
                     this.showUnlockNotification(`🔬 Ricercata: ${tech.name}!`);
                     this.render();
+                    saveGameToServer(true); // ✅ Salva dopo ricerca
                 } else {
                     alert('Risorse insufficienti!');
                 }
@@ -2271,6 +2273,7 @@ async function loadLeaderboard() {
                     this.spendResources(cost);
                     car.upgrades[stat]++;
                     this.render();
+                    saveGameToServer(true); // ✅ Salva dopo upgrade
                 } else {
                     alert('Risorse insufficienti!');
                 }
@@ -2642,7 +2645,7 @@ async function loadLeaderboard() {
 
         // Scelta casuale immagine (1-10) e storia
         const imageNum = Math.floor(Math.random() * 10) + 1;
-        const imagePath = win ? `victory_${imageNum}.jpg` : `defeat_${imageNum}.jpg`;
+        const imagePath = win ? `images/sections/victory_${imageNum}.jpg` : `images/sections/defeat_${imageNum}.jpg`;
         const stories = win ? this.victoryStories : this.defeatStories;
         const randomStory = stories[Math.floor(Math.random() * stories.length)] || (win ? "Ottima gara!" : "Riprova!");
 
@@ -2751,6 +2754,9 @@ async function loadLeaderboard() {
             closeRaceModal() {
         document.getElementById('raceModal').classList.remove('active');
         document.querySelector('#raceModal .modal-content').classList.remove('win');
+        
+        // ✅ Salva dopo chiusura gara
+        saveGameToServer(true);
     },
 
             getRandomOpponentName() {
