@@ -40,43 +40,47 @@
 
         /* ===== NUOVO LAYOUT COMPATTO CON IMMAGINI ===== */
         .page-container {
-            max-width: 920px;
+            max-width: 880px;
             margin: 0 auto;
-            padding: 15px;
+            padding: 10px;
         }
 
         .section-layout {
             display: grid;
-            grid-template-columns: 120px 650px 130px;
-            gap: 10px;
-            margin-bottom: 15px;
+            grid-template-columns: 110px 600px 120px;
+            gap: 8px;
+            margin-bottom: 12px;
             align-items: start;
         }
 
         .side-menu {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 6px;
         }
 
         .side-menu-btn {
-            padding: 10px 8px;
+            padding: 12px 8px;
             font-size: 0.85rem;
             font-weight: 600;
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid var(--accent-cyan);
-            border-radius: 6px;
+            border-radius: 5px;
             color: var(--text-primary);
             cursor: pointer;
             transition: all 0.3s;
             text-align: center;
-            white-space: nowrap;
+            line-height: 1.3;
+            min-height: 42px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .side-menu-btn:hover {
             background: var(--accent-cyan);
             color: var(--bg-dark);
-            transform: translateX(3px);
+            transform: translateX(2px);
         }
 
         .side-menu-btn.active {
@@ -87,12 +91,12 @@
 
         .section-image-container {
             position: relative;
-            width: 650px;
-            height: 300px;
-            border-radius: 10px;
+            width: 600px;
+            height: 280px;
+            border-radius: 8px;
             overflow: hidden;
             border: 2px solid var(--accent-cyan);
-            box-shadow: 0 0 20px rgba(0, 217, 255, 0.3);
+            box-shadow: 0 0 15px rgba(0, 217, 255, 0.3);
         }
 
         .section-image {
@@ -110,12 +114,12 @@
             background: linear-gradient(180deg, transparent 0%, rgba(10, 10, 10, 0.7) 100%);
             display: flex;
             align-items: flex-end;
-            padding: 20px;
+            padding: 15px;
         }
 
         .section-title-overlay {
             font-family: 'Orbitron', sans-serif;
-            font-size: 2rem;
+            font-size: 1.8rem;
             font-weight: 900;
             color: var(--accent-cyan);
             text-shadow: 0 0 10px rgba(0, 217, 255, 0.5);
@@ -124,25 +128,25 @@
         .side-stats {
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 6px;
         }
 
         .stat-box {
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid var(--accent-cyan);
-            border-radius: 6px;
-            padding: 10px;
+            border-radius: 5px;
+            padding: 8px;
             text-align: center;
         }
 
         .stat-label {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             color: var(--text-secondary);
-            margin-bottom: 4px;
+            margin-bottom: 3px;
         }
 
         .stat-value {
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             font-weight: 700;
             color: var(--accent-yellow);
         }
@@ -150,17 +154,17 @@
         .upgrade-buttons-row {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
-            margin-top: 15px;
+            gap: 8px;
+            margin-top: 12px;
         }
 
         .upgrade-btn-compact {
-            padding: 12px 10px;
-            font-size: 0.85rem;
+            padding: 10px 8px;
+            font-size: 0.8rem;
             font-weight: 600;
             background: rgba(255, 215, 0, 0.1);
             border: 2px solid var(--accent-yellow);
-            border-radius: 8px;
+            border-radius: 6px;
             color: var(--text-primary);
             cursor: pointer;
             transition: all 0.3s;
@@ -182,12 +186,12 @@
         @media (max-width: 1024px) {
             .section-layout {
                 grid-template-columns: 1fr;
-                gap: 10px;
+                gap: 8px;
             }
 
             .section-image-container {
                 width: 100%;
-                height: 250px;
+                height: 220px;
             }
 
             .side-menu {
@@ -197,7 +201,7 @@
             }
 
             .side-menu-btn {
-                min-width: 100px;
+                min-width: 90px;
             }
 
             .side-stats {
@@ -206,7 +210,7 @@
             }
 
             .stat-box {
-                min-width: 100px;
+                min-width: 90px;
             }
 
             .upgrade-buttons-row {
@@ -214,7 +218,7 @@
             }
 
             .section-title-overlay {
-                font-size: 1.5rem;
+                font-size: 1.3rem;
             }
         }
 
@@ -2937,14 +2941,14 @@ async function loadLeaderboard() {
                             }
 
                             return `
-                                <div class="workshop-detail" id="workshop-${key}" style="display: ${idx === 0 ? 'block' : 'none'}; margin-top: 20px;">
-                                    <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 10px; border: 2px solid var(--accent-cyan);">
-                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                <div class="workshop-detail" id="workshop-${key}" style="display: ${idx === 0 ? 'block' : 'none'}; margin-top: 12px;">
+                                    <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; border: 2px solid var(--accent-cyan);">
+                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                                             <div>
-                                                <h3 style="font-family: Orbitron; font-size: 1.5rem; color: var(--accent-cyan); margin-bottom: 5px;">
+                                                <h3 style="font-family: Orbitron; font-size: 1.3rem; color: var(--accent-cyan); margin-bottom: 4px;">
                                                     ${section.icon} ${section.name}
                                                 </h3>
-                                                <div style="font-size: 1.2rem; font-weight: 700; color: var(--accent-yellow);">
+                                                <div style="font-size: 1.1rem; font-weight: 700; color: var(--accent-yellow);">
                                                     Livello ${section.level}/${section.maxLevel}
                                                 </div>
                                             </div>
@@ -2952,7 +2956,7 @@ async function loadLeaderboard() {
                                                 <button 
                                                     class="upgrade-btn-compact" 
                                                     onclick="game.upgradeWorkshop('${key}')"
-                                                    style="min-width: 150px; height: 50px;"
+                                                    style="min-width: 130px; height: 45px;"
                                                     ${!canUpgrade ? 'disabled' : ''}>
                                                     ${section.level < section.maxLevel ? '⬆️ UPGRADE' : '✓ MAX'}
                                                 </button>
@@ -2960,30 +2964,30 @@ async function loadLeaderboard() {
                                         </div>
 
                                         ${section.level > 0 && production ? `
-                                            <div style="background: rgba(0,255,136,0.1); padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid var(--accent-green);">
-                                                <strong style="color: var(--accent-green);">📊 Produzione attuale:</strong> ${production}
+                                            <div style="background: rgba(0,255,136,0.1); padding: 12px; border-radius: 6px; margin-bottom: 12px; border: 1px solid var(--accent-green);">
+                                                <strong style="color: var(--accent-green);">📊 Produzione:</strong> ${production}
                                             </div>
                                         ` : ''}
 
                                         ${!locked && section.level < section.maxLevel ? `
-                                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                                                <div style="background: rgba(0,217,255,0.1); padding: 12px; border-radius: 8px; border: 1px solid var(--accent-cyan);">
-                                                    <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 5px;">Prossimo livello:</div>
-                                                    <div style="font-weight: 700; color: var(--accent-cyan);">${nextLevelBonus || 'Bonus speciale'}</div>
+                                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                                <div style="background: rgba(0,217,255,0.1); padding: 10px; border-radius: 6px; border: 1px solid var(--accent-cyan);">
+                                                    <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 4px;">Prossimo livello</div>
+                                                    <div style="font-weight: 700; color: var(--accent-cyan); font-size: 0.85rem; white-space: nowrap;">${nextLevelBonus || 'Bonus'}</div>
                                                 </div>
-                                                <div style="background: rgba(255,215,0,0.1); padding: 12px; border-radius: 8px; border: 1px solid var(--accent-yellow);">
-                                                    <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 5px;">Costo:</div>
-                                                    <div style="font-weight: 700; color: var(--accent-yellow);">
+                                                <div style="background: rgba(255,215,0,0.1); padding: 10px; border-radius: 6px; border: 1px solid var(--accent-yellow);">
+                                                    <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 4px;">Costo</div>
+                                                    <div style="font-weight: 700; color: var(--accent-yellow); font-size: 0.85rem; white-space: nowrap;">
                                                         ${Object.keys(cost).map(res => 
-                                                            `${this.resources[res].icon} ${cost[res]}`
-                                                        ).join(' • ')}
+                                                            `${this.resources[res].icon}${cost[res]}`
+                                                        ).join(' ')}
                                                     </div>
                                                 </div>
                                             </div>
                                         ` : locked ? `
-                                            <div style="text-align: center; padding: 20px; background: rgba(255,51,51,0.1); border-radius: 8px; border: 1px solid var(--accent-red);">
-                                                <div style="font-size: 1.2rem; margin-bottom: 10px;">🔒 BLOCCATO</div>
-                                                <div style="color: var(--text-secondary);">
+                                            <div style="text-align: center; padding: 15px; background: rgba(255,51,51,0.1); border-radius: 6px; border: 1px solid var(--accent-red);">
+                                                <div style="font-size: 1.1rem; margin-bottom: 8px;">🔒 BLOCCATO</div>
+                                                <div style="color: var(--text-secondary); font-size: 0.85rem;">
                                                     Richiede: ${Object.keys(section.unlockCondition).map(res =>
                                                         `${this.resources[res].icon} ${section.unlockCondition[res]}`
                                                     ).join(', ')}
@@ -3748,7 +3752,7 @@ async function loadLeaderboard() {
 
                             <!-- Immagine centrale -->
                             <div class="section-image-container">
-                                <img src="images/sections/leaderboard.svg" class="section-image" alt="Classifica">
+                                <img src="images/sections/leaderboard.jpg" class="section-image" alt="Classifica">
                                 <div class="section-image-overlay">
                                     <h2 class="section-title-overlay">🏆 CLASSIFICA</h2>
                                 </div>
