@@ -2094,7 +2094,9 @@ async function loadLeaderboard() {
                         );
                     }
                     
-                    this.render();
+                    // ✅ FIX: Aggiorna solo workshop invece di tutto
+                    this.updateResourcesDisplay();
+                    this.renderWorkshop();
                 } else {
                     alert('Risorse insufficienti!');
                 }
@@ -2854,6 +2856,16 @@ async function loadLeaderboard() {
             renderWorkshop() {
                 const container = document.getElementById('workshop');
                 
+                // ✅ Memorizza quale sezione era aperta
+                let activeSection = 0;
+                const activeDetail = document.querySelector('.workshop-detail[style*="display: block"]');
+                if (activeDetail) {
+                    const activeSections = document.querySelectorAll('.workshop-detail');
+                    activeSections.forEach((el, idx) => {
+                        if (el.style.display === 'block') activeSection = idx;
+                    });
+                }
+                
                 // Calcola stats totali
                 const totalProduction = Object.keys(this.workshop).reduce((acc, key) => {
                     const section = this.workshop[key];
@@ -2875,12 +2887,14 @@ async function loadLeaderboard() {
                                 ${workshopSections.map((key, idx) => {
                                     const section = this.workshop[key];
                                     return `
-                                        <button class="side-menu-btn ${idx === 0 ? 'active' : ''}" 
-                                                onclick="document.querySelectorAll('.workshop-detail').forEach(d => d.style.display='none'); 
-                                                         document.getElementById('workshop-${key}').style.display='block';
-                                                         document.querySelectorAll('.side-menu-btn').forEach(b => b.classList.remove('active'));
-                                                         this.classList.add('active');">
-                                            ${section.icon} ${section.name}
+                                        <button class="side-menu-btn ${idx === activeSection ? 'active' : ''}" 
+                                                onclick="
+                                                    document.querySelectorAll('.workshop-detail').forEach(d => d.style.display='none'); 
+                                                    document.getElementById('workshop-${key}').style.display='block';
+                                                    document.querySelectorAll('.side-menu-btn').forEach(b => b.classList.remove('active'));
+                                                    this.classList.add('active');
+                                                ">
+                                            ${section.icon}<br>${section.name.split(' ').pop()}
                                         </button>
                                     `;
                                 }).join('')}
@@ -2888,7 +2902,10 @@ async function loadLeaderboard() {
 
                             <!-- Immagine centrale -->
                             <div class="section-image-container">
-                                <img src="images/sections/workshop.jpg" class="section-image" alt="Officina">
+                                <img src="images/sections/workshop.jpg" 
+                                     class="section-image" 
+                                     alt="Officina"
+                                     onerror="this.style.display='none'; this.nextElementSibling.style.background='linear-gradient(135deg, #1a1a1a, #0a0a0a)'; this.nextElementSibling.innerHTML='<div style=text-align:center;padding-top:100px><div style=font-size:4rem>🔧</div><h2 style=font-family:Orbitron;font-size:2rem;color:#ffd700;margin-top:15px>OFFICINA</h2></div>'">
                                 <div class="section-image-overlay">
                                     <h2 class="section-title-overlay">🔧 OFFICINA</h2>
                                 </div>
@@ -2941,7 +2958,7 @@ async function loadLeaderboard() {
                             }
 
                             return `
-                                <div class="workshop-detail" id="workshop-${key}" style="display: ${idx === 0 ? 'block' : 'none'}; margin-top: 12px;">
+                                <div class="workshop-detail" id="workshop-${key}" style="display: ${idx === activeSection ? 'block' : 'none'}; margin-top: 12px;">
                                     <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; border: 2px solid var(--accent-cyan);">
                                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                                             <div>
@@ -3752,7 +3769,10 @@ async function loadLeaderboard() {
 
                             <!-- Immagine centrale -->
                             <div class="section-image-container">
-                                <img src="images/sections/leaderboard.jpg" class="section-image" alt="Classifica">
+                                <img src="images/sections/leaderboard.jpg" 
+                                     class="section-image" 
+                                     alt="Classifica"
+                                     onerror="this.style.display='none'; this.nextElementSibling.style.background='linear-gradient(135deg, #1a1a1a, #0a0a0a)'; this.nextElementSibling.innerHTML='<div style=text-align:center;padding-top:100px><div style=font-size:4rem>🏆</div><h2 style=font-family:Orbitron;font-size:2rem;color:#ffd700;margin-top:15px>CLASSIFICA</h2></div>'">
                                 <div class="section-image-overlay">
                                     <h2 class="section-title-overlay">🏆 CLASSIFICA</h2>
                                 </div>
