@@ -2661,61 +2661,57 @@ async function loadLeaderboard() {
             return value;
         };
 
-        // COSTRUZIONE HTML - COMPATTO E SENZA SCROLLBAR
+        // COSTRUZIONE HTML - STILE PVP CENTRATO
         comparison.innerHTML = `
-            <div style="display: flex; flex-direction: column; gap: 12px;">
-                
-                <!-- IMMAGINE PIÙ PICCOLA -->
-                <img src="${imagePath}" 
-                     alt="${win ? 'Vittoria' : 'Sconfitta'}" 
-                     onerror="this.style.display='none';"
-                     style="width: 100%; height: 160px; object-fit: cover; border-radius: 10px;">
-                
-                <!-- STORIA COMPATTA -->
-                <div style="font-size: 0.85rem; line-height: 1.4; color: var(--text-secondary); text-align: center; font-style: italic; padding: 0 10px;">
-                    "${randomStory}"
-                </div>
-                
-                <!-- DUE AUTO COMPATTE -->
-                <div style="display: grid; grid-template-columns: 50% 50%; gap: 0;">
-                    
-                    <!-- AUTO TUA -->
-                    <div style="padding-right: 10px;">
-                        <div style="color: var(--accent-cyan); margin-bottom: 8px; font-size: 1rem; font-weight: 700;">${playerCar.name}</div>
-                        <div class="race-car-stat" style="font-size: 0.85rem; margin-bottom: 4px;"><span>Motore:</span> <span>${getStatWithTech(playerCar.stats.engine, playerCar.upgrades.engine, 'engine')}</span></div>
-                        <div class="race-car-stat" style="font-size: 0.85rem; margin-bottom: 4px;"><span>Carrozzeria:</span> <span>${getStatWithTech(playerCar.stats.body, playerCar.upgrades.body, 'body')}</span></div>
-                        <div class="race-car-stat" style="font-size: 0.85rem; margin-bottom: 4px;"><span>Elettronica:</span> <span>${getStatWithTech(playerCar.stats.electronics, playerCar.upgrades.electronics, 'electronics')}</span></div>
-                        <div class="race-car-stat" style="font-size: 0.85rem; margin-bottom: 4px;"><span>Aerodinamica:</span> <span>${getStatWithTech(playerCar.stats.aero, playerCar.upgrades.aero, 'aero')}</span></div>
-                        <div style="margin-top: 8px; border-top: 2px solid var(--accent-cyan); padding-top: 8px; font-weight: 700; font-size: 0.9rem;">
-                            POTENZA: ${Math.floor(playerPower)} HP
-                        </div>
-                        ${win && rewards ? `
-                            <div style="font-size: 0.75rem; color: var(--accent-green); margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.1);">
-                                ${rewards.money ? `💰 +${rewards.money}` : ''} 
-                                ${rewards.reputation ? `⭐ +${rewards.reputation}` : ''} 
-                                ${rewards.parts ? `🔩 +${rewards.parts}` : ''}
-                                ${rewards.championshipBonus ? `🏆 +${rewards.championshipBonus}€` : ''}
-                            </div>
-                        ` : ''}
-                    </div>
-                    
-                    <!-- AUTO AVVERSARIO -->
-                    <div style="padding-left: 10px;">
-                        <div style="color: var(--accent-red); margin-bottom: 8px; font-size: 1rem; font-weight: 700;">${opponent.name}</div>
-                        <div class="race-car-stat" style="font-size: 0.85rem; margin-bottom: 4px;"><span>Motore:</span> <span>${opponent.stats.engine}</span></div>
-                        <div class="race-car-stat" style="font-size: 0.85rem; margin-bottom: 4px;"><span>Carrozzeria:</span> <span>${opponent.stats.body}</span></div>
-                        <div class="race-car-stat" style="font-size: 0.85rem; margin-bottom: 4px;"><span>Elettronica:</span> <span>${opponent.stats.electronics}</span></div>
-                        <div class="race-car-stat" style="font-size: 0.85rem; margin-bottom: 4px;"><span>Aerodinamica:</span> <span>${opponent.stats.aero}</span></div>
-                        <div style="margin-top: 8px; border-top: 2px solid var(--accent-red); padding-top: 8px; font-weight: 700; font-size: 0.9rem;">
-                            POTENZA: ${Math.floor(opponentPower)} HP
-                        </div>
-                    </div>
-                    
-                </div>
+            <div style="text-align: center; margin-bottom: 15px;">
+                <h3 style="color: var(--accent-cyan); margin-bottom: 10px;">🏎️ TUA AUTO</h3>
+                <p style="font-size: 1.2rem; font-weight: 700;">${playerCar.name}</p>
+                <p style="color: var(--accent-yellow); font-size: 1.5rem; font-weight: 900;">${Math.floor(playerPower)} HP</p>
+            </div>
+            <div style="text-align: center;">
+                <h3 style="color: var(--accent-red); margin-bottom: 10px;">🏎️ AVVERSARIO</h3>
+                <p style="font-size: 1.2rem; font-weight: 700;">${opponent.name}</p>
+                <p style="color: var(--accent-yellow); font-size: 1.5rem; font-weight: 900;">${Math.floor(opponentPower)} HP</p>
             </div>
         `;
 
-        rewardsDiv.style.display = 'none';
+        // Rewards - STILE PVP
+        if (win && rewards) {
+            rewardsDiv.style.display = 'block';
+            rewardsDiv.innerHTML = `
+                <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 10px; margin: 20px 0;">
+                    <h3 style="text-align: center; margin-bottom: 15px; color: var(--accent-green);">🏆 BOTTINO</h3>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; text-align: center;">
+                        ${rewards.money ? `
+                            <div>
+                                <div style="font-size: 0.85rem; color: #a0a0a0;">Denaro</div>
+                                <div style="font-size: 1.5rem; font-weight: 900; color: var(--accent-green);">+${rewards.money}</div>
+                            </div>
+                        ` : ''}
+                        ${rewards.reputation ? `
+                            <div>
+                                <div style="font-size: 0.85rem; color: #a0a0a0;">Reputazione</div>
+                                <div style="font-size: 1.5rem; font-weight: 900; color: var(--accent-green);">+${rewards.reputation}</div>
+                            </div>
+                        ` : ''}
+                        ${rewards.parts ? `
+                            <div>
+                                <div style="font-size: 0.85rem; color: #a0a0a0;">Parti</div>
+                                <div style="font-size: 1.5rem; font-weight: 900; color: var(--accent-green);">+${rewards.parts}</div>
+                            </div>
+                        ` : ''}
+                        ${rewards.championshipBonus ? `
+                            <div>
+                                <div style="font-size: 0.85rem; color: #a0a0a0;">Bonus Campionato</div>
+                                <div style="font-size: 1.5rem; font-weight: 900; color: var(--accent-green);">+${rewards.championshipBonus}€</div>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        } else {
+            rewardsDiv.style.display = 'none';
+        }
 
         if (isChampionship && damage > 0) {
             damageSection.innerHTML = `
@@ -2920,7 +2916,7 @@ async function loadLeaderboard() {
                             <!-- Immagine centrale -->
                             <div class="section-image-container">
                                 <img id="workshop-image"
-                                     src="images/sections/${workshopSections[activeSection] ? (workshopSections[activeSection] === 'engine' ? 'engine.jpg' : workshopSections[activeSection] === 'electronics' ? 'electronics.jpg' : workshopSections[activeSection] === 'body' ? 'body.jpg' : workshopSections[activeSection] === 'aerodynamics' ? 'aero.jpg' : 'workshop.jpg') : 'workshop.jpg'}" 
+                                     src="images/sections/engine.jpg" 
                                      class="section-image" 
                                      alt="Officina"
                                      onload="console.log('✅ Immagine workshop caricata!');"
