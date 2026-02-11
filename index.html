@@ -2650,9 +2650,10 @@ async function loadLeaderboard() {
         result.textContent = win ? '🏆 VITTORIA!' : '💥 SCONFITTA!';
         result.className = `modal-title ${win ? 'win' : 'lose'}`;
 
-        // Scelta casuale immagine (1-10) e storia
-        const imageNum = Math.floor(Math.random() * 10) + 1;
+        // Scelta casuale immagine (1-9) e storia
+        const imageNum = Math.floor(Math.random() * 9) + 1;
         const imagePath = win ? `images/sections/victory_${imageNum}.jpg` : `images/sections/defeat_${imageNum}.jpg`;
+        console.log(`🎨 Carico immagine: ${imagePath}`);
         const stories = win ? this.victoryStories : this.defeatStories;
         const randomStory = stories[Math.floor(Math.random() * stories.length)] || (win ? "Ottima gara!" : "Riprova!");
 
