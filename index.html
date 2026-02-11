@@ -1139,7 +1139,7 @@
             </button>
             <button class="nav-btn" onclick="game.changePage('garage')">
                 <span class="icon">🏎️</span>
-                Garage
+                Garage + Team
             </button>
             <button class="nav-btn" onclick="game.changePage('dealer')">
                 <span class="icon">🏪</span>
@@ -2099,17 +2099,61 @@ async function loadLeaderboard() {
                         );
                     }
                     
-                    // ✅ FIX: Aggiorna solo workshop invece di tutto
+                    // ✅ Aggiorna SOLO le risorse
                     this.updateResourcesDisplay();
                     
-                    // ✅ IMPORTANTE: Prima ri-renderizza, POI salva
-                    this.renderWorkshop();
+                    // ✅ Aggiorna SOLO i livelli nel DOM (senza re-render completo)
+                    this.updateWorkshopLevelsDisplay();
                     
-                    // ✅ Salva dopo upgrade (ma dopo render)
+                    // ✅ Salva dopo upgrade
                     saveGameToServer(true);
                 } else {
                     alert('Risorse insufficienti!');
                 }
+            },
+            
+            updateWorkshopLevelsDisplay() {
+                // Aggiorna il totale livelli nella sidebar
+                const workshopSections = Object.keys(this.workshop);
+                const totalLevels = workshopSections.reduce((sum, k) => sum + this.workshop[k].level, 0);
+                
+                const totalLevelBox = document.querySelector('.side-stats .stat-box .stat-value');
+                if (totalLevelBox && totalLevelBox.textContent !== totalLevels.toString()) {
+                    totalLevelBox.textContent = totalLevels;
+                }
+                
+                // Aggiorna il livello nella sezione dettaglio attiva
+                const activeDetail = document.querySelector('.workshop-detail[style*="display: block"]');
+                if (activeDetail) {
+                    const detailId = activeDetail.id; // es: "workshop-engine"
+                    const sectionKey = detailId.replace('workshop-', ''); // "engine"
+                    const section = this.workshop[sectionKey];
+                    
+                    if (section) {
+                        // Trova e aggiorna il testo del livello
+                        const levelDiv = activeDetail.querySelector('div[style*="font-size: 1.1rem"][style*="font-weight: 700"]');
+                        if (levelDiv) {
+                            levelDiv.textContent = `Livello ${section.level}/${section.maxLevel}`;
+                        }
+                        
+                        // Aggiorna pulsante se raggiunto max level
+                        const upgradeBtn = activeDetail.querySelector('.upgrade-btn-compact');
+                        if (upgradeBtn && section.level >= section.maxLevel) {
+                            upgradeBtn.textContent = '✓ MAX';
+                            upgradeBtn.disabled = true;
+                        }
+                        
+                        // Aggiorna costo e prossimo livello se disponibile
+                        const cost = this.getUpgradeCost(section);
+                        const canUpgrade = this.canAfford(cost) && section.level < section.maxLevel;
+                        
+                        if (upgradeBtn) {
+                            upgradeBtn.disabled = !canUpgrade;
+                        }
+                    }
+                }
+                
+                console.log('📊 Livelli aggiornati nel DOM senza re-render');
             },
 
             getUpgradeCost(section) {
@@ -2678,7 +2722,21 @@ async function loadLeaderboard() {
             <div style="grid-column: 1 / -1; margin-bottom: 15px;">
                 <img src="${imagePath}" 
                      alt="${win ? 'Vittoria' : 'Sconfitta'}" 
-                     onerror="this.style.display='none';"
+                     onerror="
+                        console.error('❌ Immagine non trovata:', this.src);
+                        // Prova altre immagini come fallback
+                        const num = parseInt(this.src.match(/_(\\d+)\\.jpg/)?.[1] || 1);
+                        const isVictory = this.src.includes('victory');
+                        const prefix = isVictory ? 'victory' : 'defeat';
+                        
+                        // Prova immagine 1 come fallback
+                        if (num !== 1) {
+                            this.src = 'images/sections/' + prefix + '_1.jpg';
+                        } else {
+                            // Se anche _1 fallisce, nascondi
+                            this.style.display='none';
+                        }
+                     "
                      style="width: 100%; height: 180px; object-fit: cover; border-radius: 10px; margin-bottom: 10px;">
                 <div style="font-size: 0.9rem; line-height: 1.4; color: var(--text-secondary); text-align: center; font-style: italic; padding: 0 15px;">
                     "${randomStory}"
