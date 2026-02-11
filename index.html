@@ -1139,7 +1139,7 @@
             </button>
             <button class="nav-btn" onclick="game.changePage('garage')">
                 <span class="icon">🏎️</span>
-                Garage + Team
+                Garage
             </button>
             <button class="nav-btn" onclick="game.changePage('dealer')">
                 <span class="icon">🏪</span>
@@ -2880,6 +2880,14 @@ async function loadLeaderboard() {
 
             renderWorkshop() {
                 const container = document.getElementById('workshop');
+                
+                // 🐛 DEBUG: Vedo i livelli prima di renderizzare
+                console.log('📊 Livelli workshop:', {
+                    engine: this.workshop.engine?.level,
+                    electronics: this.workshop.electronics?.level,
+                    body: this.workshop.body?.level,
+                    aerodynamics: this.workshop.aerodynamics?.level
+                });
                 
                 // ✅ Memorizza quale sezione era aperta
                 let activeSection = 0;
