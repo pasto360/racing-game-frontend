@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Istruzioni - Garage Racing Manager</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-dark: #0a0a0a;
+            --bg-darker: #050505;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --accent-cyan: #00d9ff;
+            --accent-yellow: #ffd700;
+            --accent-green: #00ff88;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-dark), var(--bg-darker));
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            text-align: center;
+            color: var(--accent-cyan);
+            font-size: 2.5rem;
+            margin-bottom: 40px;
+            text-shadow: 0 0 20px rgba(0, 217, 255, 0.5);
+        }
+
+        h2 {
+            font-family: 'Orbitron', sans-serif;
+            color: var(--accent-yellow);
+            font-size: 1.8rem;
+            margin-top: 40px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid var(--accent-yellow);
+            padding-bottom: 10px;
+        }
+
+        h3 {
+            color: var(--accent-cyan);
+            font-size: 1.3rem;
+            margin-top: 25px;
+            margin-bottom: 10px;
+        }
+
+        p {
+            margin-bottom: 15px;
+            color: var(--text-secondary);
+        }
+
+        ul {
+            margin-left: 30px;
+            margin-bottom: 20px;
+        }
+
+        li {
+            margin-bottom: 10px;
+            color: var(--text-secondary);
+        }
+
+        strong {
+            color: var(--accent-green);
+        }
+
+        .back-btn {
+            display: inline-block;
+            padding: 12px 30px;
+            background: linear-gradient(135deg, var(--accent-cyan), #0099cc);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 700;
+            margin-top: 40px;
+            transition: transform 0.2s;
+        }
+
+        .back-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .tip-box {
+            background: rgba(0, 217, 255, 0.1);
+            border-left: 4px solid var(--accent-cyan);
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+
+        .warning-box {
+            background: rgba(255, 215, 0, 0.1);
+            border-left: 4px solid var(--accent-yellow);
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📖 COME SI GIOCA</h1>
+
+        <h2>🎯 OBIETTIVO</h2>
+        <p>Costruisci il tuo impero automobilistico! Acquista auto, potenzia l'officina, ricerca tecnologie e domina le classifiche mondiali.</p>
+
+        <h2>💰 RISORSE</h2>
+        <ul>
+            <li><strong>Denaro (💰):</strong> Per comprare auto e upgrade</li>
+            <li><strong>Parti (🔩):</strong> Per potenziare auto e tecnologie</li>
+            <li><strong>Reputazione (⭐):</strong> Sblocca contenuti premium</li>
+        </ul>
+
+        <h2>🔧 OFFICINA</h2>
+        <p>Produci risorse automaticamente! Ogni reparto genera denaro/parti ogni ora:</p>
+        <ul>
+            <li><strong>Reparto Motori:</strong> Produce denaro</li>
+            <li><strong>Elettronica:</strong> Produce parti</li>
+            <li><strong>Carrozzeria:</strong> Bonus reputazione</li>
+            <li><strong>Aerodinamica:</strong> Bonus reputazione</li>
+        </ul>
+        
+        <div class="tip-box">
+            <strong>💡 SUGGERIMENTO:</strong> Dopo ogni upgrade dell'officina, attendi 30 secondi affinché i bonus di produzione vengano applicati!
+        </div>
+
+        <h2>🏎️ AUTO & UPGRADE</h2>
+        <p>Compra auto nel <strong>Concessionario</strong>, poi potenziale nel <strong>Garage</strong>:</p>
+        <ul>
+            <li>Ogni upgrade auto = <strong>+10 HP</strong> per quella stat</li>
+            <li>Mantieni la condizione alta (ripara se danneggiata)</li>
+            <li>Assegna piloti per bonus speciali</li>
+        </ul>
+
+        <h2>🏁 GARE</h2>
+        <p><strong>Formula vittoria:</strong> HP totali tua auto > HP avversario</p>
+        
+        <h3>Tipi di gare:</h3>
+        <ul>
+            <li><strong>Gare Stradali:</strong> 4 difficoltà, premi crescenti</li>
+            <li><strong>Campionati:</strong> 5 gare consecutive, auto si danneggia progressivamente</li>
+            <li><strong>PvP:</strong> Sfida altri giocatori (1 al giorno, resetta alle 00:00)</li>
+        </ul>
+
+        <div class="warning-box">
+            <strong>⚠️ ATTENZIONE:</strong> La condizione dell'auto influenza direttamente la potenza. Un'auto al 50% di condizione ha solo il 50% della potenza totale!
+        </div>
+
+        <h2>🔬 TECNOLOGIE</h2>
+        <p>Ricerca tecnologie per bonus permanenti alle auto:</p>
+        <ul>
+            <li>Bonus specifici (es: +20 HP motore)</li>
+            <li>Bonus generali (es: +15 HP a tutte le stat)</li>
+            <li>I bonus tecnologie si applicano a TUTTE le tue auto</li>
+        </ul>
+
+        <h2>🏆 CLASSIFICA</h2>
+        <p>Scala la classifica mondiale! La classifica viene aggiornata 3 volte al giorno:</p>
+        <ul>
+            <li><strong>00:00</strong> - Aggiornamento notturno</li>
+            <li><strong>08:00</strong> - Aggiornamento mattutino</li>
+            <li><strong>16:00</strong> - Aggiornamento pomeridiano</li>
+        </ul>
+
+        <h2>💡 CONSIGLI PRO</h2>
+        <ul>
+            <li>✅ Potenzia <strong>Officina</strong> per risorse passive costanti</li>
+            <li>✅ Fai <strong>upgrade auto</strong> per vincere gare difficili</li>
+            <li>✅ <strong>Ripara auto</strong> dopo i campionati (5 gare consecutive danneggiano molto)</li>
+            <li>✅ Ricerca <strong>tecnologie</strong> per bonus permanenti su tutte le auto</li>
+            <li>✅ Sfida giocatori <strong>PvP</strong> ogni giorno per rubare risorse</li>
+            <li>✅ Le auto più costose hanno stat base più alte, ma tutte possono essere potenziate</li>
+            <li>✅ Pianifica bene gli upgrade: concentrati su una stat alla volta per massimizzare l'efficacia</li>
+        </ul>
+
+        <div class="tip-box">
+            <strong>🎮 STRATEGIA AVANZATA:</strong> Non vendere mai le auto! Anche le auto economiche diventano potenti con abbastanza upgrade e tecnologie. Costruisci una collezione!
+        </div>
+
+        <h2>🆘 SUPPORTO</h2>
+        <p>Hai trovato un bug o hai suggerimenti? Contatta il team di sviluppo attraverso il feedback nel gioco.</p>
+
+        <div style="text-align: center;">
+            <a href="index.html" class="back-btn">← Torna al Gioco</a>
+        </div>
+    </div>
+</body>
+</html>
