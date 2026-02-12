@@ -1249,7 +1249,7 @@
 
     <footer style="display: flex; justify-content: space-between; align-items: center; padding: 0 20px;">
         <span>Garage Racing Manager v5.1</span>
-        <a href="#" onclick="openInstructions(); return false;" style="color: var(--accent-cyan); text-decoration: none; cursor: pointer;">
+        <a href="istruzioni.html" target="_blank" style="color: var(--accent-cyan); text-decoration: none; cursor: pointer;">
             📖 Istruzioni
         </a>
     </footer>
@@ -1376,18 +1376,6 @@
     </div>
 
     <script>
-// Funzione globale per aprire istruzioni
-function openInstructions() {
-    console.log('📖 Apertura istruzioni...');
-    const modal = document.getElementById('instructionsModal');
-    if (modal) {
-        modal.classList.add('active');
-        console.log('✅ Modal istruzioni aperto');
-    } else {
-        console.error('❌ Modal instructionsModal non trovato!');
-    }
-}
-
 // ===== CONFIGURAZIONE CLOUD =====
 const API_URL = 'https://racing-game-backend-production-a5dd.up.railway.app';
 let authToken = localStorage.getItem('authToken');
