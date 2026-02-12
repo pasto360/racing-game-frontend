@@ -1200,6 +1200,7 @@
 
         <div id="page-workshop" class="page active">
             <h2 class="section-title">🔧 Reparti Officina</h2>
+            <div id="workshop-queue-container" style="display: none;"></div>
             <div class="workshop-grid" id="workshop"></div>
         </div>
 
@@ -1360,12 +1361,17 @@
 
     <footer style="display: flex; justify-content: space-between; align-items: center; padding: 0 20px;">
         <span>Garage Racing Manager v5.1</span>
-        <a href="#" onclick="game.showInstructions(); return false;" style="color: var(--accent-cyan); text-decoration: none; cursor: pointer;">
+        <a href="#" onclick="openInstructions(); return false;" style="color: var(--accent-cyan); text-decoration: none; cursor: pointer;">
             📖 Istruzioni
         </a>
     </footer>
 
     <script>
+// Funzione globale per aprire istruzioni
+function openInstructions() {
+    document.getElementById('instructionsModal').classList.add('active');
+}
+
 // ===== CONFIGURAZIONE CLOUD =====
 const API_URL = 'https://racing-game-backend-production-a5dd.up.railway.app';
 let authToken = localStorage.getItem('authToken');
@@ -2014,6 +2020,9 @@ async function loadLeaderboard() {
         this.defeatStories = ["Sconfitta amara, ma si impara dagli errori."];
     }
     
+    // ✅ Sistema code upgrade con timer
+    this.workshopQueue = []; // Array di {sectionKey, endTime, level}
+    
     const loaded = await loadGameFromServer();
     
     if (!loaded) {
@@ -2045,7 +2054,13 @@ async function loadLeaderboard() {
             this.lastTickTime = now;
 
             this.updateResources(deltaSeconds);
+            this.processWorkshopQueue(); // ✅ Controlla timer upgrade
             this.render();
+            
+            // ✅ Aggiorna UI coda upgrade se visibile
+            if (this.currentPage === 'workshop' && this.workshopQueue.length > 0) {
+                this.renderWorkshopQueue();
+            }
         }, 1000);
     },
 
@@ -2144,38 +2159,113 @@ async function loadLeaderboard() {
                 const cost = this.getUpgradeCost(section);
                 
                 if (this.canAfford(cost)) {
+                    // ✅ Spendi risorse SUBITO
                     this.spendResources(cost);
+                    
+                    // ✅ Aumenta livello SUBITO (visibile nell'UI)
                     section.level++;
                     
-                    console.log(`🔧 Upgrade ${sectionKey}: livello ora è ${section.level}/${section.maxLevel}`);
+                    console.log(`🔧 Upgrade ${sectionKey}: livello ${section.level}/${section.maxLevel} - timer 30s per bonus produzione`);
                     
-                    if (section.reputationBonus) {
-                        const bonus = section.reputationBonus * section.level;
-                        this.resources.reputation.value = Math.min(
-                            this.resources.reputation.value + bonus,
-                            this.resources.reputation.max
-                        );
-                    }
+                    // ✅ Aggiungi alla coda con timer 30 secondi
+                    const endTime = Date.now() + 30000; // 30 secondi
+                    this.workshopQueue.push({
+                        sectionKey,
+                        endTime,
+                        level: section.level,
+                        reputationBonus: section.reputationBonus,
+                        oneTimeBonus: section.oneTimeBonus
+                    });
                     
-                    if (section.oneTimeBonus && section.oneTimeBonus.reputation) {
-                        const bonus = section.oneTimeBonus.reputation;
-                        this.resources.reputation.value = Math.min(
-                            this.resources.reputation.value + bonus,
-                            this.resources.reputation.max
-                        );
-                    }
-                    
-                    // ✅ Aggiorna SOLO le risorse
+                    // ✅ Aggiorna UI
                     this.renderResources();
-                    
-                    // ✅ Aggiorna SOLO i livelli nel DOM (senza re-render completo)
                     this.updateWorkshopLevelsDisplay();
+                    this.renderWorkshopQueue(); // Mostra timer
                     
-                    // ✅ Salva dopo upgrade
+                    // ✅ Salva
                     saveGameToServer(true);
                 } else {
                     alert('Risorse insufficienti!');
                 }
+            },
+            
+            processWorkshopQueue() {
+                const now = Date.now();
+                const completed = [];
+                
+                // Trova upgrade completati
+                this.workshopQueue.forEach((item, index) => {
+                    if (now >= item.endTime) {
+                        completed.push(index);
+                        
+                        // Applica bonus reputazione
+                        if (item.reputationBonus) {
+                            const bonus = item.reputationBonus * item.level;
+                            this.resources.reputation.value = Math.min(
+                                this.resources.reputation.value + bonus,
+                                this.resources.reputation.max
+                            );
+                        }
+                        
+                        if (item.oneTimeBonus && item.oneTimeBonus.reputation) {
+                            const bonus = item.oneTimeBonus.reputation;
+                            this.resources.reputation.value = Math.min(
+                                this.resources.reputation.value + bonus,
+                                this.resources.reputation.max
+                            );
+                        }
+                        
+                        console.log(`✅ Upgrade ${item.sectionKey} completato! Bonus applicati.`);
+                    }
+                });
+                
+                // Rimuovi dalla coda (in ordine inverso per non alterare indici)
+                completed.reverse().forEach(index => {
+                    this.workshopQueue.splice(index, 1);
+                });
+                
+                // Aggiorna UI se qualcosa è completato
+                if (completed.length > 0) {
+                    this.renderResources();
+                    this.renderWorkshopQueue();
+                }
+            },
+            
+            renderWorkshopQueue() {
+                const container = document.getElementById('workshop-queue-container');
+                if (!container) return;
+                
+                if (this.workshopQueue.length === 0) {
+                    container.style.display = 'none';
+                    return;
+                }
+                
+                container.style.display = 'block';
+                const now = Date.now();
+                
+                container.innerHTML = `
+                    <div style="background: rgba(0,217,255,0.1); border: 2px solid var(--accent-cyan); border-radius: 8px; padding: 15px; margin-bottom: 15px;">
+                        <h4 style="margin: 0 0 10px 0; color: var(--accent-cyan);">⏱️ UPGRADE IN CORSO</h4>
+                        ${this.workshopQueue.map(item => {
+                            const section = this.workshop[item.sectionKey];
+                            const timeLeft = Math.max(0, item.endTime - now);
+                            const seconds = Math.ceil(timeLeft / 1000);
+                            const progress = Math.max(0, Math.min(100, ((30000 - timeLeft) / 30000) * 100));
+                            
+                            return `
+                                <div style="margin-bottom: 10px; padding: 10px; background: rgba(0,0,0,0.3); border-radius: 6px;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                                        <span style="font-weight: 700;">${section.icon} ${section.name} Lv.${item.level}</span>
+                                        <span style="color: var(--accent-yellow); font-weight: 700;">${seconds}s</span>
+                                    </div>
+                                    <div style="width: 100%; height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden;">
+                                        <div style="width: ${progress}%; height: 100%; background: linear-gradient(90deg, var(--accent-cyan), var(--accent-green)); transition: width 0.3s;"></div>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                `;
             },
             
             updateWorkshopLevelsDisplay() {
@@ -2830,25 +2920,25 @@ async function loadLeaderboard() {
                     <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; text-align: center;">
                         ${rewards.money ? `
                             <div>
-                                <div style="font-size: 0.85rem; color: #a0a0a0;">Denaro</div>
+                                <div style="font-size: 0.85rem; color: #a0a0a0;">💰 Denaro</div>
                                 <div style="font-size: 1.5rem; font-weight: 900; color: var(--accent-green);">+${rewards.money}</div>
                             </div>
                         ` : ''}
                         ${rewards.reputation ? `
                             <div>
-                                <div style="font-size: 0.85rem; color: #a0a0a0;">Reputazione</div>
+                                <div style="font-size: 0.85rem; color: #a0a0a0;">⭐ Reputazione</div>
                                 <div style="font-size: 1.5rem; font-weight: 900; color: var(--accent-green);">+${rewards.reputation}</div>
                             </div>
                         ` : ''}
                         ${rewards.parts ? `
                             <div>
-                                <div style="font-size: 0.85rem; color: #a0a0a0;">Parti</div>
+                                <div style="font-size: 0.85rem; color: #a0a0a0;">🔩 Parti</div>
                                 <div style="font-size: 1.5rem; font-weight: 900; color: var(--accent-green);">+${rewards.parts}</div>
                             </div>
                         ` : ''}
                         ${rewards.championshipBonus ? `
                             <div>
-                                <div style="font-size: 0.85rem; color: #a0a0a0;">Bonus Campionato</div>
+                                <div style="font-size: 0.85rem; color: #a0a0a0;">🏆 Bonus Campionato</div>
                                 <div style="font-size: 1.5rem; font-weight: 900; color: var(--accent-green);">+${rewards.championshipBonus}€</div>
                             </div>
                         ` : ''}
@@ -4182,18 +4272,18 @@ async function loadLeaderboard() {
                 const color = win ? 'var(--accent-green)' : 'var(--accent-red)';
                 rewardsDiv.innerHTML = `
                     <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 10px; margin: 20px 0;">
-                        <h3 style="text-align: center; margin-bottom: 15px; color: ${color};">${win ? 'BOTTINO' : 'PERDITE'}</h3>
+                        <h3 style="text-align: center; margin-bottom: 15px; color: ${color};">${win ? '🏆 BOTTINO' : '💥 PERDITE'}</h3>
                         <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; text-align: center;">
                             <div>
-                                <div style="font-size: 0.85rem; color: #a0a0a0;">Denaro</div>
+                                <div style="font-size: 0.85rem; color: #a0a0a0;">💰 Denaro</div>
                                 <div style="font-size: 1.5rem; font-weight: 900; color: ${color};">${sign}${rewards.money}</div>
                             </div>
                             <div>
-                                <div style="font-size: 0.85rem; color: #a0a0a0;">Parti</div>
+                                <div style="font-size: 0.85rem; color: #a0a0a0;">🔩 Parti</div>
                                 <div style="font-size: 1.5rem; font-weight: 900; color: ${color};">${sign}${rewards.parts}</div>
                             </div>
                             <div>
-                                <div style="font-size: 0.85rem; color: #a0a0a0;">Reputazione</div>
+                                <div style="font-size: 0.85rem; color: #a0a0a0;">⭐ Reputazione</div>
                                 <div style="font-size: 1.5rem; font-weight: 900; color: ${color};">${sign}${rewards.reputation}</div>
                             </div>
                         </div>
