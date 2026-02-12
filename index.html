@@ -1139,7 +1139,7 @@
             </button>
             <button class="nav-btn" onclick="game.changePage('garage')">
                 <span class="icon">🏎️</span>
-                Garage + Team
+                Garage
             </button>
             <button class="nav-btn" onclick="game.changePage('dealer')">
                 <span class="icon">🏪</span>
@@ -1278,6 +1278,69 @@
                         <div style="font-size: 1.1rem; font-weight: 700; color: var(--accent-green);">+5%</div>
                         <div style="font-size: 0.8rem; margin-top: 5px;">delle sue risorse</div>
                     </div>
+
+    <!-- Modal Istruzioni -->
+    <div class="modal" id="instructionsModal">
+        <div class="modal-content" style="max-width: 700px; max-height: 80vh; overflow-y: auto;">
+            <h2 style="font-family: Orbitron; text-align: center; color: var(--accent-cyan); margin-bottom: 20px;">📖 COME SI GIOCA</h2>
+            
+            <div style="line-height: 1.6; color: var(--text-secondary);">
+                <h3 style="color: var(--accent-yellow); margin-top: 20px;">🎯 OBIETTIVO</h3>
+                <p>Costruisci il tuo impero automobilistico! Acquista auto, potenzia l'officina, ricerca tecnologie e domina le classifiche mondiali.</p>
+                
+                <h3 style="color: var(--accent-yellow); margin-top: 20px;">💰 RISORSE</h3>
+                <ul style="margin-left: 20px;">
+                    <li><strong>Denaro (💰):</strong> Per comprare auto e upgrade</li>
+                    <li><strong>Parti (🔩):</strong> Per potenziare auto e tecnologie</li>
+                    <li><strong>Reputazione (⭐):</strong> Sblocca contenuti premium</li>
+                </ul>
+                
+                <h3 style="color: var(--accent-yellow); margin-top: 20px;">🔧 OFFICINA</h3>
+                <p>Produci risorse automaticamente! Ogni reparto genera denaro/parti ogni ora:</p>
+                <ul style="margin-left: 20px;">
+                    <li><strong>Reparto Motori:</strong> Produce denaro</li>
+                    <li><strong>Elettronica:</strong> Produce parti</li>
+                    <li><strong>Carrozzeria:</strong> Bonus reputazione</li>
+                    <li><strong>Aerodinamica:</strong> Bonus reputazione</li>
+                </ul>
+                
+                <h3 style="color: var(--accent-yellow); margin-top: 20px;">🏎️ AUTO & UPGRADE</h3>
+                <p>Compra auto nel <strong>Concessionario</strong>, poi potenziale nel <strong>Garage</strong>:</p>
+                <ul style="margin-left: 20px;">
+                    <li>Ogni upgrade auto = <strong>+10 HP</strong> per quella stat</li>
+                    <li>Mantieni la condizione alta (ripara se danneggiata)</li>
+                    <li>Assegna piloti per bonus speciali</li>
+                </ul>
+                
+                <h3 style="color: var(--accent-yellow); margin-top: 20px;">🏁 GARE</h3>
+                <p><strong>Formula vittoria:</strong> HP totali tua auto > HP avversario</p>
+                <ul style="margin-left: 20px;">
+                    <li><strong>Gare Stradali:</strong> 4 difficoltà, premi crescenti</li>
+                    <li><strong>Campionati:</strong> 5 gare consecutive, auto si danneggia</li>
+                    <li><strong>PvP:</strong> Sfida altri giocatori (1 al giorno)</li>
+                </ul>
+                
+                <h3 style="color: var(--accent-yellow); margin-top: 20px;">🔬 TECNOLOGIE</h3>
+                <p>Ricerca tecnologie per bonus permanenti alle auto (es: +20 HP motore, +15 HP tutte le stat).</p>
+                
+                <h3 style="color: var(--accent-yellow); margin-top: 20px;">🏆 CLASSIFICA</h3>
+                <p>Scala la classifica mondiale! Aggiornata 3 volte al giorno (00:00, 08:00, 16:00).</p>
+                
+                <h3 style="color: var(--accent-yellow); margin-top: 20px;">💡 CONSIGLI</h3>
+                <ul style="margin-left: 20px;">
+                    <li>✅ Potenzia <strong>Officina</strong> per risorse passive</li>
+                    <li>✅ Fai <strong>upgrade auto</strong> per vincere gare</li>
+                    <li>✅ <strong>Ripara auto</strong> dopo campionati</li>
+                    <li>✅ Ricerca <strong>tecnologie</strong> per bonus permanenti</li>
+                    <li>✅ Sfida giocatori <strong>PvP</strong> ogni giorno</li>
+                </ul>
+            </div>
+            
+            <button class="btn" onclick="document.getElementById('instructionsModal').classList.remove('active')" style="width: 100%; margin-top: 20px;">
+                Chiudi
+            </button>
+        </div>
+    </div>
                     <div style="text-align: center; padding: 15px; background: rgba(255,51,51,0.1); border: 2px solid var(--accent-red); border-radius: 8px;">
                         <div style="font-size: 0.85rem; color: #a0a0a0; margin-bottom: 5px;">SE PERDI</div>
                         <div style="font-size: 1.1rem; font-weight: 700; color: var(--accent-red);">-10%</div>
@@ -1295,8 +1358,11 @@
         </div>
     </div>
 
-    <footer>
-        Garage Racing Manager - Cloud Edition v5.0 • 100% Online
+    <footer style="display: flex; justify-content: space-between; align-items: center; padding: 0 20px;">
+        <span>Garage Racing Manager v5.1</span>
+        <a href="#" onclick="game.showInstructions(); return false;" style="color: var(--accent-cyan); text-decoration: none; cursor: pointer;">
+            📖 Istruzioni
+        </a>
     </footer>
 
     <script>
@@ -2100,7 +2166,7 @@ async function loadLeaderboard() {
                     }
                     
                     // ✅ Aggiorna SOLO le risorse
-                    this.updateResourcesDisplay();
+                    this.renderResources();
                     
                     // ✅ Aggiorna SOLO i livelli nel DOM (senza re-render completo)
                     this.updateWorkshopLevelsDisplay();
@@ -4019,6 +4085,10 @@ async function loadLeaderboard() {
             closeChallengeModal() {
                 document.getElementById('challengeModal').classList.remove('active');
                 this._pendingChallenge = null;
+            },
+            
+            showInstructions() {
+                document.getElementById('instructionsModal').classList.add('active');
             },
 
             async confirmChallenge() {
