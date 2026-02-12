@@ -1800,7 +1800,7 @@ async function loadLeaderboard() {
         
         // Se cache valida per questo slot, usa quella
         if (leaderboardCache && leaderboardCacheSlot === currentSlot) {
-            console.log(`📊 Cache classifica valida (slot ${currentSlot}), prossimo aggiornamento tra ${getNextLeaderboardUpdate()}`);
+            // ✅ Cache valida - nessun log per evitare spam
             return leaderboardCache;
         }
         
@@ -2980,9 +2980,9 @@ async function loadLeaderboard() {
                     } catch (error) {
                         console.error('Errore renderHistoryInline:', error);
                     }
-                } else if (this.currentPage === 'leaderboard') {
-                    this.renderLeaderboard();
                 }
+                // ✅ Leaderboard NON viene più ri-renderizzata ogni secondo
+                // Viene caricata SOLO quando cambi pagina o dopo PvP
             },
 
             renderResources() {
@@ -3955,7 +3955,6 @@ async function loadLeaderboard() {
                                 <img src="images/sections/leaderboard.jpg" 
                                      class="section-image" 
                                      alt="Classifica"
-                                     onload="console.log('✅ Immagine leaderboard caricata!');"
                                      onerror="console.error('❌ Immagine leaderboard non trovata:', this.src); this.style.display='none'; this.parentElement.style.background='linear-gradient(135deg, #1a1a1a, #0a0a0a)'; this.parentElement.innerHTML='<div style=text-align:center;padding-top:100px><div style=font-size:4rem>🏆</div></div>'">
                             </div>
 
