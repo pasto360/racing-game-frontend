@@ -1247,6 +1247,13 @@
         </div>
     </div>
 
+    <footer style="display: flex; justify-content: space-between; align-items: center; padding: 0 20px;">
+        <span>Garage Racing Manager v5.1</span>
+        <a href="#" onclick="openInstructions(); return false;" style="color: var(--accent-cyan); text-decoration: none; cursor: pointer;">
+            📖 Istruzioni
+        </a>
+    </footer>
+
     <div class="modal" id="raceModal">
         <div class="modal-content" style="position: relative;">
             <button onclick="game.closeRaceModal()" style="position: absolute; top: 15px; right: 15px; background: rgba(255,51,51,0.2); border: 2px solid var(--accent-red); color: var(--accent-red); width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 1.5rem; font-weight: 700; display: flex; align-items: center; justify-content: center; transition: all 0.2s;">×</button>
@@ -1367,13 +1374,6 @@
             </div>
         </div>
     </div>
-
-    <footer style="display: flex; justify-content: space-between; align-items: center; padding: 0 20px;">
-        <span>Garage Racing Manager v5.1</span>
-        <a href="#" onclick="openInstructions(); return false;" style="color: var(--accent-cyan); text-decoration: none; cursor: pointer;">
-            📖 Istruzioni
-        </a>
-    </footer>
 
     <script>
 // Funzione globale per aprire istruzioni
