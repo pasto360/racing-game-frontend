@@ -4560,8 +4560,26 @@ async function loadLeaderboard() {
                 const title = win ? 'VITTORIA!' : 'SCONFITTA';
                 const sign = win ? '+' : '-';
                 
+                // ✅ Calcola HP lato frontend se backend non li restituisce
+                let attackerPower = result.attackerPower || 0;
+                let defenderPower = result.defenderPower || 0;
+                
+                // Se non ci sono, calcola dalla prima auto
+                if (attackerPower === 0 && this.ownedCars.length > 0) {
+                    attackerPower = this.getCarPower(this.ownedCars[0]);
+                }
+                
+                // Se il backend ha restituito defenderCar, calcola
+                if (defenderPower === 0 && result.defenderCar) {
+                    // Simula calcolo defender (senza tecnologie/allenamenti che non conosciamo)
+                    defenderPower = Object.values(result.defenderCar.stats || {}).reduce((sum, val) => sum + val, 0);
+                }
+                
                 modalContent.innerHTML = `
-                    <div style="text-align: center; padding: 30px 20px;">
+                    <div style="position: relative; text-align: center; padding: 30px 20px;">
+                        <!-- X chiusura in alto a destra -->
+                        <button onclick="game.closeChallengeModal()" style="position: absolute; top: 10px; right: 10px; background: rgba(255,51,51,0.2); border: 2px solid var(--accent-red); color: var(--accent-red); width: 35px; height: 35px; border-radius: 50%; cursor: pointer; font-size: 1.3rem; font-weight: 700; display: flex; align-items: center; justify-content: center; transition: all 0.2s;">×</button>
+                        
                         <!-- Risultato -->
                         <div style="font-size: 4rem; margin-bottom: 20px;">${icon}</div>
                         <h2 style="font-family: Orbitron; font-size: 2.5rem; font-weight: 900; color: ${color}; margin-bottom: 20px;">
@@ -4574,20 +4592,22 @@ async function loadLeaderboard() {
                         </div>
                         
                         <!-- HP Confronto -->
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; padding: 20px; background: rgba(255,255,255,0.03); border-radius: 10px;">
-                            <div style="text-align: center;">
-                                <div style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 8px;">TUA POTENZA</div>
-                                <div style="font-size: 1.8rem; font-weight: 900; color: var(--accent-cyan);">
-                                    ${result.attackerPower || 0} HP
+                        ${attackerPower > 0 || defenderPower > 0 ? `
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; padding: 20px; background: rgba(255,255,255,0.03); border-radius: 10px;">
+                                <div style="text-align: center;">
+                                    <div style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 8px;">TUA POTENZA</div>
+                                    <div style="font-size: 1.8rem; font-weight: 900; color: var(--accent-cyan);">
+                                        ${Math.round(attackerPower)} HP
+                                    </div>
+                                </div>
+                                <div style="text-align: center;">
+                                    <div style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 8px;">SUA POTENZA</div>
+                                    <div style="font-size: 1.8rem; font-weight: 900; color: var(--accent-red);">
+                                        ${Math.round(defenderPower)} HP
+                                    </div>
                                 </div>
                             </div>
-                            <div style="text-align: center;">
-                                <div style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 8px;">SUA POTENZA</div>
-                                <div style="font-size: 1.8rem; font-weight: 900; color: var(--accent-red);">
-                                    ${result.defenderPower || 0} HP
-                                </div>
-                            </div>
-                        </div>
+                        ` : ''}
                         
                         <!-- Risorse vinte/perse -->
                         <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 10px; margin-bottom: 25px;">
@@ -4618,7 +4638,7 @@ async function loadLeaderboard() {
                         
                         <!-- Pulsante chiudi -->
                         <button class="btn" onclick="game.closeChallengeModal()" style="width: 100%; font-size: 1.1rem;">
-                            ${win ? '🎉 Fantastico!' : '😤 Rivincita!'}
+                            Chiudi
                         </button>
                     </div>
                 `;
