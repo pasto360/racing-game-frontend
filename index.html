@@ -1141,6 +1141,10 @@
                 <span class="icon">🏎️</span>
                 Garage
             </button>
+            <button class="nav-btn" onclick="game.changePage('track')">
+                <span class="icon">🏁</span>
+                Pista
+            </button>
             <button class="nav-btn" onclick="game.changePage('dealer')">
                 <span class="icon">🏪</span>
                 Concessionario
@@ -1213,6 +1217,12 @@
             
             <h3 style="font-family: Orbitron; font-size: 1.3rem; margin: 30px 0 15px 0; color: var(--accent-yellow);">Sponsor</h3>
             <div class="team-grid" id="sponsorsSection"></div>
+        </div>
+
+        <div id="page-track" class="page">
+            <h2 class="section-title">🏁 Centro Allenamento</h2>
+            <div id="trackTrainingQueue" style="margin-bottom: 20px;"></div>
+            <div id="trackTraining"></div>
         </div>
 
         <div id="page-dealer" class="page">
@@ -2017,6 +2027,17 @@ async function loadLeaderboard() {
     // ✅ Sistema code upgrade con timer
     this.workshopQueue = []; // Array di {sectionKey, endTime, level}
     
+    // ✅ Sistema allenamenti pista
+    this.trackTraining = {
+        engine: { level: 0, maxLevel: 10, name: 'Allenamento Motore', icon: '🔧', bonus: '+1 Motore tutte le auto' },
+        electronics: { level: 0, maxLevel: 10, name: 'Allenamento Elettronica', icon: '💻', bonus: '+1 Elettronica tutte le auto' },
+        body: { level: 0, maxLevel: 10, name: 'Allenamento Carrozzeria', icon: '🛡️', bonus: '+1 Carrozzeria tutte le auto' },
+        aero: { level: 0, maxLevel: 10, name: 'Allenamento Aerodinamica', icon: '✈️', bonus: '+1 Aerodinamica tutte le auto' },
+        money: { level: 0, maxLevel: 10, name: 'Allenamento Pilota (Denaro)', icon: '💰', bonus: 'Guadagno denaro' },
+        parts: { level: 0, maxLevel: 10, name: 'Allenamento Pilota (Parti)', icon: '🔩', bonus: 'Guadagno parti' }
+    };
+    this.trackQueue = null; // Un solo allenamento alla volta: {type, endTime, level}
+    
     const loaded = await loadGameFromServer();
     
     if (!loaded) {
@@ -2049,11 +2070,15 @@ async function loadLeaderboard() {
 
             this.updateResources(deltaSeconds);
             this.processWorkshopQueue(); // ✅ Controlla timer upgrade
+            this.processTrackQueue(); // ✅ Controlla timer allenamenti
             this.render();
             
-            // ✅ Aggiorna UI coda upgrade se visibile
+            // ✅ Aggiorna UI code upgrade/allenamenti se visibili
             if (this.currentPage === 'workshop' && this.workshopQueue.length > 0) {
                 this.renderWorkshopQueue();
+            }
+            if (this.currentPage === 'track' && this.trackQueue) {
+                this.renderTrack();
             }
         }, 1000);
     },
@@ -2102,8 +2127,8 @@ async function loadLeaderboard() {
 
         document.getElementById(`page-${page}`).classList.add('active');
         
-        // Nuova mappatura: workshop, garage, dealer, tech, race, leaderboard (6 pulsanti desktop)
-        const desktopPages = ['workshop','garage','dealer','tech','race','leaderboard'];
+        // Nuova mappatura: workshop, garage, track, dealer, tech, race, leaderboard (7 pulsanti desktop)
+        const desktopPages = ['workshop','garage','track','dealer','tech','race','leaderboard'];
         const pageIndex = desktopPages.indexOf(page);
         
         // Attiva pulsante in navigazione desktop
@@ -2117,7 +2142,7 @@ async function loadLeaderboard() {
             'workshop': 0,
             'garage': 1,
             'race': 2,
-            // dealer, tech, leaderboard sono nel menu overflow
+            // track, dealer, tech, leaderboard sono nel menu overflow
         };
         
         const mobileButtons = document.querySelectorAll('.mobile-tab-btn');
@@ -2130,6 +2155,7 @@ async function loadLeaderboard() {
             this.renderOwnedCars();
             this.renderTeam(); // Team integrato in garage
         }
+        if (page === 'track') this.renderTrack();
         if (page === 'dealer') this.renderAvailableCars();
         if (page === 'tech') this.renderTech();
         if (page === 'race') {
@@ -2317,6 +2343,217 @@ async function loadLeaderboard() {
                 }
                 
                 console.log('📊 Livelli aggiornati nel DOM senza re-render');
+            },
+
+            // ==================== PISTA ====================
+            
+            getTrainingTime(type, level) {
+                // Allenamenti auto (+1 stat): 3 minuti → 48 ore
+                if (['engine', 'electronics', 'body', 'aero'].includes(type)) {
+                    const minTime = 3 * 60; // 3 minuti in secondi
+                    const maxTime = 48 * 60 * 60; // 48 ore in secondi
+                    
+                    // Formula esponenziale: tempo cresce esponenzialmente
+                    const factor = Math.pow(maxTime / minTime, level / 9); // 9 perché level va da 1 a 10
+                    return Math.floor(minTime * factor);
+                }
+                
+                // Allenamenti pilota (denaro/parti): 3 minuti → 72 ore
+                if (['money', 'parts'].includes(type)) {
+                    const minTime = 3 * 60; // 3 minuti
+                    const maxTime = 72 * 60 * 60; // 72 ore
+                    
+                    const factor = Math.pow(maxTime / minTime, level / 9);
+                    return Math.floor(minTime * factor);
+                }
+                
+                return 3 * 60; // Default 3 minuti
+            },
+            
+            getTrainingReward(type, level) {
+                if (type === 'money') {
+                    // 500 → 10,000 monete (livello 1 → 10)
+                    const min = 500;
+                    const max = 10000;
+                    return Math.floor(min + ((max - min) / 9) * (level - 1));
+                }
+                
+                if (type === 'parts') {
+                    // 50 → 1500 parti (livello 1 → 10)
+                    const min = 50;
+                    const max = 1500;
+                    return Math.floor(min + ((max - min) / 9) * (level - 1));
+                }
+                
+                // Auto training: +1 alla stat
+                return 1;
+            },
+            
+            startTraining(type) {
+                const training = this.trackTraining[type];
+                
+                if (!training) {
+                    alert('❌ Tipo allenamento non valido');
+                    return;
+                }
+                
+                if (training.level >= training.maxLevel) {
+                    alert('✅ Hai già raggiunto il livello massimo per questo allenamento!');
+                    return;
+                }
+                
+                if (this.trackQueue) {
+                    alert('⏱️ C\'è già un allenamento in corso! Completalo prima di iniziarne un altro.');
+                    return;
+                }
+                
+                const nextLevel = training.level + 1;
+                const timeSeconds = this.getTrainingTime(type, nextLevel);
+                const endTime = Date.now() + (timeSeconds * 1000);
+                
+                this.trackQueue = {
+                    type,
+                    endTime,
+                    level: nextLevel,
+                    timeSeconds
+                };
+                
+                console.log(`🏁 Allenamento ${type} livello ${nextLevel} iniziato - durata ${timeSeconds}s`);
+                
+                this.renderTrack();
+                saveGameToServer(true);
+            },
+            
+            processTrackQueue() {
+                if (!this.trackQueue) return;
+                
+                const now = Date.now();
+                if (now >= this.trackQueue.endTime) {
+                    const { type, level } = this.trackQueue;
+                    const training = this.trackTraining[type];
+                    
+                    // Applica bonus
+                    training.level = level;
+                    
+                    // Assegna premio
+                    if (type === 'money') {
+                        const reward = this.getTrainingReward(type, level);
+                        this.resources.money.value += reward;
+                        console.log(`✅ Allenamento pilota completato! +${reward}💰`);
+                    } else if (type === 'parts') {
+                        const reward = this.getTrainingReward(type, level);
+                        this.resources.parts.value += reward;
+                        console.log(`✅ Allenamento pilota completato! +${reward}🔩`);
+                    } else {
+                        // Bonus auto (+1 permanente alla stat)
+                        console.log(`✅ Allenamento ${type} completato! +1 ${type} permanente su tutte le auto`);
+                    }
+                    
+                    this.trackQueue = null;
+                    this.renderResources();
+                    
+                    if (this.currentPage === 'track') {
+                        this.renderTrack();
+                    }
+                    
+                    saveGameToServer(true);
+                }
+            },
+            
+            renderTrack() {
+                const container = document.getElementById('trackTraining');
+                const queueContainer = document.getElementById('trackTrainingQueue');
+                
+                // Mostra allenamento in corso
+                if (this.trackQueue) {
+                    const now = Date.now();
+                    const timeLeft = Math.max(0, this.trackQueue.endTime - now);
+                    const seconds = Math.ceil(timeLeft / 1000);
+                    const hours = Math.floor(seconds / 3600);
+                    const mins = Math.floor((seconds % 3600) / 60);
+                    const secs = seconds % 60;
+                    const progress = Math.max(0, Math.min(100, ((this.trackQueue.timeSeconds * 1000 - timeLeft) / (this.trackQueue.timeSeconds * 1000)) * 100));
+                    
+                    const training = this.trackTraining[this.trackQueue.type];
+                    
+                    queueContainer.innerHTML = `
+                        <div style="background: rgba(0,217,255,0.1); border: 2px solid var(--accent-cyan); border-radius: 12px; padding: 20px; margin-bottom: 20px;">
+                            <h3 style="color: var(--accent-cyan); margin-bottom: 15px; font-family: Orbitron;">⏱️ ALLENAMENTO IN CORSO</h3>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <span style="font-size: 1.1rem; font-weight: 700;">${training.icon} ${training.name} Lv.${this.trackQueue.level}</span>
+                                <span style="color: var(--accent-yellow); font-weight: 900; font-family: Orbitron; font-size: 1.2rem;">
+                                    ${hours}h ${mins}m ${secs}s
+                                </span>
+                            </div>
+                            <div style="width: 100%; height: 12px; background: rgba(255,255,255,0.1); border-radius: 6px; overflow: hidden;">
+                                <div style="width: ${progress}%; height: 100%; background: linear-gradient(90deg, var(--accent-cyan), var(--accent-green)); transition: width 0.3s;"></div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    queueContainer.innerHTML = '';
+                }
+                
+                // Griglia allenamenti
+                container.innerHTML = `
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px;">
+                        ${Object.keys(this.trackTraining).map(type => {
+                            const training = this.trackTraining[type];
+                            const isMaxLevel = training.level >= training.maxLevel;
+                            const nextLevel = training.level + 1;
+                            const timeSeconds = this.getTrainingTime(type, nextLevel);
+                            const reward = this.getTrainingReward(type, nextLevel);
+                            const isActive = this.trackQueue && this.trackQueue.type === type;
+                            
+                            // Converti tempo in formato leggibile
+                            let timeText = '';
+                            if (timeSeconds < 3600) {
+                                timeText = `${Math.floor(timeSeconds / 60)}m`;
+                            } else if (timeSeconds < 86400) {
+                                timeText = `${Math.floor(timeSeconds / 3600)}h`;
+                            } else {
+                                timeText = `${Math.floor(timeSeconds / 86400)}g`;
+                            }
+                            
+                            return `
+                                <div style="background: linear-gradient(135deg, rgba(10,10,10,0.8), rgba(20,20,20,0.8)); border: 2px solid ${isMaxLevel ? 'var(--accent-green)' : 'rgba(255,255,255,0.1)'}; border-radius: 12px; padding: 20px; ${isActive ? 'opacity: 0.6;' : ''}">
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                        <div>
+                                            <h3 style="font-family: Orbitron; font-size: 1.2rem; color: var(--accent-cyan); margin-bottom: 5px;">
+                                                ${training.icon} ${training.name}
+                                            </h3>
+                                            <div style="font-size: 1rem; font-weight: 700; color: var(--accent-yellow);">
+                                                Livello ${training.level}/${training.maxLevel}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div style="background: rgba(0,217,255,0.05); padding: 12px; border-radius: 8px; margin-bottom: 15px;">
+                                        <div style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 8px;">
+                                            📊 <strong>Bonus:</strong> ${training.bonus}
+                                        </div>
+                                        ${!isMaxLevel ? `
+                                            <div style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 8px;">
+                                                🎁 <strong>Prossimo livello:</strong> ${type === 'money' ? `+${reward}💰` : type === 'parts' ? `+${reward}🔩` : `+${reward} ${type}`}
+                                            </div>
+                                            <div style="font-size: 0.9rem; color: var(--text-secondary);">
+                                                ⏱️ <strong>Tempo:</strong> ${timeText}
+                                            </div>
+                                        ` : ''}
+                                    </div>
+                                    
+                                    <button 
+                                        class="btn" 
+                                        onclick="game.startTraining('${type}')"
+                                        ${isMaxLevel || isActive || this.trackQueue ? 'disabled' : ''}
+                                        style="width: 100%; ${isMaxLevel ? 'background: var(--accent-green);' : ''}">
+                                        ${isMaxLevel ? '✅ COMPLETATO' : isActive ? '⏱️ IN CORSO...' : '🏁 INIZIA'}
+                                    </button>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                `;
             },
 
             getUpgradeCost(section) {
@@ -2538,6 +2775,7 @@ async function loadLeaderboard() {
                 Object.keys(car.stats).forEach(stat => {
                     let statValue = car.stats[stat] + (car.upgrades[stat] * 10);
                     
+                    // Bonus tecnologie
                     this.technologies.forEach(tech => {
                         if (tech.researched) {
                             if (tech.bonus.stat === stat) {
@@ -2547,6 +2785,11 @@ async function loadLeaderboard() {
                             }
                         }
                     });
+                    
+                    // ✅ Bonus allenamenti pista
+                    if (this.trackTraining && this.trackTraining[stat]) {
+                        statValue += this.trackTraining[stat].level;
+                    }
                     
                     power += statValue;
                 });
