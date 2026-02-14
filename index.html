@@ -1647,6 +1647,14 @@ async function loadGameFromServer(retryCount = 0) {
         game.championship = data.championship || game.championship;
         game.raceHistory = data.raceHistory || [];
         
+        // ✅ NUOVI CAMPI v5.2
+        game.trackTraining = data.trackTraining || game.trackTraining;
+        game.trackQueue = data.trackQueue || game.trackQueue;
+        game.missions = data.missions || game.missions;
+        game.pvpStats = data.pvpStats || game.pvpStats;
+        game.upgradesCount = data.upgradesCount || 0;
+        game.championshipsWon = data.championshipsWon || 0;
+        
         // PRODUZIONE OFFLINE
         const lastSaveTime = data.lastSaveTime || Date.now();
         const now = Date.now();
@@ -1725,11 +1733,17 @@ async function saveGameToServer(showIndicator = true) {
                         currentDriver: game.currentDriver,
                         sponsors: game.sponsors,
                         currentSponsor: game.currentSponsor,
-                        sponsorRacesLeft: game.sponsorRacesLeft,
                         technologies: game.technologies,
                         races: game.races,
                         championship: game.championship,
-                        raceHistory: game.raceHistory
+                        raceHistory: game.raceHistory,
+                        // ✅ NUOVI CAMPI v5.2
+                        trackTraining: game.trackTraining,
+                        trackQueue: game.trackQueue,
+                        missions: game.missions,
+                        pvpStats: game.pvpStats,
+                        upgradesCount: game.upgradesCount,
+                        championshipsWon: game.championshipsWon
                     }
                 })
             });
@@ -2144,6 +2158,11 @@ async function loadLeaderboard() {
             reward: { money: 15000, reputation: 200 }
         }
     };
+    
+    // ✅ Stats PvP e contatori
+    this.pvpStats = { wins: 0, losses: 0, total: 0 };
+    this.upgradesCount = 0;
+    this.championshipsWon = 0;
     
     const loaded = await loadGameFromServer();
     
