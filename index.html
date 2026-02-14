@@ -2671,9 +2671,9 @@ async function loadLeaderboard() {
                 if (!container) return;
                 
                 // ✅ Aggiorna automaticamente il progress delle missioni
-                this.missions.races200.progress = this.races.total || 0;
+                this.missions.races200.progress = this.races.completed || 0; // ← FIX: completed invece di total
                 this.missions.wins100.progress = this.races.wins || 0;
-                this.missions.losses100.progress = (this.races.total - this.races.wins) || 0;
+                this.missions.losses100.progress = (this.races.completed - this.races.wins) || 0; // ← FIX
                 
                 // Conta livelli allenamenti
                 let trainingTotal = 0;
@@ -2721,15 +2721,23 @@ async function loadLeaderboard() {
                 // Definizioni missioni con rewards
                 const missionDefs = {
                     races200: { 
-                        name: 'Veterano delle Piste', desc: 'Completa 200 gare', icon: '🏁',
-                        target: 200, reward: { reputation: 30 }
+                        name: 'Veterano delle Piste', 
+                        desc: 'Completa 200 gare (Stradali/Campionati)', 
+                        icon: '🏁',
+                        target: 200, 
+                        reward: { reputation: 30 }
                     },
                     wins100: {
-                        name: 'Campione Imbattibile', desc: 'Vinci 100 gare', icon: '🏆',
-                        target: 100, reward: { money: 1000, reputation: 50 }
+                        name: 'Campione Imbattibile', 
+                        desc: 'Vinci 100 gare (Stradali/Campionati)', 
+                        icon: '🏆',
+                        target: 100, 
+                        reward: { money: 1000, reputation: 50 }
                     },
                     losses100: {
-                        name: 'Mai Mollare', desc: 'Ottieni 100 sconfitte', icon: '💪',
+                        name: 'Mai Mollare', 
+                        desc: 'Ottieni 100 sconfitte (Stradali/Campionati)', 
+                        icon: '💪',
                         target: 100, reward: { parts: 100 }
                     },
                     training60: {
@@ -2812,8 +2820,19 @@ async function loadLeaderboard() {
             
             completeMission(missionId) {
                 const mission = this.missions[missionId];
-                if (!mission || mission.completed) return;
                 
+                // ✅ VERIFICA CHE NON SIA GIÀ COMPLETATA
+                if (!mission) {
+                    console.warn('Missione non trovata:', missionId);
+                    return;
+                }
+                
+                if (mission.completed) {
+                    console.log('Missione già completata:', missionId);
+                    return; // ← FIX: Exit PRIMA di dare premi
+                }
+                
+                // ✅ MARCA COME COMPLETATA PRIMA DI DARE PREMI
                 mission.completed = true;
                 
                 const rewards = {
@@ -2831,6 +2850,8 @@ async function loadLeaderboard() {
                 
                 const reward = rewards[missionId];
                 if (!reward) return;
+                
+                console.log(`🎉 Completamento missione ${missionId}:`, reward);
                 
                 if (reward.money) this.resources.money.value += reward.money;
                 if (reward.parts) this.resources.parts.value += reward.parts;
@@ -2858,6 +2879,10 @@ async function loadLeaderboard() {
                 
                 this.renderResources();
                 if (this.currentPage === 'track') this.renderMissions();
+                
+                // ✅ SALVA IMMEDIATAMENTE
+                saveGameToServer(true);
+            },
                 saveGameToServer(true);
             },
 
