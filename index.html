@@ -1223,6 +1223,9 @@
             <h2 class="section-title">🏁 Centro Allenamento</h2>
             <div id="trackTrainingQueue" style="margin-bottom: 20px;"></div>
             <div id="trackTraining"></div>
+            
+            <h2 class="section-title" style="margin-top: 40px;">🎯 Missioni Completate</h2>
+            <div id="trackMissions"></div>
         </div>
 
         <div id="page-dealer" class="page">
@@ -2037,6 +2040,110 @@ async function loadLeaderboard() {
         parts: { level: 0, maxLevel: 10, name: 'Allenamento Pilota (Parti)', icon: '🔩', bonus: 'Guadagno parti' }
     };
     this.trackQueue = null; // Un solo allenamento alla volta: {type, endTime, level}
+    
+    // ✅ Sistema missioni
+    this.missions = {
+        races200: { 
+            id: 'races200',
+            name: 'Veterano delle Piste',
+            description: 'Completa 200 gare',
+            icon: '🏁',
+            target: 200,
+            progress: 0,
+            completed: false,
+            reward: { reputation: 30 }
+        },
+        wins100: {
+            id: 'wins100',
+            name: 'Campione Imbattibile',
+            description: 'Vinci 100 gare',
+            icon: '🏆',
+            target: 100,
+            progress: 0,
+            completed: false,
+            reward: { money: 1000, reputation: 50 }
+        },
+        losses100: {
+            id: 'losses100',
+            name: 'Mai Mollare',
+            description: 'Ottieni 100 sconfitte',
+            icon: '💪',
+            target: 100,
+            progress: 0,
+            completed: false,
+            reward: { parts: 100 }
+        },
+        training60: {
+            id: 'training60',
+            name: 'Maestro degli Allenamenti',
+            description: 'Sviluppa tutti i 60 livelli di allenamento',
+            icon: '🎓',
+            target: 60,
+            progress: 0,
+            completed: false,
+            reward: { reputation: 2000 }
+        },
+        allTech: {
+            id: 'allTech',
+            name: 'Innovatore Tecnologico',
+            description: 'Attiva tutte le tecnologie',
+            icon: '🔬',
+            target: 0, // Calcolato dinamicamente
+            progress: 0,
+            completed: false,
+            reward: { reputation: 1500 }
+        },
+        pvp50: {
+            id: 'pvp50',
+            name: 'Gladiatore PvP',
+            description: 'Vinci 50 sfide PvP',
+            icon: '⚔️',
+            target: 50,
+            progress: 0,
+            completed: false,
+            reward: { money: 5000, reputation: 100 }
+        },
+        cars10: {
+            id: 'cars10',
+            name: 'Collezionista',
+            description: 'Possiedi 10 auto diverse',
+            icon: '🏎️',
+            target: 10,
+            progress: 0,
+            completed: false,
+            reward: { money: 2000, parts: 200 }
+        },
+        reputation1000: {
+            id: 'reputation1000',
+            name: 'Leggenda Vivente',
+            description: 'Raggiungi 1000 di reputazione',
+            icon: '⭐',
+            target: 1000,
+            progress: 0,
+            completed: false,
+            reward: { money: 10000 }
+        },
+        upgrades100: {
+            id: 'upgrades100',
+            name: 'Meccanico Supremo',
+            description: 'Effettua 100 upgrade alle auto',
+            icon: '⚙️',
+            target: 100,
+            progress: 0,
+            completed: false,
+            reward: { parts: 500, reputation: 75 }
+        },
+        championship10: {
+            id: 'championship10',
+            name: 'Re dei Campionati',
+            description: 'Vinci 10 campionati',
+            icon: '👑',
+            target: 10,
+            progress: 0,
+            completed: false,
+            reward: { money: 15000, reputation: 200 }
+        }
+    };
     
     const loaded = await loadGameFromServer();
     
@@ -4323,7 +4430,7 @@ async function loadLeaderboard() {
                     const minutes = Math.floor(((nextTime - new Date()) % (1000 * 60 * 60)) / (1000 * 60));
                     
                     html += `<div style="background: rgba(255,51,51,0.2); border: 2px solid var(--accent-red); padding: 12px; border-radius: 10px; text-align: center;">
-                        ⏰ Hai già sfidato un giocatore oggi - Prossima sfida tra <strong>${hours}h ${minutes}m</strong>
+                        ⏰ Hai esaurito le sfide giornaliere (3/3) - Reset tra <strong>${hours}h ${minutes}m</strong>
                     </div>`;
                 }
 
