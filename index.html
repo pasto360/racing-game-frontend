@@ -4555,6 +4555,12 @@ async function loadLeaderboard() {
                 const win = result.victory;
                 const rewards = result.rewards || {};
                 
+                // 🐛 DEBUG: Vediamo cosa restituisce il backend
+                console.log('📊 Risultato PvP completo:', result);
+                console.log('📊 DefenderCar:', result.defenderCar);
+                console.log('📊 AttackerPower:', result.attackerPower);
+                console.log('📊 DefenderPower:', result.defenderPower);
+                
                 const color = win ? 'var(--accent-green)' : 'var(--accent-red)';
                 const icon = win ? '🏆' : '💥';
                 const title = win ? 'VITTORIA!' : 'SCONFITTA';
@@ -4572,7 +4578,15 @@ async function loadLeaderboard() {
                 // Se il backend ha restituito defenderCar, calcola
                 if (defenderPower === 0 && result.defenderCar) {
                     // Simula calcolo defender (senza tecnologie/allenamenti che non conosciamo)
-                    defenderPower = Object.values(result.defenderCar.stats || {}).reduce((sum, val) => sum + val, 0);
+                    const defenderStats = result.defenderCar.stats || {};
+                    defenderPower = Object.values(defenderStats).reduce((sum, val) => sum + (val || 0), 0);
+                    console.log('📊 DefenderPower calcolato da stats:', defenderPower);
+                }
+                
+                // Prova altri possibili nomi
+                if (defenderPower === 0) {
+                    defenderPower = result.opponentPower || result.defender_power || result.defenderStats || 0;
+                    console.log('📊 DefenderPower da nome alternativo:', defenderPower);
                 }
                 
                 modalContent.innerHTML = `
