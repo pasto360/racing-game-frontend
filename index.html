@@ -2262,7 +2262,10 @@ async function loadLeaderboard() {
             this.renderOwnedCars();
             this.renderTeam(); // Team integrato in garage
         }
-        if (page === 'track') this.renderTrack();
+        if (page === 'track') {
+            this.renderTrack();
+            this.renderMissions();
+        }
         if (page === 'dealer') this.renderAvailableCars();
         if (page === 'tech') this.renderTech();
         if (page === 'race') {
@@ -2661,6 +2664,201 @@ async function loadLeaderboard() {
                         }).join('')}
                     </div>
                 `;
+            },
+
+            renderMissions() {
+                const container = document.getElementById('trackMissions');
+                if (!container) return;
+                
+                // ✅ Aggiorna automaticamente il progress delle missioni
+                this.missions.races200.progress = this.races.total || 0;
+                this.missions.wins100.progress = this.races.wins || 0;
+                this.missions.losses100.progress = (this.races.total - this.races.wins) || 0;
+                
+                // Conta livelli allenamenti
+                let trainingTotal = 0;
+                Object.keys(this.trackTraining).forEach(key => {
+                    trainingTotal += this.trackTraining[key].level || 0;
+                });
+                this.missions.training60.progress = trainingTotal;
+                
+                // Conta tecnologie attivate
+                let techCompleted = 0;
+                this.technologies.forEach(tech => {
+                    if (tech.researched) techCompleted++;
+                });
+                this.missions.allTech.target = this.technologies.length;
+                this.missions.allTech.progress = techCompleted;
+                
+                // PvP vinte
+                this.missions.pvp50.progress = this.pvpStats?.wins || 0;
+                
+                // Auto possedute
+                this.missions.cars10.progress = this.ownedCars.length;
+                
+                // Reputazione totale
+                this.missions.reputation1000.progress = this.resources.reputation.value;
+                
+                // Upgrade totali
+                this.missions.upgrades100.progress = this.upgradesCount || 0;
+                
+                // Campionati vinti
+                this.missions.championship10.progress = this.championshipsWon || 0;
+                
+                // Auto-completa missioni raggiunte
+                Object.keys(this.missions).forEach(key => {
+                    const mission = this.missions[key];
+                    const defs = {
+                        races200: 200, wins100: 100, losses100: 100, training60: 60,
+                        allTech: this.technologies.length, pvp50: 50, cars10: 10,
+                        reputation1000: 1000, upgrades100: 100, championship10: 10
+                    };
+                    if (mission.progress >= defs[key] && !mission.completed) {
+                        this.completeMission(key);
+                    }
+                });
+                
+                // Definizioni missioni con rewards
+                const missionDefs = {
+                    races200: { 
+                        name: 'Veterano delle Piste', desc: 'Completa 200 gare', icon: '🏁',
+                        target: 200, reward: { reputation: 30 }
+                    },
+                    wins100: {
+                        name: 'Campione Imbattibile', desc: 'Vinci 100 gare', icon: '🏆',
+                        target: 100, reward: { money: 1000, reputation: 50 }
+                    },
+                    losses100: {
+                        name: 'Mai Mollare', desc: 'Ottieni 100 sconfitte', icon: '💪',
+                        target: 100, reward: { parts: 100 }
+                    },
+                    training60: {
+                        name: 'Maestro degli Allenamenti', desc: 'Sviluppa tutti i 60 livelli di allenamento', icon: '🎓',
+                        target: 60, reward: { reputation: 2000 }
+                    },
+                    allTech: {
+                        name: 'Innovatore Tecnologico', desc: 'Attiva tutte le tecnologie', icon: '🔬',
+                        target: this.technologies.length, reward: { reputation: 1500 }
+                    },
+                    pvp50: {
+                        name: 'Gladiatore PvP', desc: 'Vinci 50 sfide PvP', icon: '⚔️',
+                        target: 50, reward: { money: 5000, reputation: 100 }
+                    },
+                    cars10: {
+                        name: 'Collezionista', desc: 'Possiedi 10 auto diverse', icon: '🏎️',
+                        target: 10, reward: { money: 2000, parts: 200 }
+                    },
+                    reputation1000: {
+                        name: 'Leggenda Vivente', desc: 'Raggiungi 1000 di reputazione', icon: '⭐',
+                        target: 1000, reward: { money: 10000 }
+                    },
+                    upgrades100: {
+                        name: 'Meccanico Supremo', desc: 'Effettua 100 upgrade alle auto', icon: '⚙️',
+                        target: 100, reward: { parts: 500, reputation: 75 }
+                    },
+                    championship10: {
+                        name: 'Re dei Campionati', desc: 'Vinci 10 campionati', icon: '👑',
+                        target: 10, reward: { money: 15000, reputation: 200 }
+                    }
+                };
+                
+                container.innerHTML = `
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 15px; margin-top: 20px;">
+                        ${Object.keys(this.missions).map(key => {
+                            const mission = this.missions[key];
+                            const def = missionDefs[key];
+                            if (!def) return '';
+                            
+                            const progress = Math.min(100, (mission.progress / def.target) * 100);
+                            const isCompleted = mission.completed;
+                            
+                            return `
+                                <div style="background: ${isCompleted ? 'linear-gradient(135deg, rgba(0,255,136,0.1), rgba(0,200,100,0.1))' : 'linear-gradient(135deg, rgba(60,60,60,0.3), rgba(40,40,40,0.3))'}; border: 2px solid ${isCompleted ? 'var(--accent-green)' : 'rgba(100,100,100,0.3)'}; border-radius: 12px; padding: 18px; transition: all 0.3s;">
+                                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                                        <span style="font-size: 2.5rem; ${isCompleted ? '' : 'filter: grayscale(100%); opacity: 0.5;'}">${def.icon}</span>
+                                        <div style="flex: 1;">
+                                            <h4 style="margin: 0; font-size: 1.1rem; font-weight: 700; color: ${isCompleted ? 'var(--accent-green)' : '#aaa'};">${def.name}</h4>
+                                            <p style="margin: 5px 0 0 0; font-size: 0.85rem; color: ${isCompleted ? '#ccc' : '#888'};">${def.desc}</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div style="margin: 12px 0;">
+                                        <div style="display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 6px; color: ${isCompleted ? 'var(--accent-green)' : '#999'};">
+                                            <span><strong>${mission.progress}</strong> / ${def.target}</span>
+                                            <span>${Math.floor(progress)}%</span>
+                                        </div>
+                                        <div style="width: 100%; height: 10px; background: rgba(0,0,0,0.3); border-radius: 5px; overflow: hidden;">
+                                            <div style="width: ${progress}%; height: 100%; background: ${isCompleted ? 'linear-gradient(90deg, var(--accent-green), #00ff88)' : 'linear-gradient(90deg, rgba(100,100,100,0.5), rgba(150,150,150,0.5))'}; transition: width 0.5s;"></div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px;">
+                                        ${def.reward.money ? `<span style="background: ${isCompleted ? 'rgba(255,215,0,0.2)' : 'rgba(100,100,100,0.2)'}; padding: 5px 10px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; color: ${isCompleted ? '#ffd700' : '#888'};">💰 +${def.reward.money}</span>` : ''}
+                                        ${def.reward.parts ? `<span style="background: ${isCompleted ? 'rgba(255,215,0,0.2)' : 'rgba(100,100,100,0.2)'}; padding: 5px 10px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; color: ${isCompleted ? '#ffd700' : '#888'};">🔩 +${def.reward.parts}</span>` : ''}
+                                        ${def.reward.reputation ? `<span style="background: ${isCompleted ? 'rgba(255,215,0,0.2)' : 'rgba(100,100,100,0.2)'}; padding: 5px 10px; border-radius: 6px; font-size: 0.85rem; font-weight: 600; color: ${isCompleted ? '#ffd700' : '#888'};">⭐ +${def.reward.reputation}</span>` : ''}
+                                    </div>
+                                    
+                                    ${isCompleted ? `
+                                        <div style="text-align: center; margin-top: 15px; padding: 8px; background: rgba(0,255,136,0.1); border-radius: 6px;">
+                                            <span style="color: var(--accent-green); font-weight: 700; font-size: 0.95rem;">✅ COMPLETATA</span>
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                `;
+            },
+            
+            completeMission(missionId) {
+                const mission = this.missions[missionId];
+                if (!mission || mission.completed) return;
+                
+                mission.completed = true;
+                
+                const rewards = {
+                    races200: { reputation: 30 },
+                    wins100: { money: 1000, reputation: 50 },
+                    losses100: { parts: 100 },
+                    training60: { reputation: 2000 },
+                    allTech: { reputation: 1500 },
+                    pvp50: { money: 5000, reputation: 100 },
+                    cars10: { money: 2000, parts: 200 },
+                    reputation1000: { money: 10000 },
+                    upgrades100: { parts: 500, reputation: 75 },
+                    championship10: { money: 15000, reputation: 200 }
+                };
+                
+                const reward = rewards[missionId];
+                if (!reward) return;
+                
+                if (reward.money) this.resources.money.value += reward.money;
+                if (reward.parts) this.resources.parts.value += reward.parts;
+                if (reward.reputation) {
+                    this.resources.reputation.value = Math.min(
+                        this.resources.reputation.value + reward.reputation,
+                        this.resources.reputation.max
+                    );
+                }
+                
+                const names = {
+                    races200: 'Veterano delle Piste', wins100: 'Campione Imbattibile',
+                    losses100: 'Mai Mollare', training60: 'Maestro degli Allenamenti',
+                    allTech: 'Innovatore Tecnologico', pvp50: 'Gladiatore PvP',
+                    cars10: 'Collezionista', reputation1000: 'Leggenda Vivente',
+                    upgrades100: 'Meccanico Supremo', championship10: 'Re dei Campionati'
+                };
+                
+                let rewardText = [];
+                if (reward.money) rewardText.push(`💰 +${reward.money}`);
+                if (reward.parts) rewardText.push(`🔩 +${reward.parts}`);
+                if (reward.reputation) rewardText.push(`⭐ +${reward.reputation}`);
+                
+                alert(`🎉 MISSIONE COMPLETATA!\n\n${names[missionId]}\n\nPremi:\n${rewardText.join('\n')}`);
+                
+                this.renderResources();
+                if (this.currentPage === 'track') this.renderMissions();
+                saveGameToServer(true);
             },
 
             getUpgradeCost(section) {
