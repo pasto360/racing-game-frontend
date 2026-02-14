@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Garage Racing Manager - Cloud Edition</title>
+    <!-- Favicon per evitare errore 404 -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='0.9em' font-size='90'>🏎️</text></svg>">
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -2900,8 +2902,6 @@ async function loadLeaderboard() {
                 if (this.currentPage === 'track') this.renderMissions();
                 
                 // ✅ SALVA IMMEDIATAMENTE
-                saveGameToServer(true);
-            },
                 saveGameToServer(true);
             },
 
