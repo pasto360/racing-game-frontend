@@ -2022,8 +2022,8 @@ async function loadLeaderboard() {
                 totalRaces: 5,
                 wins: 0,
                 results: [],
-                entryFee: 7000,
-                prizePool: 5000
+                entryFee: 3500,
+                prizePool: 7000  // Max premio (5 vittorie)
             },
 
             async init() {
@@ -3369,7 +3369,8 @@ async function loadLeaderboard() {
                 const opponentPower = Object.values(opponent.stats).reduce((a, b) => a + b, 0);
                 const win = carPower > opponentPower;
 
-                const damage = Math.floor(Math.random() * 15 + 10);
+                // ✅ DANNI RIDOTTI: 5-12% (era 10-25%)
+                const damage = Math.floor(Math.random() * 8 + 5);
                 car.condition = Math.max(0, car.condition - damage);
 
                 let rewards = {};
@@ -3411,10 +3412,39 @@ async function loadLeaderboard() {
                 }
 
                 if (this.championship.currentRace >= this.championship.totalRaces) {
-                    if (this.championship.wins >= 3) {
-                        this.resources.money.value += this.championship.prizePool;
-                        rewards.championshipBonus = this.championship.prizePool;
+                    // ✅ NUOVO SISTEMA PREMI PROGRESSIVI
+                    const wins = this.championship.wins;
+                    let prize = 0;
+                    let position = '';
+                    
+                    if (wins === 5) {
+                        prize = 7000;
+                        position = 'primo';
+                    } else if (wins === 4) {
+                        prize = 5000;
+                        position = 'secondo';
+                    } else if (wins === 3) {
+                        prize = 3000;
+                        position = 'terzo';
+                    } else if (wins === 2) {
+                        prize = 1500;
+                        position = 'quarto';
+                    } else if (wins === 1) {
+                        prize = 1000;
+                        position = 'quinto';
+                    } else {
+                        prize = 0;
+                        position = 'ultimo';
                     }
+                    
+                    if (prize > 0) {
+                        this.resources.money.value += prize;
+                        rewards.championshipBonus = prize;
+                    }
+                    
+                    // ✅ Salva posizione e premio per riepilogo
+                    this.championship.finalPrize = prize;
+                    this.championship.finalPosition = position;
                 }
 
                 this.showRaceSummary(win, car, carPower, opponent, opponentPower, rewards, damage, true);
@@ -3449,9 +3479,20 @@ async function loadLeaderboard() {
         result.textContent = win ? '🏆 VITTORIA!' : '💥 SCONFITTA!';
         result.className = `modal-title ${win ? 'win' : 'lose'}`;
 
-        // Scelta casuale immagine (1-9) e storia
-        const imageNum = Math.floor(Math.random() * 9) + 1;
-        const imagePath = win ? `images/sections/victory_${imageNum}.jpg` : `images/sections/defeat_${imageNum}.jpg`;
+        // Scelta immagine e storia
+        let imagePath, imageHeight;
+        
+        // ✅ Se è campionato, usa immagine fissa campionato.jpg (più piccola)
+        if (this.championship.active) {
+            imagePath = 'images/sections/campionato.jpg';
+            imageHeight = '150px'; // Più piccola per evitare scroll
+        } else {
+            // Gara normale: immagine casuale victory/defeat
+            const imageNum = Math.floor(Math.random() * 9) + 1;
+            imagePath = win ? `images/sections/victory_${imageNum}.jpg` : `images/sections/defeat_${imageNum}.jpg`;
+            imageHeight = '300px';
+        }
+        
         console.log(`🎨 Carico immagine: ${imagePath}`);
         const stories = win ? this.victoryStories : this.defeatStories;
         const randomStory = stories[Math.floor(Math.random() * stories.length)] || (win ? "Ottima gara!" : "Riprova!");
@@ -3492,7 +3533,7 @@ async function loadLeaderboard() {
                             this.style.display='none';
                         }
                      "
-                     style="width: 100%; height: 300px; object-fit: cover; border-radius: 10px; margin-bottom: 10px;">
+                     style="width: 100%; height: ${imageHeight}; object-fit: cover; border-radius: 10px; margin-bottom: 10px;">
                 <div style="font-size: 0.9rem; line-height: 1.4; color: var(--text-secondary); text-align: center; font-style: italic; padding: 0 15px;">
                     "${randomStory}"
                 </div>
@@ -3561,13 +3602,36 @@ async function loadLeaderboard() {
         }
 
         if (isChampionship && this.championship.currentRace >= this.championship.totalRaces) {
+            // ✅ RIEPILOGO FINALE CAMPIONATO
             setTimeout(() => {
+                const wins = this.championship.wins;
+                const losses = this.championship.totalRaces - wins;
+                const prize = this.championship.finalPrize || 0;
+                const position = this.championship.finalPosition || 'ultimo';
+                
+                const summary = `
+🏁 CAMPIONATO COMPLETATO!
+
+📊 Risultati:
+• Vittorie: ${wins}/5
+• Sconfitte: ${losses}/5
+• Posizione: ${position.toUpperCase()}
+
+💰 Premio: €${prize.toLocaleString()}
+
+${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '💪 Ritenta per migliorare!'}
+                `.trim();
+                
+                alert(summary);
+                
                 this.championship.active = false;
-                if (this.championship.wins >= 3) {
-                    this.showUnlockNotification(`🏆 HAI VINTO IL CAMPIONATO! +${this.championship.prizePool}€`);
-                } else {
-                    this.showUnlockNotification('❌ Campionato fallito. Ritenta!');
-                }
+                this.championship.currentRace = 0;
+                this.championship.wins = 0;
+                this.championship.results = [];
+                this.championship.finalPrize = 0;
+                this.championship.finalPosition = '';
+                
+                this.render();
             }, 100);
         }
     },
@@ -4405,13 +4469,22 @@ async function loadLeaderboard() {
                     champContainer.innerHTML = `
                         <div style="background: var(--bg-card); border: 2px solid var(--accent-purple); border-radius: 12px; padding: 30px; text-align: center;">
                             <div style="font-size: 1.5rem; margin-bottom: 20px;">
-                                🏆 5 Gare Consecutive
+                                🏆 CAMPIONATO - 5 Gare Consecutive
                             </div>
                             <div style="margin: 20px 0;">
-                                <div style="margin: 10px 0;">💰 Quota Iscrizione: ${this.championship.entryFee}€</div>
-                                <div style="margin: 10px 0;">🏆 Premio (minimo 3 vittorie): ${this.championship.prizePool}€</div>
-                                <div style="margin: 10px 0;">⚠️ Danni garantiti ad ogni gara</div>
-                                <div style="margin: 10px 0;">💰 Ricompense progressive ad ogni vittoria</div>
+                                <div style="margin: 10px 0; font-size: 1.1rem; color: var(--accent-yellow);">💰 Iscrizione: ${this.championship.entryFee}€</div>
+                                <div style="margin: 15px 0; padding: 15px; background: rgba(255,215,0,0.1); border-radius: 8px;">
+                                    <div style="font-weight: 700; margin-bottom: 8px;">🏆 PREMI:</div>
+                                    <div style="font-size: 0.9rem; line-height: 1.8;">
+                                        5 vittorie = 7000€ 🥇<br>
+                                        4 vittorie = 5000€ 🥈<br>
+                                        3 vittorie = 3000€ 🥉<br>
+                                        2 vittorie = 1500€<br>
+                                        1 vittoria = 1000€
+                                    </div>
+                                </div>
+                                <div style="margin: 10px 0; color: var(--accent-red);">⚠️ Danni progressivi ad ogni gara</div>
+                                <div style="margin: 10px 0;">💰 Ricompense immediate per vittorie</div>
                             </div>
                             <button class="btn btn-purple" onclick="game.startChampionship()" ${!canStart ? 'disabled' : ''}>
                                 Iscriviti al Campionato
