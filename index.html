@@ -547,6 +547,32 @@
             border-color: var(--accent-red);
             background: linear-gradient(135deg, rgba(255, 51, 51, 0.05), transparent);
         }
+        
+        /* Tab Buttons per Classifica */
+        .tab-btn {
+            padding: 12px 30px;
+            background: rgba(255,255,255,0.05);
+            border: 2px solid rgba(255,255,255,0.1);
+            color: var(--text-secondary);
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            font-size: 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .tab-btn:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: var(--accent-cyan);
+        }
+        
+        .tab-btn.active {
+            background: linear-gradient(135deg, var(--accent-cyan), var(--accent-green));
+            border-color: var(--accent-cyan);
+            color: white;
+            box-shadow: 0 0 20px rgba(0,217,255,0.3);
+        }
 
         .car-header {
             display: flex;
@@ -1163,6 +1189,10 @@
                <span class="icon">🏆</span>
                Classifica
             </button>
+            <button class="nav-btn" onclick="game.changePage('stats')">
+               <span class="icon">📊</span>
+               Statistiche
+            </button>
         </nav>
 
         <!-- Mobile Tab Bar (visibile solo su mobile) -->
@@ -1200,6 +1230,10 @@
                 <button class="mobile-menu-item" onclick="game.changePage('leaderboard'); closeMobileMenu()">
                     <span class="icon">🏆</span>
                     <span>Classifica</span>
+                </button>
+                <button class="mobile-menu-item" onclick="game.changePage('stats'); closeMobileMenu()">
+                    <span class="icon">📊</span>
+                    <span>Statistiche</span>
                 </button>
             </div>
         </div>
@@ -1257,13 +1291,52 @@
 
         
         <div id="page-leaderboard" class="page">
-            <h2 class="section-title">🏆 Classifica Mondiale</h2>
-            <div id="leaderboardContainer"></div>
+            <h2 class="section-title">🏆 Classifiche</h2>
+            
+            <!-- Tab Selector -->
+            <div style="display: flex; gap: 10px; margin-bottom: 20px; justify-content: center;">
+                <button id="tabMondiale" class="tab-btn active" onclick="game.switchLeaderboardTab('mondiale')">
+                    🌍 Mondiale
+                </button>
+                <button id="tabSettimanale" class="tab-btn" onclick="game.switchLeaderboardTab('settimanale')">
+                    📅 Settimanale
+                </button>
+            </div>
+            
+            <!-- Classifica Mondiale -->
+            <div id="leaderboardMondiale" class="leaderboard-tab active">
+                <div id="leaderboardContainer"></div>
+            </div>
+            
+            <!-- Classifica Settimanale -->
+            <div id="leaderboardSettimanale" class="leaderboard-tab" style="display: none;">
+                <!-- Header settimana -->
+                <div id="weeklyHeader" style="background: linear-gradient(135deg, rgba(255,215,0,0.1), rgba(255,165,0,0.1)); border: 2px solid var(--accent-yellow); border-radius: 10px; padding: 15px; margin-bottom: 20px; text-align: center;">
+                    <div style="font-size: 1.2rem; font-weight: 700; color: var(--accent-yellow); font-family: Orbitron;">
+                        📅 SETTIMANA #<span id="weekNumber">1</span>
+                    </div>
+                    <div style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 5px;">
+                        Reset: Lunedì ore 08:00
+                    </div>
+                </div>
+                
+                <!-- Vincitori settimana passata -->
+                <div id="weeklyWinners"></div>
+                
+                <!-- Classifica corrente -->
+                <div id="weeklyLeaderboardContainer"></div>
+            </div>
+        </div>
+        
+        <!-- PAGINA STATISTICHE -->
+        <div id="page-stats" class="page">
+            <h2 class="section-title">📊 Le Mie Statistiche</h2>
+            <div id="statsContainer"></div>
         </div>
     </div>
 
     <footer style="display: flex; justify-content: space-between; align-items: center; padding: 0 20px;">
-        <span>Garage Racing Manager v5.1</span>
+        <span>Garage Racing Manager v5.2</span>
         <a href="istruzioni.html" target="_blank" style="color: var(--accent-cyan); text-decoration: none; cursor: pointer;">
             📖 Istruzioni
         </a>
@@ -2306,7 +2379,14 @@ async function loadLeaderboard() {
                 // Non bloccare il gioco se lo storico fallisce
             }
         }
-        if (page === 'leaderboard') this.renderLeaderboard();
+        if (page === 'leaderboard') {
+            this.renderLeaderboard();
+            this.renderWeeklyLeaderboard();
+        }
+        
+        if (page === 'stats') {
+            this.renderStats();
+        }
 
         this.currentPage = page;
     },
@@ -4810,6 +4890,325 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                     // Rilascia flag anche in caso di errore
                     this._isRenderingLeaderboard = false;
                 }
+            },
+
+            switchLeaderboardTab(tab) {
+                // Attiva/disattiva tab buttons
+                document.getElementById('tabMondiale').classList.toggle('active', tab === 'mondiale');
+                document.getElementById('tabSettimanale').classList.toggle('active', tab === 'settimanale');
+                
+                // Mostra/nascondi contenuto
+                document.getElementById('leaderboardMondiale').style.display = tab === 'mondiale' ? 'block' : 'none';
+                document.getElementById('leaderboardSettimanale').style.display = tab === 'settimanale' ? 'block' : 'none';
+            },
+
+            async renderWeeklyLeaderboard() {
+                try {
+                    const container = document.getElementById('weeklyLeaderboardContainer');
+                    const winnersContainer = document.getElementById('weeklyWinners');
+                    
+                    container.innerHTML = '<p style="color: #a0a0a0; text-align: center; padding: 40px;">⏳ Caricamento...</p>';
+                    
+                    const token = localStorage.getItem('authToken');
+                    const response = await fetch(`${API_URL}/api/game/leaderboard-weekly`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error('Errore caricamento classifica settimanale');
+                    }
+                    
+                    const data = await response.json();
+                    
+                    // Aggiorna numero settimana
+                    document.getElementById('weekNumber').textContent = data.weekNumber;
+                    
+                    // Mostra vincitori settimana passata
+                    if (data.lastWinners) {
+                        winnersContainer.innerHTML = `
+                            <div style="background: linear-gradient(135deg, rgba(255,215,0,0.15), rgba(255,140,0,0.15)); border: 2px solid var(--accent-yellow); border-radius: 12px; padding: 20px; margin-bottom: 25px;">
+                                <h3 style="text-align: center; color: var(--accent-yellow); font-family: Orbitron; margin-bottom: 15px; font-size: 1.1rem;">
+                                    🏆 VINCITORI SETTIMANA #${data.lastWinners.week_number}
+                                </h3>
+                                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+                                    <div style="text-align: center;">
+                                        <div style="font-size: 2rem; margin-bottom: 5px;">🥇</div>
+                                        <div style="font-size: 0.9rem; font-weight: 700; color: var(--accent-yellow);">${data.lastWinners.first_place || 'N/A'}</div>
+                                        <div style="font-size: 0.75rem; color: var(--text-secondary);">+500⭐ +5000€</div>
+                                    </div>
+                                    <div style="text-align: center;">
+                                        <div style="font-size: 2rem; margin-bottom: 5px;">🥈</div>
+                                        <div style="font-size: 0.9rem; font-weight: 700; color: #c0c0c0;">${data.lastWinners.second_place || 'N/A'}</div>
+                                        <div style="font-size: 0.75rem; color: var(--text-secondary);">+300⭐ +3000€</div>
+                                    </div>
+                                    <div style="text-align: center;">
+                                        <div style="font-size: 2rem; margin-bottom: 5px;">🥉</div>
+                                        <div style="font-size: 0.9rem; font-weight: 700; color: #cd7f32;">${data.lastWinners.third_place || 'N/A'}</div>
+                                        <div style="font-size: 0.75rem; color: var(--text-secondary);">+100⭐ +1000€</div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        winnersContainer.innerHTML = '';
+                    }
+                    
+                    // Render classifica corrente
+                    const leaderboard = data.leaderboard || [];
+                    
+                    if (leaderboard.length === 0) {
+                        container.innerHTML = '<p style="color: #a0a0a0; text-align: center; padding: 40px;">Nessun dato disponibile</p>';
+                        return;
+                    }
+                    
+                    let html = '<div style="background: var(--bg-card); border: 2px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 20px;">';
+                    
+                    leaderboard.forEach((player, index) => {
+                        const rank = index + 1;
+                        const isCurrentUser = player.username === currentUser?.username;
+                        const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : '';
+                        
+                        html += `
+                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); ${isCurrentUser ? 'background: rgba(0,217,255,0.1); border-radius: 8px; border: 2px solid var(--accent-cyan);' : ''}">
+                                <div style="display: flex; align-items: center; gap: 15px;">
+                                    <div style="font-family: Orbitron; font-weight: 900; font-size: 1.3rem; color: ${rank <= 3 ? 'var(--accent-yellow)' : 'var(--text-secondary)'}; min-width: 40px; text-align: center;">
+                                        ${medal || rank}
+                                    </div>
+                                    <div>
+                                        <div style="font-weight: 700; font-size: 1rem; ${isCurrentUser ? 'color: var(--accent-cyan);' : ''}">${player.username}</div>
+                                        ${isCurrentUser ? '<div style="font-size: 0.75rem; color: var(--accent-green);">Tu</div>' : ''}
+                                    </div>
+                                </div>
+                                <div style="text-align: right;">
+                                    <div style="font-family: Orbitron; font-weight: 900; font-size: 1.2rem; color: var(--accent-yellow);">
+                                        ${player.reputation} ⭐
+                                    </div>
+                                    <div style="font-size: 0.75rem; color: var(--text-secondary);">
+                                        questa settimana
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    html += '</div>';
+                    container.innerHTML = html;
+                    
+                } catch (error) {
+                    console.error('Errore classifica settimanale:', error);
+                    document.getElementById('weeklyLeaderboardContainer').innerHTML = 
+                        '<p style="color: #ff3333; text-align: center; padding: 40px;">❌ Errore caricamento</p>';
+                }
+            },
+            
+            renderStats() {
+                const container = document.getElementById('statsContainer');
+                
+                // Calcola statistiche
+                const totalRaces = this.races.completed || 0;
+                const wins = this.races.wins || 0;
+                const losses = totalRaces - wins;
+                const winRate = totalRaces > 0 ? ((wins / totalRaces) * 100).toFixed(1) : 0;
+                
+                const pvpTotal = this.pvpStats?.total || 0;
+                const pvpWins = this.pvpStats?.wins || 0;
+                const pvpLosses = this.pvpStats?.losses || 0;
+                const pvpWinRate = pvpTotal > 0 ? ((pvpWins / pvpTotal) * 100).toFixed(1) : 0;
+                
+                // Auto preferita (più gare)
+                let favoriteCar = { name: 'Nessuna', races: 0, wins: 0 };
+                if (this.raceHistory && this.raceHistory.length > 0) {
+                    const carStats = {};
+                    this.raceHistory.forEach(race => {
+                        const carName = race.car || 'Sconosciuta';
+                        if (!carStats[carName]) {
+                            carStats[carName] = { races: 0, wins: 0 };
+                        }
+                        carStats[carName].races++;
+                        if (race.won) carStats[carName].wins++;
+                    });
+                    
+                    Object.keys(carStats).forEach(carName => {
+                        if (carStats[carName].races > favoriteCar.races) {
+                            favoriteCar = { name: carName, ...carStats[carName] };
+                        }
+                    });
+                }
+                const favoriteWinRate = favoriteCar.races > 0 ? ((favoriteCar.wins / favoriteCar.races) * 100).toFixed(0) : 0;
+                
+                // Record personali
+                let maxPower = 0;
+                let maxMoney = this.resources.money.value;
+                if (this.ownedCars && this.ownedCars.length > 0) {
+                    this.ownedCars.forEach(car => {
+                        const power = this.getCarPower(car);
+                        if (power > maxPower) maxPower = power;
+                    });
+                }
+                
+                // Striscia vittorie
+                let currentStreak = 0;
+                let maxStreak = 0;
+                let tempStreak = 0;
+                if (this.raceHistory && this.raceHistory.length > 0) {
+                    const recentRaces = this.raceHistory.slice(-50).reverse();
+                    for (let i = 0; i < recentRaces.length; i++) {
+                        if (recentRaces[i].won) {
+                            tempStreak++;
+                            if (i === 0) currentStreak = tempStreak;
+                            if (tempStreak > maxStreak) maxStreak = tempStreak;
+                        } else {
+                            tempStreak = 0;
+                        }
+                    }
+                }
+                
+                // Campionati
+                const championshipsWon = this.championshipsWon || 0;
+                
+                // Tecnologie
+                let techResearched = 0;
+                this.technologies.forEach(tech => {
+                    if (tech.researched) techResearched++;
+                });
+                
+                // Missioni completate
+                let missionsCompleted = 0;
+                Object.values(this.missions).forEach(mission => {
+                    if (mission.completed) missionsCompleted++;
+                });
+                
+                // HTML
+                container.innerHTML = `
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px;">
+                        
+                        <!-- Card Gare -->
+                        <div style="background: linear-gradient(135deg, rgba(0,217,255,0.1), rgba(0,255,136,0.1)); border: 2px solid var(--accent-cyan); border-radius: 12px; padding: 25px;">
+                            <h3 style="color: var(--accent-cyan); font-family: Orbitron; margin-bottom: 20px; font-size: 1.3rem;">
+                                🏁 GARE
+                            </h3>
+                            <div style="display: flex; flex-direction: column; gap: 12px;">
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span style="color: var(--text-secondary);">Totali:</span>
+                                    <span style="font-weight: 700; font-size: 1.2rem;">${totalRaces.toLocaleString()}</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span style="color: var(--text-secondary);">Vinte:</span>
+                                    <span style="font-weight: 700; font-size: 1.2rem; color: var(--accent-green);">${wins.toLocaleString()} (${winRate}%)</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span style="color: var(--text-secondary);">Perse:</span>
+                                    <span style="font-weight: 700; font-size: 1.2rem; color: var(--accent-red);">${losses.toLocaleString()} (${(100-winRate).toFixed(1)}%)</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1);">
+                                    <span style="color: var(--text-secondary);">Striscia vittorie:</span>
+                                    <span style="font-weight: 700; font-size: 1.2rem; color: var(--accent-yellow);">${currentStreak > 0 ? currentStreak + ' 🔥' : '0'}</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Card PvP -->
+                        <div style="background: linear-gradient(135deg, rgba(255,51,51,0.1), rgba(255,140,0,0.1)); border: 2px solid var(--accent-red); border-radius: 12px; padding: 25px;">
+                            <h3 style="color: var(--accent-red); font-family: Orbitron; margin-bottom: 20px; font-size: 1.3rem;">
+                                ⚔️ PVP
+                            </h3>
+                            <div style="display: flex; flex-direction: column; gap: 12px;">
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span style="color: var(--text-secondary);">Sfide totali:</span>
+                                    <span style="font-weight: 700; font-size: 1.2rem;">${pvpTotal}</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span style="color: var(--text-secondary);">Vittorie:</span>
+                                    <span style="font-weight: 700; font-size: 1.2rem; color: var(--accent-green);">${pvpWins} (${pvpWinRate}%)</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span style="color: var(--text-secondary);">Sconfitte:</span>
+                                    <span style="font-weight: 700; font-size: 1.2rem; color: var(--accent-red);">${pvpLosses} (${(100-pvpWinRate).toFixed(1)}%)</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1);">
+                                    <span style="color: var(--text-secondary);">Rank mondiale:</span>
+                                    <span style="font-weight: 700; font-size: 1.2rem; color: var(--accent-yellow);">#${this._leaderboardCache?.leaderboard?.findIndex(p => p.username === currentUser?.username) + 1 || '?'}</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Card Auto Preferita -->
+                        <div style="background: linear-gradient(135deg, rgba(255,215,0,0.1), rgba(255,140,0,0.1)); border: 2px solid var(--accent-yellow); border-radius: 12px; padding: 25px;">
+                            <h3 style="color: var(--accent-yellow); font-family: Orbitron; margin-bottom: 20px; font-size: 1.3rem;">
+                                🏎️ AUTO PREFERITA
+                            </h3>
+                            <div style="display: flex; flex-direction: column; gap: 12px;">
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span style="color: var(--text-secondary);">Auto:</span>
+                                    <span style="font-weight: 700; font-size: 1.1rem;">${favoriteCar.name}</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span style="color: var(--text-secondary);">Gare corse:</span>
+                                    <span style="font-weight: 700; font-size: 1.2rem;">${favoriteCar.races}</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span style="color: var(--text-secondary);">Win rate:</span>
+                                    <span style="font-weight: 700; font-size: 1.2rem; color: var(--accent-green);">${favoriteWinRate}%</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1);">
+                                    <span style="color: var(--text-secondary);">Auto possedute:</span>
+                                    <span style="font-weight: 700; font-size: 1.2rem;">${this.ownedCars.length}</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Card Record Personali -->
+                        <div style="background: linear-gradient(135deg, rgba(138,43,226,0.1), rgba(75,0,130,0.1)); border: 2px solid var(--accent-purple); border-radius: 12px; padding: 25px;">
+                            <h3 style="color: var(--accent-purple); font-family: Orbitron; margin-bottom: 20px; font-size: 1.3rem;">
+                                💎 RECORD PERSONALI
+                            </h3>
+                            <div style="display: flex; flex-direction: column; gap: 12px;">
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span style="color: var(--text-secondary);">Miglior HP:</span>
+                                    <span style="font-weight: 700; font-size: 1.2rem; color: var(--accent-yellow);">${Math.floor(maxPower)} HP</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span style="color: var(--text-secondary);">Denaro attuale:</span>
+                                    <span style="font-weight: 700; font-size: 1.2rem;">€${maxMoney.toLocaleString()}</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span style="color: var(--text-secondary);">Campionati vinti:</span>
+                                    <span style="font-weight: 700; font-size: 1.2rem;">${championshipsWon}</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1);">
+                                    <span style="color: var(--text-secondary);">Striscia max:</span>
+                                    <span style="font-weight: 700; font-size: 1.2rem; color: var(--accent-yellow);">${maxStreak} 🔥</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Card Progressione -->
+                        <div style="background: linear-gradient(135deg, rgba(0,255,136,0.1), rgba(0,200,100,0.1)); border: 2px solid var(--accent-green); border-radius: 12px; padding: 25px;">
+                            <h3 style="color: var(--accent-green); font-family: Orbitron; margin-bottom: 20px; font-size: 1.3rem;">
+                                📈 PROGRESSIONE
+                            </h3>
+                            <div style="display: flex; flex-direction: column; gap: 12px;">
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span style="color: var(--text-secondary);">Reputazione:</span>
+                                    <span style="font-weight: 700; font-size: 1.2rem; color: var(--accent-yellow);">${this.resources.reputation.value} ⭐</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span style="color: var(--text-secondary);">Tecnologie:</span>
+                                    <span style="font-weight: 700; font-size: 1.2rem;">${techResearched}/${this.technologies.length}</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between;">
+                                    <span style="color: var(--text-secondary);">Missioni:</span>
+                                    <span style="font-weight: 700; font-size: 1.2rem;">${missionsCompleted}/10</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1);">
+                                    <span style="color: var(--text-secondary);">Upgrade totali:</span>
+                                    <span style="font-weight: 700; font-size: 1.2rem;">${this.upgradesCount || 0}</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                    </div>
+                `;
             },
 
             async checkCanChallenge() {
