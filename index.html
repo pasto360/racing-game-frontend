@@ -1159,6 +1159,9 @@
             <h1>Garage Racing Manager</h1>
             <div class="resources" id="resources"></div>
         </header>
+        
+        <!-- Banner Eventi (dinamico) -->
+        <div id="eventBanner"></div>
 
         <nav class="navigation">
             <button class="nav-btn active" onclick="game.changePage('workshop')">
@@ -1192,6 +1195,10 @@
             <button class="nav-btn" onclick="game.changePage('stats')">
                <span class="icon">📊</span>
                Statistiche
+            </button>
+            <button class="nav-btn" onclick="game.changePage('events')">
+               <span class="icon">🎉</span>
+               Eventi
             </button>
         </nav>
 
@@ -1234,6 +1241,10 @@
                 <button class="mobile-menu-item" onclick="game.changePage('stats'); closeMobileMenu()">
                     <span class="icon">📊</span>
                     <span>Statistiche</span>
+                </button>
+                <button class="mobile-menu-item" onclick="game.changePage('events'); closeMobileMenu()">
+                    <span class="icon">🎉</span>
+                    <span>Eventi</span>
                 </button>
             </div>
         </div>
@@ -1332,6 +1343,12 @@
         <div id="page-stats" class="page">
             <h2 class="section-title">📊 Le Mie Statistiche</h2>
             <div id="statsContainer"></div>
+        </div>
+        
+        <!-- PAGINA EVENTI -->
+        <div id="page-events" class="page">
+            <h2 class="section-title">🎉 Eventi Temporanei</h2>
+            <div id="eventsContainer"></div>
         </div>
     </div>
 
@@ -2247,6 +2264,87 @@ async function loadLeaderboard() {
     this.upgradesCount = 0;
     this.championshipsWon = 0;
     
+    // ✅ SISTEMA EVENTI TEMPORANEI
+    this.currentEvent = null;
+    this.eventProgress = {}; // Progress obiettivi evento corrente
+    
+    // Eventi ricorrenti preconfigurati
+    this.recurringEvents = [
+        {
+            id: 'weekend_fuoco',
+            name: 'Weekend di Fuoco',
+            description: 'Bonus speciali per tutto il weekend!',
+            icon: '🔥',
+            schedule: { dayOfWeek: [5, 6, 0], startHour: 0, endHour: 23 }, // Ven-Dom
+            bonuses: {
+                moneyMultiplier: 1.5,
+                reputationMultiplier: 2.0,
+                pvpUnlimited: true,
+                damageReduction: 0.5
+            },
+            objective: {
+                type: 'wins',
+                target: 25,
+                description: 'Vinci 25 gare',
+                reward: { money: 10000, parts: 500, reputation: 100 }
+            }
+        },
+        {
+            id: 'lunedi_riparazioni',
+            name: 'Lunedì Riparazioni',
+            description: 'Riparazioni scontate!',
+            icon: '🔧',
+            schedule: { dayOfWeek: [1], startHour: 0, endHour: 23 }, // Lunedì
+            bonuses: {
+                repairDiscount: 0.75,
+                workshopBonus: 1.25
+            },
+            objective: {
+                type: 'repairs',
+                target: 5,
+                description: 'Ripara 5 auto',
+                reward: { money: 5000, parts: 300 }
+            }
+        },
+        {
+            id: 'mercoledi_tech',
+            name: 'Mercoledì Tecnologico',
+            description: 'Ricerca tecnologie a metà prezzo!',
+            icon: '🔬',
+            schedule: { dayOfWeek: [3], startHour: 0, endHour: 23 }, // Mercoledì
+            bonuses: {
+                techDiscount: 0.5,
+                techTimeReduction: 0.5
+            },
+            objective: {
+                type: 'technologies',
+                target: 2,
+                description: 'Sblocca 2 tecnologie',
+                reward: { reputation: 200, parts: 400 }
+            }
+        },
+        {
+            id: 'giovedi_pvp',
+            name: 'Giovedì PvP',
+            description: 'Sfide illimitate e bonus ricompense!',
+            icon: '⚔️',
+            schedule: { dayOfWeek: [4], startHour: 0, endHour: 23 }, // Giovedì
+            bonuses: {
+                pvpUnlimited: true,
+                pvpRewardMultiplier: 1.5
+            },
+            objective: {
+                type: 'pvp_wins',
+                target: 10,
+                description: 'Vinci 10 sfide PvP',
+                reward: { money: 8000, reputation: 200 }
+            }
+        }
+    ];
+    
+    // Check evento attivo all'avvio
+    this.checkActiveEvent();
+    
     const loaded = await loadGameFromServer();
     
     if (!loaded) {
@@ -2271,6 +2369,7 @@ async function loadLeaderboard() {
 
             startGameLoop() {
         this.lastTickTime = Date.now();
+        this.lastEventCheck = Date.now();
 
         setInterval(() => {
             const now = Date.now();
@@ -2280,6 +2379,13 @@ async function loadLeaderboard() {
             this.updateResources(deltaSeconds);
             this.processWorkshopQueue(); // ✅ Controlla timer upgrade
             this.processTrackQueue(); // ✅ Controlla timer allenamenti
+            
+            // ✅ Check eventi attivi ogni minuto
+            if (now - this.lastEventCheck > 60000) {
+                this.checkActiveEvent();
+                this.lastEventCheck = now;
+            }
+            
             this.render();
             
             // ✅ Aggiorna UI code upgrade/allenamenti se visibili
@@ -2386,6 +2492,10 @@ async function loadLeaderboard() {
         
         if (page === 'stats') {
             this.renderStats();
+        }
+        
+        if (page === 'events') {
+            this.renderEventPage();
         }
 
         this.currentPage = page;
@@ -3343,6 +3453,22 @@ async function loadLeaderboard() {
                             Object.keys(rewards).forEach(key => {
                                 rewards[key] = Math.floor(rewards[key] * (1 + this.currentSponsor.bonus.value));
                             });
+                        }
+                    }
+                    
+                    // ✅ BONUS EVENTI
+                    if (this.currentEvent && this.currentEvent.bonuses) {
+                        if (this.currentEvent.bonuses.moneyMultiplier) {
+                            rewards.money = Math.floor(rewards.money * this.currentEvent.bonuses.moneyMultiplier);
+                        }
+                        if (this.currentEvent.bonuses.reputationMultiplier) {
+                            rewards.reputation = Math.floor(rewards.reputation * this.currentEvent.bonuses.reputationMultiplier);
+                        }
+                    }
+
+                    Object.keys(rewards).forEach(key => {
+                                rewards[key] = Math.floor(rewards[key] * (1 + this.currentSponsor.bonus.value));
+                            });
                         } else if (this.currentSponsor.bonus.type === 'all') {
                             Object.keys(rewards).forEach(key => {
                                 rewards[key] = Math.floor(rewards[key] * (1 + this.currentSponsor.bonus.value));
@@ -3362,6 +3488,11 @@ async function loadLeaderboard() {
 
                 this.races.completed++;
                 this.races.lastRaceTime = now;
+                
+                // ✅ Aggiorna obiettivo evento se vittoria
+                if (win) {
+                    this.updateEventProgress('wins', 1);
+                }
                 
                 // Decrementa contratto sponsor
                 this.decrementSponsorRaces();
@@ -3466,6 +3597,10 @@ async function loadLeaderboard() {
                 let rewards = {};
                 if (win) {
                     this.championship.wins++;
+                    
+                    // ✅ Aggiorna obiettivo evento
+                    this.updateEventProgress('wins', 1);
+                    
                     rewards = {
                         money: Math.floor(500 + (this.championship.currentRace * 200)),
                         reputation: Math.floor(20 + (this.championship.currentRace * 5)),
@@ -3807,6 +3942,12 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
             render() {
                 this.renderResources();
                 this.checkUnlocks();
+                
+                // ✅ Render banner eventi
+                const bannerContainer = document.getElementById('eventBanner');
+                if (bannerContainer) {
+                    bannerContainer.innerHTML = this.renderEventBanner();
+                }
                 
                 // ✅ NON ri-renderizzare pagine già renderizzate (evita loop immagini)
                 // Solo renderizza se cambia qualcosa di importante
@@ -5214,6 +5355,359 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                     </div>
                 `;
             },
+            
+            // ===== SISTEMA EVENTI TEMPORANEI =====
+            
+            checkActiveEvent() {
+                const now = new Date();
+                const dayOfWeek = now.getDay(); // 0=Dom, 1=Lun, ..., 6=Sab
+                const hour = now.getHours();
+                
+                // Cerca evento ricorrente attivo
+                for (const event of this.recurringEvents) {
+                    const schedule = event.schedule;
+                    const isDayMatch = schedule.dayOfWeek.includes(dayOfWeek);
+                    const isHourMatch = hour >= schedule.startHour && hour <= schedule.endHour;
+                    
+                    if (isDayMatch && isHourMatch) {
+                        // Evento attivo!
+                        if (!this.currentEvent || this.currentEvent.id !== event.id) {
+                            // Nuovo evento iniziato
+                            this.activateEvent(event);
+                        }
+                        return;
+                    }
+                }
+                
+                // Nessun evento attivo
+                if (this.currentEvent) {
+                    this.deactivateEvent();
+                }
+            },
+            
+            activateEvent(eventTemplate) {
+                console.log('🎉 Evento attivato:', eventTemplate.name);
+                
+                // Crea istanza evento
+                this.currentEvent = {
+                    ...eventTemplate,
+                    startTime: Date.now(),
+                    active: true
+                };
+                
+                // Inizializza progress obiettivo
+                if (!this.eventProgress[eventTemplate.id]) {
+                    this.eventProgress[eventTemplate.id] = {
+                        progress: 0,
+                        completed: false,
+                        claimed: false
+                    };
+                }
+                
+                // Mostra notifica
+                this.showUnlockNotification(`🎉 EVENTO INIZIATO: ${eventTemplate.name}!`);
+                
+                // Re-render se sei nella pagina giusta
+                if (this.currentPage) {
+                    this.render();
+                }
+            },
+            
+            deactivateEvent() {
+                if (this.currentEvent) {
+                    console.log('⏰ Evento terminato:', this.currentEvent.name);
+                    
+                    const progress = this.eventProgress[this.currentEvent.id];
+                    if (progress && progress.completed && !progress.claimed) {
+                        this.showUnlockNotification(`⚠️ Evento "${this.currentEvent.name}" terminato! Riscuoti i premi prima che scada!`);
+                    }
+                    
+                    this.currentEvent = null;
+                    this.render();
+                }
+            },
+            
+            updateEventProgress(type, amount = 1) {
+                if (!this.currentEvent || !this.currentEvent.objective) return;
+                
+                const objective = this.currentEvent.objective;
+                if (objective.type !== type) return;
+                
+                const eventId = this.currentEvent.id;
+                if (!this.eventProgress[eventId]) {
+                    this.eventProgress[eventId] = { progress: 0, completed: false, claimed: false };
+                }
+                
+                const progress = this.eventProgress[eventId];
+                if (progress.completed) return;
+                
+                progress.progress += amount;
+                
+                if (progress.progress >= objective.target) {
+                    progress.progress = objective.target;
+                    progress.completed = true;
+                    this.showUnlockNotification(`🏆 Obiettivo evento completato! Vai alla pagina Eventi per riscuotere i premi!`);
+                }
+                
+                console.log(`📊 Evento progress (${type}):`, progress.progress, '/', objective.target);
+            },
+            
+            claimEventReward() {
+                if (!this.currentEvent) {
+                    alert('❌ Nessun evento attivo!');
+                    return;
+                }
+                
+                const eventId = this.currentEvent.id;
+                const progress = this.eventProgress[eventId];
+                
+                if (!progress || !progress.completed) {
+                    alert('❌ Obiettivo non completato!');
+                    return;
+                }
+                
+                if (progress.claimed) {
+                    alert('⚠️ Premi già riscossi!');
+                    return;
+                }
+                
+                const reward = this.currentEvent.objective.reward;
+                
+                // Assegna premi
+                if (reward.money) this.resources.money.value += reward.money;
+                if (reward.parts) this.resources.parts.value += reward.parts;
+                if (reward.reputation) {
+                    this.resources.reputation.value = Math.min(
+                        this.resources.reputation.value + reward.reputation,
+                        this.resources.reputation.max
+                    );
+                }
+                
+                progress.claimed = true;
+                
+                let rewardText = [];
+                if (reward.money) rewardText.push(`💰 +${reward.money.toLocaleString()}€`);
+                if (reward.parts) rewardText.push(`🔩 +${reward.parts.toLocaleString()}`);
+                if (reward.reputation) rewardText.push(`⭐ +${reward.reputation}`);
+                
+                alert(`🎉 PREMI RISCOSSI!\n\n${rewardText.join('\n')}`);
+                
+                this.renderResources();
+                this.renderEventPage();
+                saveGameToServer(true);
+            },
+            
+            renderEventBanner() {
+                // Banner in cima a tutte le pagine se evento attivo
+                let bannerHtml = '';
+                
+                if (this.currentEvent) {
+                    const event = this.currentEvent;
+                    const progress = this.eventProgress[event.id] || { progress: 0, completed: false, claimed: false };
+                    
+                    // Calcola tempo rimanente
+                    const now = new Date();
+                    const schedule = event.schedule;
+                    const endOfDay = new Date(now);
+                    endOfDay.setHours(schedule.endHour, 59, 59, 999);
+                    
+                    const timeLeft = endOfDay - now;
+                    const hoursLeft = Math.floor(timeLeft / (1000 * 60 * 60));
+                    const minutesLeft = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+                    
+                    const statusIcon = progress.claimed ? '✅' : progress.completed ? '🏆' : '⏳';
+                    const statusText = progress.claimed ? 'Completato' : progress.completed ? 'Pronto!' : `${progress.progress}/${event.objective.target}`;
+                    
+                    bannerHtml = `
+                        <div style="background: linear-gradient(135deg, rgba(255,140,0,0.2), rgba(255,69,0,0.2)); border: 2px solid var(--accent-yellow); border-radius: 10px; padding: 12px 20px; margin-bottom: 15px; cursor: pointer; transition: all 0.3s;" onclick="game.changePage('events')">
+                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+                                <div style="display: flex; align-items: center; gap: 12px;">
+                                    <span style="font-size: 2rem;">${event.icon}</span>
+                                    <div>
+                                        <div style="font-weight: 700; font-size: 1.1rem; color: var(--accent-yellow);">
+                                            EVENTO ATTIVO: ${event.name}
+                                        </div>
+                                        <div style="font-size: 0.85rem; color: var(--text-secondary);">
+                                            ${event.description}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 15px;">
+                                    <div style="text-align: center;">
+                                        <div style="font-size: 0.75rem; color: var(--text-secondary);">Obiettivo</div>
+                                        <div style="font-weight: 700; color: var(--accent-green);">${statusIcon} ${statusText}</div>
+                                    </div>
+                                    <div style="text-align: center;">
+                                        <div style="font-size: 0.75rem; color: var(--text-secondary);">Scade tra</div>
+                                        <div style="font-weight: 700; color: var(--accent-red);">⏰ ${hoursLeft}h ${minutesLeft}m</div>
+                                    </div>
+                                    <button class="btn" style="padding: 8px 20px; font-size: 0.9rem;" onclick="event.stopPropagation(); game.changePage('events');">
+                                        Dettagli
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                return bannerHtml;
+            },
+            
+            renderEventPage() {
+                const container = document.getElementById('eventsContainer');
+                if (!container) return;
+                
+                if (!this.currentEvent) {
+                    container.innerHTML = `
+                        <div style="text-align: center; padding: 60px 20px;">
+                            <div style="font-size: 5rem; margin-bottom: 20px; opacity: 0.3;">📅</div>
+                            <h3 style="color: var(--text-secondary); margin-bottom: 15px;">Nessun Evento Attivo</h3>
+                            <p style="color: var(--text-secondary); max-width: 500px; margin: 0 auto;">
+                                Gli eventi temporanei offrono bonus speciali e premi esclusivi.
+                                Torna più tardi per scoprire nuove opportunità!
+                            </p>
+                            <div style="margin-top: 30px; padding: 20px; background: rgba(255,255,255,0.05); border-radius: 10px; max-width: 600px; margin: 30px auto 0;">
+                                <h4 style="color: var(--accent-cyan); margin-bottom: 15px;">📅 Programma Eventi</h4>
+                                <div style="display: flex; flex-direction: column; gap: 10px; text-align: left;">
+                                    <div style="padding: 10px; background: rgba(255,140,0,0.1); border-radius: 6px;">
+                                        🔥 <strong>Weekend di Fuoco</strong> - Venerdì-Domenica
+                                    </div>
+                                    <div style="padding: 10px; background: rgba(0,217,255,0.1); border-radius: 6px;">
+                                        🔧 <strong>Lunedì Riparazioni</strong> - Ogni Lunedì
+                                    </div>
+                                    <div style="padding: 10px; background: rgba(138,43,226,0.1); border-radius: 6px;">
+                                        🔬 <strong>Mercoledì Tecnologico</strong> - Ogni Mercoledì
+                                    </div>
+                                    <div style="padding: 10px; background: rgba(255,51,51,0.1); border-radius: 6px;">
+                                        ⚔️ <strong>Giovedì PvP</strong> - Ogni Giovedì
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                const event = this.currentEvent;
+                const progress = this.eventProgress[event.id] || { progress: 0, completed: false, claimed: false };
+                const objective = event.objective;
+                const progressPercent = Math.min(100, (progress.progress / objective.target) * 100);
+                
+                // Tempo rimanente
+                const now = new Date();
+                const schedule = event.schedule;
+                const endOfDay = new Date(now);
+                endOfDay.setHours(schedule.endHour, 59, 59, 999);
+                const timeLeft = endOfDay - now;
+                const hoursLeft = Math.floor(timeLeft / (1000 * 60 * 60));
+                const minutesLeft = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+                
+                // Bonus text
+                let bonusesHtml = '';
+                if (event.bonuses.moneyMultiplier) {
+                    bonusesHtml += `<div>💰 +${((event.bonuses.moneyMultiplier - 1) * 100).toFixed(0)}% denaro gare</div>`;
+                }
+                if (event.bonuses.reputationMultiplier) {
+                    bonusesHtml += `<div>⭐ +${((event.bonuses.reputationMultiplier - 1) * 100).toFixed(0)}% reputazione</div>`;
+                }
+                if (event.bonuses.pvpUnlimited) {
+                    bonusesHtml += `<div>⚔️ Sfide PvP illimitate</div>`;
+                }
+                if (event.bonuses.damageReduction) {
+                    bonusesHtml += `<div>🛡️ -${(event.bonuses.damageReduction * 100).toFixed(0)}% danni</div>`;
+                }
+                if (event.bonuses.repairDiscount) {
+                    bonusesHtml += `<div>🔧 -${(event.bonuses.repairDiscount * 100).toFixed(0)}% costi riparazione</div>`;
+                }
+                if (event.bonuses.workshopBonus) {
+                    bonusesHtml += `<div>⚙️ +${((event.bonuses.workshopBonus - 1) * 100).toFixed(0)}% produzione officina</div>`;
+                }
+                if (event.bonuses.techDiscount) {
+                    bonusesHtml += `<div>🔬 -${(event.bonuses.techDiscount * 100).toFixed(0)}% costo tecnologie</div>`;
+                }
+                if (event.bonuses.pvpRewardMultiplier) {
+                    bonusesHtml += `<div>⚔️ +${((event.bonuses.pvpRewardMultiplier - 1) * 100).toFixed(0)}% ricompense PvP</div>`;
+                }
+                
+                // Premi text
+                const reward = objective.reward;
+                let rewardsHtml = '';
+                if (reward.money) rewardsHtml += `<div style="font-size: 1.2rem;">💰 ${reward.money.toLocaleString()}€</div>`;
+                if (reward.parts) rewardsHtml += `<div style="font-size: 1.2rem;">🔩 ${reward.parts.toLocaleString()} parti</div>`;
+                if (reward.reputation) rewardsHtml += `<div style="font-size: 1.2rem;">⭐ ${reward.reputation} reputazione</div>`;
+                
+                container.innerHTML = `
+                    <div style="max-width: 800px; margin: 0 auto;">
+                        <!-- Header Evento -->
+                        <div style="background: linear-gradient(135deg, rgba(255,140,0,0.2), rgba(255,69,0,0.2)); border: 3px solid var(--accent-yellow); border-radius: 15px; padding: 30px; text-align: center; margin-bottom: 30px;">
+                            <div style="font-size: 4rem; margin-bottom: 15px;">${event.icon}</div>
+                            <h2 style="font-family: Orbitron; color: var(--accent-yellow); font-size: 2rem; margin-bottom: 10px;">${event.name}</h2>
+                            <p style="color: var(--text-secondary); font-size: 1.1rem; margin-bottom: 20px;">${event.description}</p>
+                            <div style="display: inline-block; padding: 10px 25px; background: rgba(255,51,51,0.3); border: 2px solid var(--accent-red); border-radius: 8px;">
+                                <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 5px;">⏰ SCADE TRA</div>
+                                <div style="font-family: Orbitron; font-size: 1.5rem; font-weight: 900; color: var(--accent-red);">${hoursLeft}h ${minutesLeft}m</div>
+                            </div>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px;">
+                            <!-- Bonus Attivi -->
+                            <div style="background: var(--bg-card); border: 2px solid var(--accent-cyan); border-radius: 12px; padding: 25px;">
+                                <h3 style="color: var(--accent-cyan); font-family: Orbitron; margin-bottom: 20px; font-size: 1.3rem;">
+                                    🎁 BONUS ATTIVI
+                                </h3>
+                                <div style="display: flex; flex-direction: column; gap: 12px; font-size: 1rem; line-height: 1.6;">
+                                    ${bonusesHtml}
+                                </div>
+                            </div>
+                            
+                            <!-- Obiettivo -->
+                            <div style="background: var(--bg-card); border: 2px solid var(--accent-yellow); border-radius: 12px; padding: 25px;">
+                                <h3 style="color: var(--accent-yellow); font-family: Orbitron; margin-bottom: 20px; font-size: 1.3rem;">
+                                    🎯 OBIETTIVO
+                                </h3>
+                                <p style="font-size: 1.1rem; margin-bottom: 15px;">${objective.description}</p>
+                                <div style="margin: 20px 0;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                                        <span style="font-weight: 700;">${progress.progress} / ${objective.target}</span>
+                                        <span style="color: var(--accent-green);">${Math.floor(progressPercent)}%</span>
+                                    </div>
+                                    <div style="width: 100%; height: 20px; background: rgba(0,0,0,0.3); border-radius: 10px; overflow: hidden;">
+                                        <div style="width: ${progressPercent}%; height: 100%; background: linear-gradient(90deg, var(--accent-yellow), var(--accent-green)); transition: width 0.5s;"></div>
+                                    </div>
+                                </div>
+                                ${progress.completed ? `
+                                    <div style="text-align: center; margin-top: 15px; padding: 12px; background: rgba(0,255,136,0.1); border-radius: 8px;">
+                                        <span style="color: var(--accent-green); font-weight: 700; font-size: 1.1rem;">✅ OBIETTIVO COMPLETATO!</span>
+                                    </div>
+                                ` : ''}
+                            </div>
+                            
+                            <!-- Premi -->
+                            <div style="background: var(--bg-card); border: 2px solid var(--accent-purple); border-radius: 12px; padding: 25px; grid-column: 1 / -1;">
+                                <h3 style="color: var(--accent-purple); font-family: Orbitron; margin-bottom: 20px; font-size: 1.3rem;">
+                                    🏆 PREMI
+                                </h3>
+                                <div style="display: flex; justify-content: center; align-items: center; gap: 30px; flex-wrap: wrap; margin-bottom: 20px;">
+                                    ${rewardsHtml}
+                                </div>
+                                ${progress.claimed ? `
+                                    <div style="text-align: center; padding: 15px; background: rgba(0,217,255,0.1); border-radius: 8px;">
+                                        <span style="color: var(--accent-cyan); font-weight: 700; font-size: 1.1rem;">✅ PREMI GIÀ RISCOSSI</span>
+                                    </div>
+                                ` : progress.completed ? `
+                                    <button class="btn btn-purple" onclick="game.claimEventReward()" style="width: 100%; padding: 15px; font-size: 1.2rem;">
+                                        🎁 RISCUOTI PREMI
+                                    </button>
+                                ` : `
+                                    <div style="text-align: center; padding: 15px; background: rgba(255,255,255,0.05); border-radius: 8px;">
+                                        <span style="color: var(--text-secondary);">Completa l'obiettivo per riscuotere i premi</span>
+                                    </div>
+                                `}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            },
 
             async checkCanChallenge() {
                 try {
@@ -5361,6 +5855,8 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                     this.pvpStats.total++;
                     if (result.victory) {
                         this.pvpStats.wins++;
+                        // ✅ Aggiorna obiettivo evento PvP
+                        this.updateEventProgress('pvp_wins', 1);
                     } else {
                         this.pvpStats.losses++;
                     }
