@@ -1784,6 +1784,9 @@ async function loadGameFromServer(retryCount = 0) {
         game.upgradesCount = data.upgradesCount || 0;
         game.championshipsWon = data.championshipsWon || 0;
         
+        // ✅ EVENTI
+        game.eventProgress = data.eventProgress || {};
+        
         // PRODUZIONE OFFLINE
         const lastSaveTime = data.lastSaveTime || Date.now();
         const now = Date.now();
@@ -1872,7 +1875,9 @@ async function saveGameToServer(showIndicator = true) {
                         missions: game.missions,
                         pvpStats: game.pvpStats,
                         upgradesCount: game.upgradesCount,
-                        championshipsWon: game.championshipsWon
+                        championshipsWon: game.championshipsWon,
+                        // ✅ EVENTI
+                        eventProgress: game.eventProgress
                     }
                 })
             });
@@ -5181,27 +5186,6 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                 const pvpLosses = this.pvpStats?.losses || 0;
                 const pvpWinRate = pvpTotal > 0 ? ((pvpWins / pvpTotal) * 100).toFixed(1) : 0;
                 
-                // Auto preferita (più gare)
-                let favoriteCar = { name: 'Nessuna', races: 0, wins: 0 };
-                if (this.raceHistory && this.raceHistory.length > 0) {
-                    const carStats = {};
-                    this.raceHistory.forEach(race => {
-                        const carName = race.car || 'Sconosciuta';
-                        if (!carStats[carName]) {
-                            carStats[carName] = { races: 0, wins: 0 };
-                        }
-                        carStats[carName].races++;
-                        if (race.won) carStats[carName].wins++;
-                    });
-                    
-                    Object.keys(carStats).forEach(carName => {
-                        if (carStats[carName].races > favoriteCar.races) {
-                            favoriteCar = { name: carName, ...carStats[carName] };
-                        }
-                    });
-                }
-                const favoriteWinRate = favoriteCar.races > 0 ? ((favoriteCar.wins / favoriteCar.races) * 100).toFixed(0) : 0;
-                
                 // Record personali
                 let maxPower = 0;
                 let maxMoney = this.resources.money.value;
@@ -5294,31 +5278,6 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                                 <div style="display: flex; justify-content: space-between; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1);">
                                     <span style="color: var(--text-secondary);">Rank mondiale:</span>
                                     <span style="font-weight: 700; font-size: 1.2rem; color: var(--accent-yellow);">#${this._leaderboardCache?.leaderboard?.findIndex(p => p.username === currentUser?.username) + 1 || '?'}</span>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Card Auto Preferita -->
-                        <div style="background: linear-gradient(135deg, rgba(255,215,0,0.1), rgba(255,140,0,0.1)); border: 2px solid var(--accent-yellow); border-radius: 12px; padding: 25px;">
-                            <h3 style="color: var(--accent-yellow); font-family: Orbitron; margin-bottom: 20px; font-size: 1.3rem;">
-                                🏎️ AUTO PREFERITA
-                            </h3>
-                            <div style="display: flex; flex-direction: column; gap: 12px;">
-                                <div style="display: flex; justify-content: space-between;">
-                                    <span style="color: var(--text-secondary);">Auto:</span>
-                                    <span style="font-weight: 700; font-size: 1.1rem;">${favoriteCar.name}</span>
-                                </div>
-                                <div style="display: flex; justify-content: space-between;">
-                                    <span style="color: var(--text-secondary);">Gare corse:</span>
-                                    <span style="font-weight: 700; font-size: 1.2rem;">${favoriteCar.races}</span>
-                                </div>
-                                <div style="display: flex; justify-content: space-between;">
-                                    <span style="color: var(--text-secondary);">Win rate:</span>
-                                    <span style="font-weight: 700; font-size: 1.2rem; color: var(--accent-green);">${favoriteWinRate}%</span>
-                                </div>
-                                <div style="display: flex; justify-content: space-between; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1);">
-                                    <span style="color: var(--text-secondary);">Auto possedute:</span>
-                                    <span style="font-weight: 700; font-size: 1.2rem;">${this.ownedCars.length}</span>
                                 </div>
                             </div>
                         </div>
