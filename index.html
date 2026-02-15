@@ -1155,13 +1155,15 @@
     
     <div class="container" id="gameContainer" style="display: none;">
         <header>
-            <button class="logout-btn" onclick="handleLogout()">🚪 LOGOUT</button>
+            <div style="display: flex; flex-direction: column; gap: 8px; position: absolute; top: 15px; left: 15px;">
+                <button class="logout-btn" onclick="handleLogout()">🚪 LOGOUT</button>
+                <button id="eventBtn" class="logout-btn" onclick="game.changePage('events')" style="display: none; background: linear-gradient(135deg, rgba(255,140,0,0.3), rgba(255,69,0,0.3)); border-color: var(--accent-yellow); color: var(--accent-yellow); font-weight: 700;">
+                    🎉 EVENTO ATTIVO
+                </button>
+            </div>
             <h1>Garage Racing Manager</h1>
             <div class="resources" id="resources"></div>
         </header>
-        
-        <!-- Banner Eventi (dinamico) -->
-        <div id="eventBanner"></div>
 
         <nav class="navigation">
             <button class="nav-btn active" onclick="game.changePage('workshop')">
@@ -2273,13 +2275,12 @@ async function loadLeaderboard() {
         {
             id: 'weekend_fuoco',
             name: 'Weekend di Fuoco',
-            description: 'Bonus speciali per tutto il weekend!',
+            description: 'Bonus speciali!',
             icon: '🔥',
             schedule: { dayOfWeek: [5, 6, 0], startHour: 0, endHour: 23 }, // Ven-Dom
             bonuses: {
                 moneyMultiplier: 1.5,
                 reputationMultiplier: 2.0,
-                pvpUnlimited: true,
                 damageReduction: 0.5
             },
             objective: {
@@ -2326,11 +2327,10 @@ async function loadLeaderboard() {
         {
             id: 'giovedi_pvp',
             name: 'Giovedì PvP',
-            description: 'Sfide illimitate e bonus ricompense!',
+            description: 'Bonus ricompense PvP!',
             icon: '⚔️',
             schedule: { dayOfWeek: [4], startHour: 0, endHour: 23 }, // Giovedì
             bonuses: {
-                pvpUnlimited: true,
                 pvpRewardMultiplier: 1.5
             },
             objective: {
@@ -3937,10 +3937,10 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                 this.renderResources();
                 this.checkUnlocks();
                 
-                // ✅ Render banner eventi
-                const bannerContainer = document.getElementById('eventBanner');
-                if (bannerContainer) {
-                    bannerContainer.innerHTML = this.renderEventBanner();
+                // ✅ Mostra/nascondi pulsante evento
+                const eventBtn = document.getElementById('eventBtn');
+                if (eventBtn) {
+                    eventBtn.style.display = this.currentEvent ? 'block' : 'none';
                 }
                 
                 // ✅ NON ri-renderizzare pagine già renderizzate (evita loop immagini)
@@ -5491,62 +5491,6 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                 saveGameToServer(true);
             },
             
-            renderEventBanner() {
-                // Banner in cima a tutte le pagine se evento attivo
-                let bannerHtml = '';
-                
-                if (this.currentEvent) {
-                    const event = this.currentEvent;
-                    const progress = this.eventProgress[event.id] || { progress: 0, completed: false, claimed: false };
-                    
-                    // Calcola tempo rimanente
-                    const now = new Date();
-                    const schedule = event.schedule;
-                    const endOfDay = new Date(now);
-                    endOfDay.setHours(schedule.endHour, 59, 59, 999);
-                    
-                    const timeLeft = endOfDay - now;
-                    const hoursLeft = Math.floor(timeLeft / (1000 * 60 * 60));
-                    const minutesLeft = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
-                    
-                    const statusIcon = progress.claimed ? '✅' : progress.completed ? '🏆' : '⏳';
-                    const statusText = progress.claimed ? 'Completato' : progress.completed ? 'Pronto!' : `${progress.progress}/${event.objective.target}`;
-                    
-                    bannerHtml = `
-                        <div style="background: linear-gradient(135deg, rgba(255,140,0,0.2), rgba(255,69,0,0.2)); border: 2px solid var(--accent-yellow); border-radius: 10px; padding: 12px 20px; margin-bottom: 15px; cursor: pointer; transition: all 0.3s;" onclick="game.changePage('events')">
-                            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-                                <div style="display: flex; align-items: center; gap: 12px;">
-                                    <span style="font-size: 2rem;">${event.icon}</span>
-                                    <div>
-                                        <div style="font-weight: 700; font-size: 1.1rem; color: var(--accent-yellow);">
-                                            EVENTO ATTIVO: ${event.name}
-                                        </div>
-                                        <div style="font-size: 0.85rem; color: var(--text-secondary);">
-                                            ${event.description}
-                                        </div>
-                                    </div>
-                                </div>
-                                <div style="display: flex; align-items: center; gap: 15px;">
-                                    <div style="text-align: center;">
-                                        <div style="font-size: 0.75rem; color: var(--text-secondary);">Obiettivo</div>
-                                        <div style="font-weight: 700; color: var(--accent-green);">${statusIcon} ${statusText}</div>
-                                    </div>
-                                    <div style="text-align: center;">
-                                        <div style="font-size: 0.75rem; color: var(--text-secondary);">Scade tra</div>
-                                        <div style="font-weight: 700; color: var(--accent-red);">⏰ ${hoursLeft}h ${minutesLeft}m</div>
-                                    </div>
-                                    <button class="btn" style="padding: 8px 20px; font-size: 0.9rem;" onclick="event.stopPropagation(); game.changePage('events');">
-                                        Dettagli
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                }
-                
-                return bannerHtml;
-            },
-            
             renderEventPage() {
                 const container = document.getElementById('eventsContainer');
                 if (!container) return;
@@ -5603,9 +5547,6 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                 }
                 if (event.bonuses.reputationMultiplier) {
                     bonusesHtml += `<div>⭐ +${((event.bonuses.reputationMultiplier - 1) * 100).toFixed(0)}% reputazione</div>`;
-                }
-                if (event.bonuses.pvpUnlimited) {
-                    bonusesHtml += `<div>⚔️ Sfide PvP illimitate</div>`;
                 }
                 if (event.bonuses.damageReduction) {
                     bonusesHtml += `<div>🛡️ -${(event.bonuses.damageReduction * 100).toFixed(0)}% danni</div>`;
