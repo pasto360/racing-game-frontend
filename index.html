@@ -1646,7 +1646,15 @@ async function loadGameFromServer(retryCount = 0) {
         }
         
         game.races = data.races || game.races;
-        game.championship = data.championship || game.championship;
+        // ✅ Championship: merge dati server ma mantieni valori aggiornati
+        if (data.championship) {
+            game.championship = {
+                ...game.championship, // Valori di default aggiornati
+                ...data.championship, // Dati salvati dal server
+                entryFee: 3500,      // ✅ FORZA valore aggiornato
+                prizePool: 7000      // ✅ FORZA valore aggiornato
+            };
+        }
         game.raceHistory = data.raceHistory || [];
         
         // ✅ NUOVI CAMPI v5.2
