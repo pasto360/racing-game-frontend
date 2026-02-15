@@ -3370,10 +3370,12 @@ async function loadLeaderboard() {
                     date: new Date().toLocaleString('it-IT'),
                     type: 'Stradale',
                     playerCar: car.name,
+                    car: car.name, // ← Per statistiche auto preferita
                     playerPower: Math.floor(carPower),
                     opponentName: opponent.name,
                     opponentPower: Math.floor(opponentPower),
                     win: win,
+                    won: win, // ← Per calcolo striscia
                     rewards: win ? rewards : null
                 });
                 
@@ -3487,10 +3489,12 @@ async function loadLeaderboard() {
                     date: new Date().toLocaleString('it-IT'),
                     type: 'Campionato',
                     playerCar: car.name,
+                    car: car.name, // ← Per statistiche auto preferita
                     playerPower: Math.floor(carPower),
                     opponentName: opponent.name,
                     opponentPower: Math.floor(opponentPower),
                     win: win,
+                    won: win, // ← Per calcolo striscia
                     rewards: win ? rewards : null,
                     damage: damage
                 });
@@ -5349,6 +5353,35 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                             this[key] = result.newState[key];
                         }
                     });
+                    
+                    // ✅ FIX: Aggiorna pvpStats manualmente
+                    if (!this.pvpStats) {
+                        this.pvpStats = { wins: 0, losses: 0, total: 0 };
+                    }
+                    this.pvpStats.total++;
+                    if (result.victory) {
+                        this.pvpStats.wins++;
+                    } else {
+                        this.pvpStats.losses++;
+                    }
+                    
+                    // ✅ Aggiungi a raceHistory
+                    this.raceHistory.unshift({
+                        date: new Date().toLocaleString('it-IT'),
+                        type: 'PvP',
+                        playerCar: this.ownedCars[0]?.name || 'Sconosciuta',
+                        car: this.ownedCars[0]?.name || 'Sconosciuta', // ← Per statistiche auto preferita
+                        playerPower: result.attackerPower || 0,
+                        opponentName: defenderUsername,
+                        opponentPower: result.defenderPower || 0,
+                        win: result.victory,
+                        won: result.victory, // ← Per calcolo striscia
+                        rewards: result.victory ? result.rewards : null
+                    });
+                    
+                    if (this.raceHistory.length > 50) {
+                        this.raceHistory = this.raceHistory.slice(0, 50);
+                    }
 
                     // Mostra risultato NELLO STESSO MODAL
                     this.showPvPResultInline(result, defenderUsername, modalContent);
