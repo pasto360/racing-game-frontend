@@ -3453,6 +3453,10 @@ async function loadLeaderboard() {
                             Object.keys(rewards).forEach(key => {
                                 rewards[key] = Math.floor(rewards[key] * (1 + this.currentSponsor.bonus.value));
                             });
+                        } else if (this.currentSponsor.bonus.type === 'all') {
+                            Object.keys(rewards).forEach(key => {
+                                rewards[key] = Math.floor(rewards[key] * (1 + this.currentSponsor.bonus.value));
+                            });
                         }
                     }
                     
@@ -3466,16 +3470,6 @@ async function loadLeaderboard() {
                         }
                     }
 
-                    Object.keys(rewards).forEach(key => {
-                                rewards[key] = Math.floor(rewards[key] * (1 + this.currentSponsor.bonus.value));
-                            });
-                        } else if (this.currentSponsor.bonus.type === 'all') {
-                            Object.keys(rewards).forEach(key => {
-                                rewards[key] = Math.floor(rewards[key] * (1 + this.currentSponsor.bonus.value));
-                            });
-                        }
-                    }
-                    
                     Object.keys(rewards).forEach(key => {
                         if (this.resources[key]) {
                             this.resources[key].value = Math.min(
