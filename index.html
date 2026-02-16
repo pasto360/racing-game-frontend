@@ -2442,7 +2442,14 @@ async function loadLeaderboard() {
             if (section.level > 0 && section.production) {
                 Object.keys(section.production).forEach(resource => {
                     if (this.resources[resource]) {
-                        const perSecond = (section.production[resource] * section.level) / 3600;
+                        let production = section.production[resource] * section.level;
+                        
+                        // ✅ BONUS EVENTO OFFICINA
+                        if (this.currentEvent && this.currentEvent.bonuses && this.currentEvent.bonuses.workshopBonus) {
+                            production *= this.currentEvent.bonuses.workshopBonus;
+                        }
+                        
+                        const perSecond = production / 3600;
                         this.resources[resource].value = Math.min(
                             this.resources[resource].value + (perSecond * deltaSeconds),
                             this.resources[resource].max
@@ -3285,9 +3292,21 @@ async function loadLeaderboard() {
                     }
                 }
 
-                if (this.canAfford(tech.cost)) {
-                    this.spendResources(tech.cost);
+                // ✅ Calcola costo con eventuale sconto evento
+                let finalCost = { ...tech.cost };
+                if (this.currentEvent && this.currentEvent.bonuses && this.currentEvent.bonuses.techDiscount) {
+                    Object.keys(finalCost).forEach(key => {
+                        finalCost[key] = Math.ceil(finalCost[key] * (1 - this.currentEvent.bonuses.techDiscount));
+                    });
+                }
+                
+                if (this.canAfford(finalCost)) {
+                    this.spendResources(finalCost);
                     tech.researched = true;
+                    
+                    // ✅ Aggiorna obiettivo evento tecnologie
+                    this.updateEventProgress('technologies', 1);
+                    
                     this.showUnlockNotification(`🔬 Ricercata: ${tech.name}!`);
                     this.render();
                     saveGameToServer(true); // ✅ Salva dopo ricerca
@@ -3340,6 +3359,11 @@ async function loadLeaderboard() {
                         discount += Math.abs(tech.bonus.value);
                     }
                 });
+                
+                // ✅ BONUS EVENTO RIPARAZIONI
+                if (this.currentEvent && this.currentEvent.bonuses && this.currentEvent.bonuses.repairDiscount) {
+                    discount += this.currentEvent.bonuses.repairDiscount;
+                }
 
                 Object.keys(cost).forEach(key => {
                     cost[key] = Math.ceil(cost[key] * (1 - discount));
@@ -3348,6 +3372,10 @@ async function loadLeaderboard() {
                 if (this.canAfford(cost)) {
                     this.spendResources(cost);
                     car.condition = 100;
+                    
+                    // ✅ Aggiorna obiettivo evento riparazioni
+                    this.updateEventProgress('repairs', 1);
+                    
                     document.getElementById('repairModal').classList.remove('active');
                     this.render();
                 } else {
@@ -5414,10 +5442,21 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
             },
             
             updateEventProgress(type, amount = 1) {
-                if (!this.currentEvent || !this.currentEvent.objective) return;
+                console.log('🔍 updateEventProgress chiamata:', type, amount);
+                console.log('🔍 currentEvent:', this.currentEvent);
+                
+                if (!this.currentEvent || !this.currentEvent.objective) {
+                    console.log('⚠️ Nessun evento attivo o objective mancante');
+                    return;
+                }
                 
                 const objective = this.currentEvent.objective;
-                if (objective.type !== type) return;
+                console.log('🔍 objective.type:', objective.type, 'cercato:', type);
+                
+                if (objective.type !== type) {
+                    console.log('⚠️ Tipo obiettivo non corrisponde');
+                    return;
+                }
                 
                 const eventId = this.currentEvent.id;
                 if (!this.eventProgress[eventId]) {
@@ -5425,17 +5464,22 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                 }
                 
                 const progress = this.eventProgress[eventId];
-                if (progress.completed) return;
+                if (progress.completed) {
+                    console.log('⚠️ Obiettivo già completato');
+                    return;
+                }
                 
                 progress.progress += amount;
+                console.log(`✅ Evento progress aggiornato (${type}):`, progress.progress, '/', objective.target);
                 
                 if (progress.progress >= objective.target) {
                     progress.progress = objective.target;
                     progress.completed = true;
-                    // ✅ Completato silenziosamente (no notifica)
+                    console.log('🏆 Obiettivo completato!');
                 }
                 
-                console.log(`📊 Evento progress (${type}):`, progress.progress, '/', objective.target);
+                // ✅ Salva immediatamente
+                saveGameToServer(true);
             },
             
             claimEventReward() {
