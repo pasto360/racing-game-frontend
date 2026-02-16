@@ -1381,6 +1381,12 @@
         </div>
     </div>
 
+    <!-- SPAZIO PUBBLICITÀ GOOGLE ADSENSE -->
+    <div id="adsense-container" style="max-width: 970px; margin: 30px auto; padding: 20px; text-align: center; background: rgba(255,255,255,0.02); border: 1px dashed rgba(255,255,255,0.1); border-radius: 10px; min-height: 90px; display: flex; align-items: center; justify-content: center;">
+        <!-- Inserisci qui il codice Google AdSense -->
+        <span style="color: rgba(255,255,255,0.2); font-size: 0.9rem;">Advertisement Space</span>
+    </div>
+
     <footer style="display: flex; justify-content: space-between; align-items: center; padding: 0 20px;">
         <span>Garage Racing Manager v5.2</span>
         <a href="istruzioni.html" target="_blank" style="color: var(--accent-cyan); text-decoration: none; cursor: pointer;">
@@ -3915,7 +3921,7 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                         
                         if (canUnlock) {
                             section.unlocked = true;
-                            this.showUnlockNotification(`🔓 SBLOCCATO: ${section.name}!`);
+                            // ✅ Sblocca silenziosamente (no notifica)
                         }
                     }
                 });
@@ -3928,7 +3934,7 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                         
                         if (canUnlock) {
                             car.unlocked = true;
-                            this.showUnlockNotification(`🔓 DISPONIBILE: ${car.name}!`);
+                            // ✅ Sblocca silenziosamente (no notifica)
                         }
                     }
                 });
@@ -3941,7 +3947,7 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                         
                         if (canUnlock) {
                             driver.unlocked = true;
-                            this.showUnlockNotification(`🔓 PILOTA: ${driver.name}!`);
+                            // ✅ Sblocca silenziosamente (no notifica)
                         }
                     }
                 });
@@ -3949,7 +3955,7 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                 this.sponsors.forEach(sponsor => {
                     if (!sponsor.unlocked && this.races.wins >= sponsor.requirement) {
                         sponsor.unlocked = true;
-                        this.showUnlockNotification(`🔓 SPONSOR: ${sponsor.name}!`);
+                        // ✅ Sblocca silenziosamente (no notifica)
                     }
                 });
             },
@@ -5201,13 +5207,19 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                 let maxStreak = 0;
                 let tempStreak = 0;
                 if (this.raceHistory && this.raceHistory.length > 0) {
-                    const recentRaces = this.raceHistory.slice(-50).reverse();
-                    for (let i = 0; i < recentRaces.length; i++) {
-                        if (recentRaces[i].won) {
+                    // ✅ raceHistory è già ordinato dal più recente al più vecchio (unshift)
+                    // Quindi [0] è la gara più recente
+                    for (let i = 0; i < Math.min(50, this.raceHistory.length); i++) {
+                        if (this.raceHistory[i].won) {
                             tempStreak++;
-                            if (i === 0) currentStreak = tempStreak;
+                            // ✅ Se siamo alla prima gara (più recente) e ha vinto, è la striscia corrente
+                            if (i === 0 || currentStreak > 0) {
+                                currentStreak = tempStreak;
+                            }
                             if (tempStreak > maxStreak) maxStreak = tempStreak;
                         } else {
+                            // Sconfitta interrompe la striscia
+                            if (i === 0) currentStreak = 0; // Prima gara persa = striscia 0
                             tempStreak = 0;
                         }
                     }
@@ -5291,10 +5303,6 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                                 <div style="display: flex; justify-content: space-between;">
                                     <span style="color: var(--text-secondary);">Miglior HP:</span>
                                     <span style="font-weight: 700; font-size: 1.2rem; color: var(--accent-yellow);">${Math.floor(maxPower)} HP</span>
-                                </div>
-                                <div style="display: flex; justify-content: space-between;">
-                                    <span style="color: var(--text-secondary);">Denaro attuale:</span>
-                                    <span style="font-weight: 700; font-size: 1.2rem;">€${maxMoney.toLocaleString()}</span>
                                 </div>
                                 <div style="display: flex; justify-content: space-between;">
                                     <span style="color: var(--text-secondary);">Campionati vinti:</span>
@@ -5384,8 +5392,7 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                     };
                 }
                 
-                // Mostra notifica
-                this.showUnlockNotification(`🎉 EVENTO INIZIATO: ${eventTemplate.name}!`);
+                // ✅ Attiva silenziosamente (no notifica)
                 
                 // Re-render se sei nella pagina giusta
                 if (this.currentPage) {
@@ -5397,10 +5404,9 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                 if (this.currentEvent) {
                     console.log('⏰ Evento terminato:', this.currentEvent.name);
                     
+                    // ✅ Termina silenziosamente (no notifica)
                     const progress = this.eventProgress[this.currentEvent.id];
-                    if (progress && progress.completed && !progress.claimed) {
-                        this.showUnlockNotification(`⚠️ Evento "${this.currentEvent.name}" terminato! Riscuoti i premi prima che scada!`);
-                    }
+                    // ✅ Rimosso alert evento terminato
                     
                     this.currentEvent = null;
                     this.render();
@@ -5426,7 +5432,7 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                 if (progress.progress >= objective.target) {
                     progress.progress = objective.target;
                     progress.completed = true;
-                    this.showUnlockNotification(`🏆 Obiettivo evento completato! Vai alla pagina Eventi per riscuotere i premi!`);
+                    // ✅ Completato silenziosamente (no notifica)
                 }
                 
                 console.log(`📊 Evento progress (${type}):`, progress.progress, '/', objective.target);
