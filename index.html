@@ -1178,6 +1178,14 @@
             }
         }
     </style>
+    <!-- =====================================================
+         FILE BETA ESTERNI
+         - beta.css  → stili pagina beta
+         - beta.js   → logica pagina beta (espone BetaModule)
+         - Il server beta usa: server_beta.js (routes separate)
+         ===================================================== -->
+    <link rel="stylesheet" href="beta.css">
+    <script src="beta.js" defer></script>
 </head>
 <body>
     <div class="save-indicator" id="saveIndicator">💾 Salvataggio...</div>
@@ -1221,13 +1229,13 @@
                <span class="icon">🏆</span>
                Classifica
             </button>
-            <button class="nav-btn" onclick="game.changePage('stats')">
-               <span class="icon">📊</span>
-               Statistiche
-            </button>
             <button class="nav-btn" onclick="game.changePage('events')">
                <span class="icon">🎉</span>
                Eventi
+            </button>
+            <button class="nav-btn" onclick="game.changePage('beta')" style="border-color: rgba(138,43,226,0.5); background: linear-gradient(135deg, rgba(138,43,226,0.15), rgba(75,0,130,0.15));">
+               <span class="icon">🧪</span>
+               Beta
             </button>
         </nav>
 
@@ -1267,13 +1275,13 @@
                     <span class="icon">🏆</span>
                     <span>Classifica</span>
                 </button>
-                <button class="mobile-menu-item" onclick="game.changePage('stats'); closeMobileMenu()">
-                    <span class="icon">📊</span>
-                    <span>Statistiche</span>
-                </button>
                 <button class="mobile-menu-item" onclick="game.changePage('events'); closeMobileMenu()">
                     <span class="icon">🎉</span>
                     <span>Eventi</span>
+                </button>
+                <button class="mobile-menu-item" onclick="game.changePage('beta'); closeMobileMenu()" style="color: rgba(138,43,226,0.9);">
+                    <span class="icon">🧪</span>
+                    <span>Beta</span>
                 </button>
             </div>
         </div>
@@ -1368,10 +1376,10 @@
             </div>
         </div>
         
-        <!-- PAGINA STATISTICHE -->
-        <div id="page-stats" class="page">
-            <h2 class="section-title">📊 Le Mie Statistiche</h2>
-            <div id="statsContainer"></div>
+        <!-- PAGINA BETA -->
+        <div id="page-beta" class="page">
+            <h2 class="section-title">🧪 Beta</h2>
+            <div id="betaContainer"></div>
         </div>
         
         <!-- PAGINA EVENTI -->
@@ -2526,12 +2534,12 @@ async function loadLeaderboard() {
             this.renderWeeklyLeaderboard();
         }
         
-        if (page === 'stats') {
-            this.renderStats();
-        }
-        
         if (page === 'events') {
             this.renderEventPage();
+        }
+        
+        if (page === 'beta') {
+            this.renderBetaPage();
         }
 
         this.currentPage = page;
@@ -5499,6 +5507,25 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                 this.renderResources();
                 this.renderEventPage();
                 saveGameToServer(true);
+            },
+            
+            renderBetaPage() {
+                const container = document.getElementById('betaContainer');
+                if (!container) return;
+                
+                // ✅ Carica il modulo beta esterno se non ancora caricato
+                if (typeof BetaModule === 'undefined') {
+                    container.innerHTML = `
+                        <div style="text-align:center; padding: 60px 20px; color: var(--text-secondary);">
+                            <div style="font-size: 4rem; margin-bottom: 20px;">🧪</div>
+                            <p>Caricamento modulo beta...</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Delega il rendering al modulo beta esterno
+                BetaModule.render(container, game);
             },
             
             renderEventPage() {
