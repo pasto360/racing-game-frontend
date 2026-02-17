@@ -1,0 +1,83 @@
+/* =====================================================
+   BETA.CSS - Stili pagina Beta
+   Separato da index.html per non toccare i file originali
+   ===================================================== */
+
+/* Container principale beta */
+#betaContainer {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Badge "BETA" */
+.beta-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, rgba(138,43,226,0.3), rgba(75,0,130,0.3));
+    border: 1px solid rgba(138,43,226,0.6);
+    color: #b57bee;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 4px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    vertical-align: middle;
+    margin-left: 8px;
+}
+
+/* Placeholder pagina vuota */
+.beta-empty {
+    text-align: center;
+    padding: 80px 20px;
+    color: rgba(255,255,255,0.3);
+}
+
+.beta-empty .beta-icon {
+    font-size: 5rem;
+    display: block;
+    margin-bottom: 20px;
+    opacity: 0.4;
+}
+
+.beta-empty h3 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.2rem;
+    margin-bottom: 10px;
+    color: rgba(138,43,226,0.6);
+}
+
+.beta-empty p {
+    font-size: 0.9rem;
+    max-width: 400px;
+    margin: 0 auto;
+    line-height: 1.6;
+}
+
+/* Card beta generica (usa per future feature) */
+.beta-card {
+    background: linear-gradient(135deg, rgba(138,43,226,0.08), rgba(75,0,130,0.08));
+    border: 2px solid rgba(138,43,226,0.3);
+    border-radius: 12px;
+    padding: 25px;
+    margin-bottom: 20px;
+    transition: border-color 0.3s;
+}
+
+.beta-card:hover {
+    border-color: rgba(138,43,226,0.6);
+}
+
+.beta-card h3 {
+    font-family: 'Orbitron', sans-serif;
+    color: #b57bee;
+    margin-bottom: 15px;
+}
+
+/* Griglia beta */
+.beta-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 20px;
+}
