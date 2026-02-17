@@ -1811,10 +1811,7 @@ async function loadGameFromServer(retryCount = 0) {
                             const productionPerHour = section.production[resource] * section.level;
                             const offlineProduction = productionPerHour * offlineHours;
                             
-                            game.resources[resource].value = Math.min(
-                                game.resources[resource].value + offlineProduction,
-                                game.resources[resource].max
-                            );
+                            game.resources[resource].value += offlineProduction;
                         }
                     });
                 }
@@ -2005,9 +2002,9 @@ async function loadLeaderboard() {
     selectedCarIndex: 0,
         
     resources: {
-                money: { value: 15000, rate: 0, max: 999999, icon: '💰', name: 'Denaro' },
-                parts: { value: 150, rate: 0, max: 999999, icon: '🔩', name: 'Parti' },
-                reputation: { value: 0, rate: 0, max: 10000, icon: '⭐', name: 'Reputazione' },
+                money: { value: 15000, rate: 0, max: Infinity, icon: '💰', name: 'Denaro' },
+                parts: { value: 150, rate: 0, max: Infinity, icon: '🔩', name: 'Parti' },
+                reputation: { value: 0, rate: 0, max: Infinity, icon: '⭐', name: 'Reputazione' },
                 energy: { value: 100, rate: 0, max: 100, icon: '⚡', name: 'Energia' }
             },
 
@@ -2450,16 +2447,13 @@ async function loadLeaderboard() {
                         }
                         
                         const perSecond = production / 3600;
-                        this.resources[resource].value = Math.min(
-                            this.resources[resource].value + (perSecond * deltaSeconds),
-                            this.resources[resource].max
-                        );
+                        this.resources[resource].value += (perSecond * deltaSeconds);
                     }
                 });
             }
         });
 
-        // Energia: recupera 1 punto al minuto
+        // Energia: recupera 1 punto al minuto (mantiene cap a 100)
         this.resources.energy.value = Math.min(
             this.resources.energy.value + (deltaSeconds / 60),
             this.resources.energy.max
@@ -2469,10 +2463,7 @@ async function loadLeaderboard() {
             const sponsor = this.sponsors[this.currentSponsor];
             if (sponsor.income) {
                 const perSecond = sponsor.income / 3600;
-                this.resources.money.value = Math.min(
-                    this.resources.money.value + (perSecond * deltaSeconds),
-                    this.resources.money.max
-                );
+                this.resources.money.value += (perSecond * deltaSeconds);
             }
         }
     },
@@ -2602,11 +2593,7 @@ async function loadLeaderboard() {
                         }
                         
                         if (item.oneTimeBonus && item.oneTimeBonus.reputation) {
-                            const bonus = item.oneTimeBonus.reputation;
-                            this.resources.reputation.value = Math.min(
-                                this.resources.reputation.value + bonus,
-                                this.resources.reputation.max
-                            );
+                            this.resources.reputation.value += item.oneTimeBonus.reputation;
                         }
                         
                         console.log(`✅ Upgrade ${item.sectionKey} completato! Bonus applicati.`);
@@ -3119,12 +3106,7 @@ async function loadLeaderboard() {
                 
                 if (reward.money) this.resources.money.value += reward.money;
                 if (reward.parts) this.resources.parts.value += reward.parts;
-                if (reward.reputation) {
-                    this.resources.reputation.value = Math.min(
-                        this.resources.reputation.value + reward.reputation,
-                        this.resources.reputation.max
-                    );
-                }
+                if (reward.reputation) this.resources.reputation.value += reward.reputation;
                 
                 const names = {
                     races200: 'Veterano delle Piste', wins100: 'Campione Imbattibile',
@@ -3538,10 +3520,7 @@ async function loadLeaderboard() {
 
                     Object.keys(rewards).forEach(key => {
                         if (this.resources[key]) {
-                            this.resources[key].value = Math.min(
-                                this.resources[key].value + rewards[key],
-                                this.resources[key].max
-                            );
+                            this.resources[key].value += rewards[key];
                         }
                     });
                 }
@@ -5506,12 +5485,7 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                 // Assegna premi
                 if (reward.money) this.resources.money.value += reward.money;
                 if (reward.parts) this.resources.parts.value += reward.parts;
-                if (reward.reputation) {
-                    this.resources.reputation.value = Math.min(
-                        this.resources.reputation.value + reward.reputation,
-                        this.resources.reputation.max
-                    );
-                }
+                if (reward.reputation) this.resources.reputation.value += reward.reputation;
                 
                 progress.claimed = true;
                 
