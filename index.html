@@ -3432,21 +3432,11 @@ async function loadLeaderboard() {
 
                 const carPower = this.getCarPower(car);
                 
-                let difficultyFactor = 0.85;
-                
-                if (this.races.completed > 0) {
-                    const winRate = this.races.wins / this.races.completed;
-                    
-                    if (winRate > 0.7) {
-                        difficultyFactor = 0.95 + Math.random() * 0.15;
-                    } else if (winRate > 0.5) {
-                        difficultyFactor = 0.85 + Math.random() * 0.2;
-                    } else if (winRate > 0.3) {
-                        difficultyFactor = 0.75 + Math.random() * 0.2;
-                    } else {
-                        difficultyFactor = 0.65 + Math.random() * 0.2;
-                    }
-                }
+                // ✅ 50% avversario più forte, 50% più debole (casuale)
+                const isStronger = Math.random() < 0.5;
+                const difficultyFactor = isStronger 
+                    ? (1.05 + Math.random() * 0.15)  // 105-120% del tuo power
+                    : (0.80 + Math.random() * 0.15); // 80-95% del tuo power
                 
                 const opponentBasePower = carPower * difficultyFactor;
                 
@@ -3471,6 +3461,8 @@ async function loadLeaderboard() {
                 };
                 
                 const opponentPower = Object.values(opponent.stats).reduce((a, b) => a + b, 0);
+                
+                // ✅ Vince chi ha più HP (come dev'essere)
                 const win = carPower > opponentPower;
 
                 let rewards = {};
@@ -3611,7 +3603,13 @@ async function loadLeaderboard() {
                 this.resources.energy.value -= energyCost;
 
                 const carPower = this.getCarPower(car);
-                const difficultyFactor = 0.9 + (this.championship.currentRace * 0.05);
+                
+                // ✅ 50% avversario più forte, 50% più debole (casuale)
+                const isStronger = Math.random() < 0.5;
+                const difficultyFactor = isStronger 
+                    ? (1.05 + Math.random() * 0.15)  // 105-120% del tuo power
+                    : (0.80 + Math.random() * 0.15); // 80-95% del tuo power
+                
                 const opponentBasePower = carPower * difficultyFactor;
                 
                 const statDistribution = [
@@ -3635,6 +3633,8 @@ async function loadLeaderboard() {
                 };
                 
                 const opponentPower = Object.values(opponent.stats).reduce((a, b) => a + b, 0);
+                
+                // ✅ Vince chi ha più HP (come dev'essere)
                 const win = carPower > opponentPower;
 
                 // ✅ DANNI RIDOTTI: 5-12% (era 10-25%)
