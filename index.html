@@ -2591,13 +2591,13 @@ async function loadLeaderboard() {
                     if (now >= item.endTime) {
                         completed.push(index);
                         
+                        // ✅ Incrementa contatore per missione
+                        this.upgradesCount = (this.upgradesCount || 0) + 1;
+                        
                         // Applica bonus reputazione
                         if (item.reputationBonus) {
                             const bonus = item.reputationBonus * item.level;
-                            this.resources.reputation.value = Math.min(
-                                this.resources.reputation.value + bonus,
-                                this.resources.reputation.max
-                            );
+                            this.resources.reputation.value += bonus;
                         }
                         
                         if (item.oneTimeBonus && item.oneTimeBonus.reputation) {
@@ -3317,6 +3317,10 @@ async function loadLeaderboard() {
                 if (this.canAfford(cost)) {
                     this.spendResources(cost);
                     car.upgrades[stat]++;
+                    
+                    // ✅ Incrementa contatore per missione
+                    this.upgradesCount = (this.upgradesCount || 0) + 1;
+                    
                     this.render();
                     saveGameToServer(true); // ✅ Salva dopo upgrade
                 } else {
