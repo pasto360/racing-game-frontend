@@ -2594,6 +2594,11 @@ async function loadLeaderboard() {
                         // ✅ Incrementa contatore per missione
                         this.upgradesCount = (this.upgradesCount || 0) + 1;
                         
+                        // ✅ Aggiorna subito la missione
+                        if (this.missions && this.missions.upgrades100) {
+                            this.missions.upgrades100.progress = this.upgradesCount;
+                        }
+                        
                         // Applica bonus reputazione
                         if (item.reputationBonus) {
                             const bonus = item.reputationBonus * item.level;
@@ -3321,6 +3326,11 @@ async function loadLeaderboard() {
                     // ✅ Incrementa contatore per missione
                     this.upgradesCount = (this.upgradesCount || 0) + 1;
                     console.log(`🔧 Upgrade ${stat} completato! Totale upgrade: ${this.upgradesCount}`);
+                    
+                    // ✅ Aggiorna subito la missione
+                    if (this.missions && this.missions.upgrades100) {
+                        this.missions.upgrades100.progress = this.upgradesCount;
+                    }
                     
                     this.render();
                     saveGameToServer(true); // ✅ Salva dopo upgrade
