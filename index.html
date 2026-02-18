@@ -3320,6 +3320,7 @@ async function loadLeaderboard() {
                     
                     // ✅ Incrementa contatore per missione
                     this.upgradesCount = (this.upgradesCount || 0) + 1;
+                    console.log(`🔧 Upgrade ${stat} completato! Totale upgrade: ${this.upgradesCount}`);
                     
                     this.render();
                     saveGameToServer(true); // ✅ Salva dopo upgrade
