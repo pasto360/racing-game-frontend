@@ -3247,28 +3247,16 @@ async function loadLeaderboard() {
                     this.currentSponsor = null;
                     this.sponsorRacesLeft = 0;
                 } else {
-                    // Attiva nuovo sponsor con 20 gare
+                    // Attiva sponsor permanente (nessuna scadenza)
                     this.currentSponsor = sponsor;
-                    this.sponsorRacesLeft = 20;
-                    this.showUnlockNotification(`🏢 Sponsor attivato: ${sponsor.name} (20 gare)`);
+                    this.sponsorRacesLeft = 0;
                 }
                 this.render();
             },
 
-            // Funzione chiamata dopo ogni gara per decrementare sponsor
+            // Funzione chiamata dopo ogni gara (ora non fa nulla, sponsor permanente)
             decrementSponsorRaces() {
-                if (this.currentSponsor && this.sponsorRacesLeft > 0) {
-                    this.sponsorRacesLeft--;
-                    
-                    if (this.sponsorRacesLeft === 5) {
-                        this.showUnlockNotification(`⚠️ Contratto sponsor in scadenza: ${this.sponsorRacesLeft} gare rimaste`);
-                    }
-                    
-                    if (this.sponsorRacesLeft === 0) {
-                        this.showUnlockNotification(`💼 Contratto sponsor scaduto: ${this.currentSponsor.name}`);
-                        this.currentSponsor = null;
-                    }
-                }
+                // ✅ Sponsor permanente - nessuna scadenza
             },
 
             researchTech(techId) {
@@ -4644,13 +4632,8 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                                 <div style="color: var(--accent-yellow); margin-bottom: 15px;">
                                     ${bonusText}
                                 </div>
-                                ${isActive && this.sponsorRacesLeft > 0 ? `
-                                    <div style="background: rgba(255, 215, 0, 0.2); border: 1px solid var(--accent-yellow); border-radius: 5px; padding: 8px; margin-bottom: 15px; font-size: 0.9rem;">
-                                        ⏳ ${this.sponsorRacesLeft} gare rimaste
-                                    </div>
-                                ` : ''}
                                 <button class="btn btn-success" onclick="game.activateSponsor(${index})">
-                                    ${isActive ? 'Disattiva' : 'Attiva (20 gare)'}
+                                    ${isActive ? 'Disattiva' : 'Attiva'}
                                 </button>
                             ` : `
                                 <div style="color: var(--text-secondary); margin-top: 15px;">
@@ -5746,6 +5729,13 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
 
             async confirmChallenge() {
                 if (!this._pendingChallenge) return;
+                
+                // ✅ Ricontrolla energia prima di confermare
+                if (this.resources.energy.value < 20) {
+                    alert('⚡ Energia insufficiente!\n\nServono 20 energia per sfidare un giocatore.');
+                    this.closeChallengeModal();
+                    return;
+                }
                 
                 const { defenderId, defenderUsername } = this._pendingChallenge;
                 
