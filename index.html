@@ -3463,13 +3463,31 @@ async function loadLeaderboard() {
 
                 const carPower = this.getCarPower(car);
                 
-                // ✅ 50% avversario più forte, 50% più debole (casuale)
-                const isStronger = Math.random() < 0.5;
-                const difficultyFactor = isStronger 
-                    ? (1.05 + Math.random() * 0.15)  // 105-120% del tuo power
-                    : (0.80 + Math.random() * 0.15); // 80-95% del tuo power
+                // ✅ Probabilità vittoria basata su HP (scalini)
+                let winChance = 0.50; // Default 50%
                 
-                const opponentBasePower = carPower * difficultyFactor;
+                if (carPower <= 150) {
+                    winChance = 0.50;      // ≤150 HP: 50%
+                } else if (carPower <= 200) {
+                    winChance = 0.52;      // 151-200 HP: 52%
+                } else if (carPower <= 250) {
+                    winChance = 0.55;      // 201-250 HP: 55%
+                } else if (carPower <= 300) {
+                    winChance = 0.57;      // 251-300 HP: 57%
+                } else if (carPower <= 350) {
+                    winChance = 0.60;      // 301-350 HP: 60%
+                } else if (carPower <= 400) {
+                    winChance = 0.62;      // 351-400 HP: 62%
+                } else if (carPower <= 450) {
+                    winChance = 0.65;      // 401-450 HP: 65%
+                } else if (carPower <= 500) {
+                    winChance = 0.68;      // 451-500 HP: 68%
+                } else {
+                    winChance = 0.70;      // 501+ HP: 70%
+                }
+                
+                // Genera avversario (solo per visual, non influenza vittoria)
+                const opponentPowerDisplay = Math.floor(carPower * (0.85 + Math.random() * 0.3)); // 85-115%
                 
                 const statDistribution = [
                     0.20 + Math.random() * 0.15,
@@ -3484,17 +3502,17 @@ async function loadLeaderboard() {
                 const opponent = {
                     name: this.getRandomOpponentName(),
                     stats: {
-                        engine: Math.floor(opponentBasePower * normalized[0]),
-                        body: Math.floor(opponentBasePower * normalized[1]),
-                        electronics: Math.floor(opponentBasePower * normalized[2]),
-                        aero: Math.floor(opponentBasePower * normalized[3])
+                        engine: Math.floor(opponentPowerDisplay * normalized[0]),
+                        body: Math.floor(opponentPowerDisplay * normalized[1]),
+                        electronics: Math.floor(opponentPowerDisplay * normalized[2]),
+                        aero: Math.floor(opponentPowerDisplay * normalized[3])
                     }
                 };
                 
                 const opponentPower = Object.values(opponent.stats).reduce((a, b) => a + b, 0);
                 
-                // ✅ Vince chi ha più HP (come dev'essere)
-                const win = carPower > opponentPower;
+                // ✅ Vittoria basata su probabilità (non su confronto power)
+                const win = Math.random() < winChance;
 
                 let rewards = {};
                 
@@ -3554,6 +3572,14 @@ async function loadLeaderboard() {
                             this.resources[key].value += rewards[key];
                         }
                     });
+                } else {
+                    // ✅ SCONFITTA: perdi 0.25% del denaro
+                    const moneyLoss = Math.floor(this.resources.money.value * 0.0025);
+                    this.resources.money.value = Math.max(0, this.resources.money.value - moneyLoss);
+                    
+                    rewards = {
+                        money: -moneyLoss
+                    };
                 }
 
                 this.races.completed++;
