@@ -1791,7 +1791,14 @@ async function loadGameFromServer(retryCount = 0) {
         game.raceHistory = data.raceHistory || [];
         
         // ✅ NUOVI CAMPI v5.2
-        game.trackTraining = data.trackTraining || game.trackTraining;
+        // ✅ Merge trackTraining (preserva name, icon, bonus, maxLevel dalle definitions)
+        if (data.trackTraining) {
+            Object.keys(game.trackTraining).forEach(key => {
+                if (data.trackTraining[key]) {
+                    game.trackTraining[key].level = data.trackTraining[key].level || 0;
+                }
+            });
+        }
         game.trackQueue = data.trackQueue || game.trackQueue;
         game.missions = data.missions || game.missions;
         game.pvpStats = data.pvpStats || game.pvpStats;
@@ -2202,22 +2209,22 @@ async function loadLeaderboard() {
     
     // ✅ Sistema missioni
     this.missions = {
-        races200: { 
-            id: 'races200',
+        races1000: { 
+            id: 'races1000',
             name: 'Veterano delle Piste',
-            description: 'Completa 200 gare',
+            description: 'Completa 1000 gare',
             icon: '🏁',
-            target: 200,
+            target: 1000,
             progress: 0,
             completed: false,
-            reward: { reputation: 30 }
+            reward: { reputation: 150 }
         },
-        wins100: {
-            id: 'wins100',
+        wins500: {
+            id: 'wins500',
             name: 'Campione Imbattibile',
-            description: 'Vinci 100 gare',
+            description: 'Vinci 500 gare',
             icon: '🏆',
-            target: 100,
+            target: 500,
             progress: 0,
             completed: false,
             reward: { money: 1000, reputation: 50 }
@@ -2262,6 +2269,16 @@ async function loadLeaderboard() {
             completed: false,
             reward: { money: 5000, reputation: 100 }
         },
+        pvp100: {
+            id: 'pvp100',
+            name: 'Spartaco',
+            description: 'Vinci 100 sfide PvP',
+            icon: '🗡️',
+            target: 100,
+            progress: 0,
+            completed: false,
+            reward: { money: 10000, reputation: 250 }
+        },
         cars10: {
             id: 'cars10',
             name: 'Collezionista',
@@ -2272,12 +2289,12 @@ async function loadLeaderboard() {
             completed: false,
             reward: { money: 2000, parts: 200 }
         },
-        reputation1000: {
-            id: 'reputation1000',
+        reputation10000: {
+            id: 'reputation10000',
             name: 'Leggenda Vivente',
-            description: 'Raggiungi 1000 di reputazione',
+            description: 'Raggiungi 10000 di reputazione',
             icon: '⭐',
-            target: 1000,
+            target: 10000,
             progress: 0,
             completed: false,
             reward: { money: 10000 }
@@ -2292,12 +2309,16 @@ async function loadLeaderboard() {
             completed: false,
             reward: { parts: 500, reputation: 75 }
         },
-        championship10: {
-            id: 'championship10',
-            name: 'Re dei Campionati',
-            description: 'Vinci 10 campionati',
-            icon: '👑',
-            target: 10,
+        power500: {
+            id: 'power500',
+            name: 'Fuorigiri',
+            description: 'Porta un\'auto a 500 HP',
+            icon: '🔥',
+            target: 500,
+            progress: 0,
+            completed: false,
+            reward: { parts: 300 }
+        }
             progress: 0,
             completed: false,
             reward: { money: 15000, reputation: 200 }
@@ -2935,9 +2956,9 @@ async function loadLeaderboard() {
                 if (!container) return;
                 
                 // ✅ Aggiorna automaticamente il progress delle missioni
-                this.missions.races200.progress = this.races.completed || 0; // ← FIX: completed invece di total
-                this.missions.wins100.progress = this.races.wins || 0;
-                this.missions.losses100.progress = (this.races.completed - this.races.wins) || 0; // ← FIX
+                this.missions.races1000.progress = this.races.completed || 0;
+                this.missions.wins500.progress = this.races.wins || 0;
+                this.missions.losses100.progress = (this.races.completed - this.races.wins) || 0;
                 
                 // Conta livelli allenamenti
                 let trainingTotal = 0;
@@ -2956,26 +2977,32 @@ async function loadLeaderboard() {
                 
                 // PvP vinte
                 this.missions.pvp50.progress = this.pvpStats?.wins || 0;
+                this.missions.pvp100.progress = this.pvpStats?.wins || 0;
                 
                 // Auto possedute
                 this.missions.cars10.progress = this.ownedCars.length;
                 
                 // Reputazione totale
-                this.missions.reputation1000.progress = this.resources.reputation.value;
+                this.missions.reputation10000.progress = this.resources.reputation.value;
                 
                 // Upgrade totali
                 this.missions.upgrades100.progress = this.upgradesCount || 0;
                 
-                // Campionati vinti
-                this.missions.championship10.progress = this.championshipsWon || 0;
+                // Power massimo auto (Fuorigiri)
+                let maxPower = 0;
+                this.ownedCars.forEach(car => {
+                    const power = this.getCarPower(car);
+                    if (power > maxPower) maxPower = power;
+                });
+                this.missions.power500.progress = Math.floor(maxPower);
                 
                 // Auto-completa missioni raggiunte
                 Object.keys(this.missions).forEach(key => {
                     const mission = this.missions[key];
                     const defs = {
-                        races200: 200, wins100: 100, losses100: 100, training60: 60,
-                        allTech: this.technologies.length, pvp50: 50, cars10: 10,
-                        reputation1000: 1000, upgrades100: 100, championship10: 10
+                        races1000: 1000, wins500: 500, losses100: 100, training60: 60,
+                        allTech: this.technologies.length, pvp50: 50, pvp100: 100, cars10: 10,
+                        reputation10000: 10000, upgrades100: 100, power500: 500
                     };
                     if (mission.progress >= defs[key] && !mission.completed) {
                         this.completeMission(key);
@@ -2984,18 +3011,18 @@ async function loadLeaderboard() {
                 
                 // Definizioni missioni con rewards
                 const missionDefs = {
-                    races200: { 
+                    races1000: { 
                         name: 'Veterano delle Piste', 
-                        desc: 'Completa 200 gare (Stradali/Campionati)', 
+                        desc: 'Completa 1000 gare (Stradali/Campionati)', 
                         icon: '🏁',
-                        target: 200, 
-                        reward: { reputation: 30 }
+                        target: 1000, 
+                        reward: { reputation: 150 }
                     },
-                    wins100: {
+                    wins500: {
                         name: 'Campione Imbattibile', 
-                        desc: 'Vinci 100 gare (Stradali/Campionati)', 
+                        desc: 'Vinci 500 gare (Stradali/Campionati)', 
                         icon: '🏆',
-                        target: 100, 
+                        target: 500, 
                         reward: { money: 1000, reputation: 50 }
                     },
                     losses100: {
@@ -3016,21 +3043,25 @@ async function loadLeaderboard() {
                         name: 'Gladiatore PvP', desc: 'Vinci 50 sfide PvP', icon: '⚔️',
                         target: 50, reward: { money: 5000, reputation: 100 }
                     },
+                    pvp100: {
+                        name: 'Spartaco', desc: 'Vinci 100 sfide PvP', icon: '🗡️',
+                        target: 100, reward: { money: 10000, reputation: 250 }
+                    },
                     cars10: {
                         name: 'Collezionista', desc: 'Possiedi 10 auto diverse', icon: '🏎️',
                         target: 10, reward: { money: 2000, parts: 200 }
                     },
-                    reputation1000: {
-                        name: 'Leggenda Vivente', desc: 'Raggiungi 1000 di reputazione', icon: '⭐',
-                        target: 1000, reward: { money: 10000 }
+                    reputation10000: {
+                        name: 'Leggenda Vivente', desc: 'Raggiungi 10000 di reputazione', icon: '⭐',
+                        target: 10000, reward: { money: 10000 }
                     },
                     upgrades100: {
                         name: 'Meccanico Supremo', desc: 'Effettua 100 upgrade alle auto', icon: '⚙️',
                         target: 100, reward: { parts: 500, reputation: 75 }
                     },
-                    championship10: {
-                        name: 'Re dei Campionati', desc: 'Vinci 10 campionati', icon: '👑',
-                        target: 10, reward: { money: 15000, reputation: 200 }
+                    power500: {
+                        name: 'Fuorigiri', desc: 'Porta un\'auto a 500 HP', icon: '🔥',
+                        target: 500, reward: { parts: 300 }
                     }
                 };
                 
@@ -3100,16 +3131,17 @@ async function loadLeaderboard() {
                 mission.completed = true;
                 
                 const rewards = {
-                    races200: { reputation: 30 },
-                    wins100: { money: 1000, reputation: 50 },
+                    races1000: { reputation: 150 },
+                    wins500: { money: 1000, reputation: 50 },
                     losses100: { parts: 100 },
                     training60: { reputation: 2000 },
                     allTech: { reputation: 1500 },
                     pvp50: { money: 5000, reputation: 100 },
+                    pvp100: { money: 10000, reputation: 250 },
                     cars10: { money: 2000, parts: 200 },
-                    reputation1000: { money: 10000 },
+                    reputation10000: { money: 10000 },
                     upgrades100: { parts: 500, reputation: 75 },
-                    championship10: { money: 15000, reputation: 200 }
+                    power500: { parts: 300 }
                 };
                 
                 const reward = rewards[missionId];
@@ -3122,11 +3154,11 @@ async function loadLeaderboard() {
                 if (reward.reputation) this.resources.reputation.value += reward.reputation;
                 
                 const names = {
-                    races200: 'Veterano delle Piste', wins100: 'Campione Imbattibile',
+                    races1000: 'Veterano delle Piste', wins500: 'Campione Imbattibile',
                     losses100: 'Mai Mollare', training60: 'Maestro degli Allenamenti',
-                    allTech: 'Innovatore Tecnologico', pvp50: 'Gladiatore PvP',
-                    cars10: 'Collezionista', reputation1000: 'Leggenda Vivente',
-                    upgrades100: 'Meccanico Supremo', championship10: 'Re dei Campionati'
+                    allTech: 'Innovatore Tecnologico', pvp50: 'Gladiatore PvP', pvp100: 'Spartaco',
+                    cars10: 'Collezionista', reputation10000: 'Leggenda Vivente',
+                    upgrades100: 'Meccanico Supremo', power500: 'Fuorigiri'
                 };
                 
                 let rewardText = [];
