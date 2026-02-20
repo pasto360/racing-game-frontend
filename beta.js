@@ -36,8 +36,8 @@ const BetaModule = (() => {
             brakeBias: 55,
             engineMap: 'balanced'
         },
-        hasRaced: false,
-        result: null,
+        attemptsUsed: 0, // 0-3 tentativi giornalieri
+        results: [], // Array risultati (max 3)
         leaderboard: []
     };
 
@@ -46,8 +46,8 @@ const BetaModule = (() => {
             const data = await api('weekly-challenge');
             
             state.circuit = data.circuit;
-            state.hasRaced = data.hasRaced;
-            state.result = data.result;
+            state.attemptsUsed = data.attemptsUsed || 0;
+            state.results = data.results || [];
             state.leaderboard = data.leaderboard;
 
             if (gameInstance.ownedCars && gameInstance.ownedCars.length > 0) {
@@ -56,7 +56,8 @@ const BetaModule = (() => {
 
             container.innerHTML = `
                 ${renderCircuit()}
-                ${!state.hasRaced ? renderSetup(gameInstance) : renderResults()}
+                ${!state.hasRaced ? renderSetup(gameInstance) : ''}
+                ${state.hasRaced && state.result ? renderResults() : ''}
                 ${renderLeaderboard()}
             `;
 
@@ -98,18 +99,32 @@ const BetaModule = (() => {
                         <div class="circuit-stat-value">${c.tightCorners} 🔴</div>
                     </div>
                     <div class="circuit-stat">
+                        <div class="circuit-stat-label">Curve Medie</div>
+                        <div class="circuit-stat-value">${c.mediumCorners} 🟡</div>
+                    </div>
+                    <div class="circuit-stat">
+                        <div class="circuit-stat-label">Curve Veloci</div>
+                        <div class="circuit-stat-value">${c.fastCorners} 🟢</div>
+                    </div>
+                    <div class="circuit-stat">
                         <div class="circuit-stat-label">Rettilinei</div>
                         <div class="circuit-stat-value">${c.longStraights + c.shortStraights}</div>
                     </div>
                 </div>
 
-                ${!state.hasRaced ? `
-                    <div style="margin-top: 20px; padding: 15px; background: rgba(0,217,255,0.1); border-radius: 8px;">
-                        <strong style="color: #00d9ff;">🏁 Tentativo Disponibile</strong>
+                ${state.attemptsUsed < 3 ? `
+                    <div style="margin-top: 20px; padding: 15px; background: rgba(0,217,255,0.1); border-radius: 8px; border-left: 4px solid #00d9ff;">
+                        <strong style="color: #00d9ff;">🏁 Tentativi: ${3 - state.attemptsUsed}/3 disponibili</strong><br>
+                        <span style="color: rgba(255,255,255,0.7); font-size: 0.9rem;">
+                            Reset giornaliero. Vale il miglior tempo!
+                        </span>
                     </div>
                 ` : `
-                    <div style="margin-top: 20px; padding: 15px; background: rgba(255,69,0,0.1); border-radius: 8px;">
-                        <strong style="color: #ff4500;">✅ Gara Completata</strong>
+                    <div style="margin-top: 20px; padding: 15px; background: rgba(255,69,0,0.1); border-radius: 8px; border-left: 4px solid #ff4500;">
+                        <strong style="color: #ff4500;">❌ Tentativi esauriti (3/3)</strong><br>
+                        <span style="color: rgba(255,255,255,0.7); font-size: 0.9rem;">
+                            Nuovi tentativi domani
+                        </span>
                     </div>
                 `}
             </div>
@@ -131,7 +146,7 @@ const BetaModule = (() => {
                 <div style="background: rgba(0,0,0,0.3); padding: 20px; border-radius: 10px; margin-bottom: 20px;">
                     <select id="car-selector" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); color: #fff; border: 2px solid rgba(0,217,255,0.3); border-radius: 8px; font-family: Orbitron; font-size: 1rem; cursor: pointer;">
                         ${game.ownedCars.map((c, i) => `
-                            <option value="${i}" ${c === car ? 'selected' : ''}>
+                            <option value="${i}" ${c === car ? 'selected' : ''} style="background: #1a1a1a; color: #fff;">
                                 ${c.name} - ${game.getCarPower(c)} HP
                             </option>
                         `).join('')}
@@ -237,11 +252,11 @@ const BetaModule = (() => {
 
         return `
             <div class="results-container">
-                <div class="results-title">🏁 RISULTATO</div>
+                <div class="results-title">🏁 RISULTATO FINALE</div>
                 <div class="results-main">
                     <div class="result-stat">
                         <div class="result-stat-label">Tempo Totale</div>
-                        <div class="result-stat-value">${formatTime(r.totalTime)}</div>
+                        <div class="result-stat-value">${r.dnf ? 'DNF' : formatTime(r.totalTime)}</div>
                     </div>
                     <div class="result-stat">
                         <div class="result-stat-label">Miglior Giro</div>
@@ -253,13 +268,20 @@ const BetaModule = (() => {
                     </div>
                     <div class="result-stat">
                         <div class="result-stat-label">Premio</div>
-                        <div class="result-stat-value" style="font-size:1.2rem;">
+                        <div class="result-stat-value" style="font-size: 1.2rem;">
                             ${r.reward.money > 0 ? `💰 ${r.reward.money.toLocaleString()}<br>` : ''}
                             ${r.reward.parts > 0 ? `🔩 ${r.reward.parts.toLocaleString()}` : ''}
+                            ${r.reward.money === 0 && r.reward.parts === 0 ? '-' : ''}
                         </div>
                     </div>
                 </div>
-                ${r.dnf ? `<div style="color:#ff4500;text-align:center;margin-top:20px;">❌ DNF - Carburante esaurito</div>` : ''}
+                ${r.dnf ? `
+                    <div style="background: rgba(255,69,0,0.2); border: 2px solid #ff4500; border-radius: 8px; padding: 20px; text-align: center; margin-top: 20px;">
+                        <div style="font-size: 2rem; margin-bottom: 10px;">❌</div>
+                        <div style="font-family: Orbitron; font-size: 1.3rem; color: #ff4500; margin-bottom: 5px;">DNF - NON CLASSIFICATO</div>
+                        <div style="color: rgba(255,255,255,0.7);">Carburante esaurito al giro ${r.dnfLap}/${state.circuit.laps}</div>
+                    </div>
+                ` : ''}
             </div>
         `;
     };
@@ -379,18 +401,25 @@ const BetaModule = (() => {
         }
 
         console.log('✅ Avvio simulazione...');
+        console.log('Setup:', state.setup);
+        console.log('Auto:', state.selectedCar?.name);
+        
         btn.disabled = true;
         btn.textContent = '⏳ SIMULAZIONE...';
 
         try {
             const carIndex = game.ownedCars.indexOf(state.selectedCar);
+            console.log('📤 Invio richiesta simulazione, carIndex:', carIndex);
+            
             const result = await api('run-simulation', {
                 method: 'POST',
                 body: JSON.stringify({ carIndex, setup: state.setup })
             });
 
-            state.hasRaced = true;
-            state.result = result.result;
+            console.log('📥 Risultato ricevuto:', result);
+
+            state.attemptsUsed++;
+            state.results.push(result.result);
             state.leaderboard = result.leaderboard;
 
             // Aggiungi premi
@@ -401,13 +430,17 @@ const BetaModule = (() => {
                 game.resources.parts.value += result.result.reward.parts;
             }
             game.render();
-            window.saveGameToServer(true);
+            
+            console.log('💾 Salvo stato...');
+            await window.saveGameToServer(true);
 
             // Re-render
-            render(document.getElementById('betaContainer'), game);
+            console.log('🎨 Re-render pagina beta');
+            await render(document.getElementById('betaContainer'), game);
 
         } catch (error) {
-            console.error('Errore:', error);
+            console.error('❌ Errore simulazione:', error);
+            console.error('Stack:', error.stack);
             alert('❌ Errore: ' + error.message);
             btn.disabled = false;
             btn.textContent = '🏁 AVVIA SIMULAZIONE';
