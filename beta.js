@@ -5,8 +5,8 @@
 const BetaModule = (() => {
 
     const getApiUrl = () => {
-        return window.API_URL || 
-               (window.location.hostname === 'localhost' ? 'http://localhost:3000' : '');
+        // Usa API_URL globale dal gioco principale (già configurato in index.html)
+        return window.API_URL || 'http://localhost:3000';
     };
 
     const api = async (endpoint, options = {}) => {
@@ -126,7 +126,27 @@ const BetaModule = (() => {
 
         return `
             <div class="setup-section">
-                <div class="setup-title">🏎️ ${car.name} (${power} HP)</div>
+                <div class="setup-title">🏎️ Auto</div>
+                
+                <div style="background: rgba(0,0,0,0.3); padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                    <select id="car-selector" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); color: #fff; border: 2px solid rgba(0,217,255,0.3); border-radius: 8px; font-family: Orbitron; font-size: 1rem; cursor: pointer;">
+                        ${game.ownedCars.map((c, i) => `
+                            <option value="${i}" ${c === car ? 'selected' : ''}>
+                                ${c.name} - ${game.getCarPower(c)} HP
+                            </option>
+                        `).join('')}
+                    </select>
+                    <div style="margin-top: 15px; padding: 15px; background: rgba(0,217,255,0.1); border-radius: 8px; text-align: center;">
+                        <div style="font-family: Orbitron; font-size: 1.5rem; color: #ffa500; margin-bottom: 5px;">
+                            ${car.name}
+                        </div>
+                        <div style="color: rgba(255,255,255,0.7);">
+                            ${power} HP • ${1000 + (car.stats.body * 2)} kg
+                        </div>
+                    </div>
+                </div>
+
+                <div class="setup-title">⚙️ Setup</div>
 
                 <div class="setup-param">
                     <div class="setup-param-label">
@@ -281,6 +301,19 @@ const BetaModule = (() => {
     };
 
     const attachListeners = (game) => {
+        // Car selector
+        const carSelector = document.getElementById('car-selector');
+        if (carSelector) {
+            console.log('✅ Selector auto trovato');
+            carSelector.addEventListener('change', (e) => {
+                const newIndex = parseInt(e.target.value);
+                state.selectedCar = game.ownedCars[newIndex];
+                console.log('🚗 Auto cambiata:', state.selectedCar.name);
+                // Re-render per aggiornare stats
+                render(document.getElementById('betaContainer'), game);
+            });
+        }
+
         // Sliders
         const downforce = document.getElementById('downforce');
         if (downforce) {
@@ -327,14 +360,25 @@ const BetaModule = (() => {
         // Run button
         const btn = document.getElementById('run-btn');
         if (btn) {
-            btn.addEventListener('click', () => runSimulation(game));
+            console.log('✅ Pulsante simulazione trovato, attacco listener');
+            btn.addEventListener('click', () => {
+                console.log('🏁 Click su AVVIA SIMULAZIONE');
+                runSimulation(game);
+            });
+        } else {
+            console.error('❌ Pulsante run-btn non trovato!');
         }
     };
 
     const runSimulation = async (game) => {
+        console.log('🚀 runSimulation chiamata!');
         const btn = document.getElementById('run-btn');
-        if (!btn) return;
+        if (!btn) {
+            console.error('❌ Pulsante non trovato in runSimulation');
+            return;
+        }
 
+        console.log('✅ Avvio simulazione...');
         btn.disabled = true;
         btn.textContent = '⏳ SIMULAZIONE...';
 
