@@ -1516,6 +1516,7 @@
     <script>
 // ===== CONFIGURAZIONE CLOUD =====
 const API_URL = 'https://racing-game-backend-production-a5dd.up.railway.app';
+window.API_URL = API_URL; // ✅ Esponi per beta.js
 let authToken = localStorage.getItem('authToken');
 let currentUser = JSON.parse(localStorage.getItem('user') || 'null');
 
