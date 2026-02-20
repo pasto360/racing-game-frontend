@@ -43,14 +43,17 @@ const BetaModule = (() => {
 
     const render = async (container, gameInstance) => {
         try {
-            const data = await api('weekly-challenge');
-            
-            state.circuit = data.circuit;
-            state.attemptsUsed = data.attemptsUsed || 0;
-            state.results = data.results || [];
-            state.leaderboard = data.leaderboard;
+            // ✅ Ricarica dati solo se non abbiamo già un risultato
+            if (!state.hasRaced || !state.circuit) {
+                const data = await api('weekly-challenge');
+                
+                state.circuit = data.circuit;
+                state.hasRaced = data.hasRaced;
+                state.result = data.result;
+                state.leaderboard = data.leaderboard;
+            }
 
-            if (gameInstance.ownedCars && gameInstance.ownedCars.length > 0) {
+            if (gameInstance.ownedCars && gameInstance.ownedCars.length > 0 && !state.selectedCar) {
                 state.selectedCar = gameInstance.ownedCars[0];
             }
 
@@ -60,6 +63,8 @@ const BetaModule = (() => {
                 ${state.hasRaced && state.result ? renderResults() : ''}
                 ${renderLeaderboard()}
             `;
+            
+            console.log('📊 Stato render - hasRaced:', state.hasRaced, 'result:', !!state.result);
 
             attachListeners(gameInstance);
 
