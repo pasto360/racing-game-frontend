@@ -4125,7 +4125,8 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                     return acc;
                 }, {});
                 
-                const workshopSections = Object.keys(this.workshop);
+                // ✅ ORDINE FISSO: Motori, Elettronica, Carrozzeria, Aerodinamica
+                const workshopSections = ['engine', 'electronics', 'body', 'aerodynamics'];
                 
                 // ✅ Calcola quale immagine mostrare in base alla sezione attiva
                 const imageMap = {
