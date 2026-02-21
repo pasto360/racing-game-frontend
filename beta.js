@@ -57,8 +57,8 @@ const BetaModule = (() => {
 
             container.innerHTML = `
                 ${renderCircuit()}
-                ${!state.hasRacedToday ? renderSetup(gameInstance) : ''}
                 ${state.result ? renderResults() : ''}
+                ${!state.hasRacedToday ? renderSetup(gameInstance) : ''}
                 ${renderLeaderboard()}
             `;
             
@@ -115,19 +115,21 @@ const BetaModule = (() => {
                     </div>
                 </div>
 
-                ${state.attemptsUsed < 3 ? `
+                ${!state.hasRacedToday ? `
                     <div style="margin-top: 20px; padding: 15px; background: rgba(0,217,255,0.1); border-radius: 8px; border-left: 4px solid #00d9ff;">
-                        <strong style="color: #00d9ff;">🏁 Tentativi: ${3 - state.attemptsUsed}/3 disponibili</strong><br>
+                        <strong style="color: #00d9ff;">🏁 Tentativo Disponibile Oggi</strong><br>
                         <span style="color: rgba(255,255,255,0.7); font-size: 0.9rem;">
-                            Reset giornaliero. Vale il miglior tempo!
+                            1 tentativo al giorno. Migliora il tuo miglior tempo settimanale!
                         </span>
+                        ${state.attemptsThisWeek > 0 ? `<br><span style="color: rgba(255,255,255,0.5); font-size: 0.85rem; margin-top: 5px; display: inline-block;">📊 Tentativi questa settimana: ${state.attemptsThisWeek}</span>` : ''}
                     </div>
                 ` : `
                     <div style="margin-top: 20px; padding: 15px; background: rgba(255,69,0,0.1); border-radius: 8px; border-left: 4px solid #ff4500;">
-                        <strong style="color: #ff4500;">❌ Tentativi esauriti (3/3)</strong><br>
+                        <strong style="color: #ff4500;">✅ Hai già corso oggi</strong><br>
                         <span style="color: rgba(255,255,255,0.7); font-size: 0.9rem;">
-                            Nuovi tentativi domani
+                            Nuovo tentativo disponibile domani alle 00:00
                         </span>
+                        ${state.attemptsThisWeek > 0 ? `<br><span style="color: rgba(255,255,255,0.5); font-size: 0.85rem; margin-top: 5px; display: inline-block;">📊 Tentativi questa settimana: ${state.attemptsThisWeek}</span>` : ''}
                     </div>
                 `}
             </div>
@@ -246,7 +248,7 @@ const BetaModule = (() => {
 
         return `
             <div class="results-container">
-                <div class="results-title">🏁 RISULTATO FINALE</div>
+                <div class="results-title">⭐ TUO MIGLIOR TEMPO QUESTA SETTIMANA</div>
                 <div class="results-main">
                     <div class="result-stat">
                         <div class="result-stat-label">Tempo Totale</div>
