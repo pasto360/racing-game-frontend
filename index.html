@@ -1801,7 +1801,17 @@ async function loadGameFromServer(retryCount = 0) {
             });
         }
         game.trackQueue = data.trackQueue || game.trackQueue;
-        game.missions = data.missions || game.missions;
+        
+        // ✅ MERGE MISSIONI (preserva nuove definizioni, carica solo completed/progress dal DB)
+        if (data.missions) {
+            Object.keys(game.missions).forEach(key => {
+                if (data.missions[key]) {
+                    game.missions[key].completed = data.missions[key].completed || false;
+                    game.missions[key].progress = data.missions[key].progress || 0;
+                }
+            });
+        }
+        
         game.pvpStats = data.pvpStats || game.pvpStats;
         game.upgradesCount = data.upgradesCount || 0;
         game.championshipsWon = data.championshipsWon || 0;
@@ -2952,38 +2962,40 @@ async function loadLeaderboard() {
                 const container = document.getElementById('trackMissions');
                 if (!container) return;
                 
-                // ✅ Aggiorna automaticamente il progress delle missioni
-                this.missions.races1000.progress = this.races.completed || 0;
-                this.missions.wins500.progress = this.races.wins || 0;
-                this.missions.losses100.progress = (this.races.completed - this.races.wins) || 0;
+                // ✅ Aggiorna automaticamente il progress delle missioni (con controllo esistenza)
+                if (this.missions.races1000) this.missions.races1000.progress = this.races.completed || 0;
+                if (this.missions.wins500) this.missions.wins500.progress = this.races.wins || 0;
+                if (this.missions.losses100) this.missions.losses100.progress = (this.races.completed - this.races.wins) || 0;
                 
                 // Conta livelli allenamenti
                 let trainingTotal = 0;
                 Object.keys(this.trackTraining).forEach(key => {
                     trainingTotal += this.trackTraining[key].level || 0;
                 });
-                this.missions.training60.progress = trainingTotal;
+                if (this.missions.training60) this.missions.training60.progress = trainingTotal;
                 
                 // Conta tecnologie attivate
                 let techCompleted = 0;
                 this.technologies.forEach(tech => {
                     if (tech.researched) techCompleted++;
                 });
-                this.missions.allTech.target = this.technologies.length;
-                this.missions.allTech.progress = techCompleted;
+                if (this.missions.allTech) {
+                    this.missions.allTech.target = this.technologies.length;
+                    this.missions.allTech.progress = techCompleted;
+                }
                 
                 // PvP vinte
-                this.missions.pvp50.progress = this.pvpStats?.wins || 0;
-                this.missions.pvp100.progress = this.pvpStats?.wins || 0;
+                if (this.missions.pvp50) this.missions.pvp50.progress = this.pvpStats?.wins || 0;
+                if (this.missions.pvp100) this.missions.pvp100.progress = this.pvpStats?.wins || 0;
                 
                 // Auto possedute
-                this.missions.cars10.progress = this.ownedCars.length;
+                if (this.missions.cars10) this.missions.cars10.progress = this.ownedCars.length;
                 
                 // Reputazione totale
-                this.missions.reputation10000.progress = this.resources.reputation.value;
+                if (this.missions.reputation10000) this.missions.reputation10000.progress = this.resources.reputation.value;
                 
                 // Upgrade totali
-                this.missions.upgrades100.progress = this.upgradesCount || 0;
+                if (this.missions.upgrades100) this.missions.upgrades100.progress = this.upgradesCount || 0;
                 
                 // Power massimo auto (Fuorigiri)
                 let maxPower = 0;
@@ -2991,7 +3003,7 @@ async function loadLeaderboard() {
                     const power = this.getCarPower(car);
                     if (power > maxPower) maxPower = power;
                 });
-                this.missions.power500.progress = Math.floor(maxPower);
+                if (this.missions.power500) this.missions.power500.progress = Math.floor(maxPower);
                 
                 // Auto-completa missioni raggiunte
                 Object.keys(this.missions).forEach(key => {
