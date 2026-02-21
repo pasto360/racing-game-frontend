@@ -87,6 +87,34 @@ const BetaModule = (() => {
                 <div class="circuit-country">${c.country}</div>
                 <p style="color: rgba(255,255,255,0.7); font-style: italic;">${c.description}</p>
                 
+                <!-- BOX AUTO -->
+                <div style="background: rgba(255,165,0,0.1); border: 2px solid rgba(255,165,0,0.3); border-radius: 10px; padding: 15px; margin: 15px 0;">
+                    <div style="font-family: Orbitron; font-size: 1.1rem; color: #ffa500; margin-bottom: 10px; text-align: center;">
+                        🏎️ THUNDERBOLT R-9
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; text-align: center;">
+                        <div>
+                            <div style="font-size: 0.75rem; color: rgba(255,255,255,0.5);">Potenza</div>
+                            <div style="font-family: Orbitron; font-size: 1rem; color: #00d9ff;">380 HP</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.75rem; color: rgba(255,255,255,0.5);">Peso</div>
+                            <div style="font-family: Orbitron; font-size: 1rem; color: #00d9ff;">1250 kg</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.75rem; color: rgba(255,255,255,0.5);">Consumo Base</div>
+                            <div style="font-family: Orbitron; font-size: 1rem; color: #00d9ff;">3.4 L/giro</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.75rem; color: rgba(255,255,255,0.5);">Rapporto P/P</div>
+                            <div style="font-family: Orbitron; font-size: 1rem; color: #ffa500;">0.304</div>
+                        </div>
+                    </div>
+                    <div style="font-size: 0.7rem; color: rgba(255,255,255,0.4); text-align: center; margin-top: 8px;">
+                        ⚠️ Consumo e prestazioni variano in base al setup
+                    </div>
+                </div>
+                
                 <div class="circuit-stats">
                     <div class="circuit-stat">
                         <div class="circuit-stat-label">Lunghezza</div>
@@ -138,25 +166,7 @@ const BetaModule = (() => {
     const renderSetup = (game) => {
         return `
             <div class="setup-section">
-                <div class="setup-title">🏎️ Auto Standard Beta</div>
-                
-                <div style="background: rgba(0,0,0,0.3); padding: 20px; border-radius: 10px; margin-bottom: 20px; text-align: center;">
-                    <div style="font-family: Orbitron; font-size: 1.5rem; color: #ffa500; margin-bottom: 10px;">
-                        Beta Racer
-                    </div>
-                    <div style="display: flex; justify-content: center; gap: 30px; color: rgba(255,255,255,0.8);">
-                        <div>
-                            <div style="font-size: 0.8rem; color: rgba(255,255,255,0.5);">Potenza</div>
-                            <div style="font-family: Orbitron; font-size: 1.2rem; color: #00d9ff;">380 HP</div>
-                        </div>
-                        <div>
-                            <div style="font-size: 0.8rem; color: rgba(255,255,255,0.5);">Peso</div>
-                            <div style="font-family: Orbitron; font-size: 1.2rem; color: #00d9ff;">1250 kg</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="setup-title">⚙️ Setup</div>
+                <div class="setup-title">⚙️ Setup Auto</div>
 
                 <div class="setup-param">
                     <div class="setup-param-label">
