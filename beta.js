@@ -27,6 +27,7 @@ const BetaModule = (() => {
         circuit: null,
         hasRacedToday: false,
         attemptsThisWeek: 0,
+        result: null,
         setup: {
             tires: 'medium',
             downforce: 50,
@@ -37,8 +38,6 @@ const BetaModule = (() => {
             brakeBias: 55,
             engineMap: 'balanced'
         },
-        attemptsUsed: 0, // 0-3 tentativi giornalieri
-        results: [], // Array risultati (max 3)
         leaderboard: []
     };
 
@@ -400,8 +399,9 @@ const BetaModule = (() => {
 
             console.log('📥 Risultato ricevuto:', result);
 
-            state.attemptsUsed++;
-            state.results.push(result.result);
+            state.hasRacedToday = true;
+            state.result = result.result;
+            state.attemptsThisWeek++;
             state.leaderboard = result.leaderboard;
 
             // Aggiungi premi
