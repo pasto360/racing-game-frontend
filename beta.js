@@ -53,10 +53,6 @@ const BetaModule = (() => {
                 state.leaderboard = data.leaderboard;
             }
 
-            if (gameInstance.ownedCars && gameInstance.ownedCars.length > 0 && !state.selectedCar) {
-                state.selectedCar = gameInstance.ownedCars[0];
-            }
-
             container.innerHTML = `
                 ${renderCircuit()}
                 ${!state.hasRaced ? renderSetup(gameInstance) : ''}
@@ -137,31 +133,22 @@ const BetaModule = (() => {
     };
 
     const renderSetup = (game) => {
-        if (!game.ownedCars || game.ownedCars.length === 0) {
-            return '<div class="setup-section"><p style="text-align:center;color:rgba(255,255,255,0.5);">⚠️ Serve almeno un\'auto</p></div>';
-        }
-
-        const car = state.selectedCar;
-        const power = game.getCarPower(car);
-
         return `
             <div class="setup-section">
-                <div class="setup-title">🏎️ Auto</div>
+                <div class="setup-title">🏎️ Auto Standard Beta</div>
                 
-                <div style="background: rgba(0,0,0,0.3); padding: 20px; border-radius: 10px; margin-bottom: 20px;">
-                    <select id="car-selector" style="width: 100%; padding: 12px; background: rgba(255,255,255,0.1); color: #fff; border: 2px solid rgba(0,217,255,0.3); border-radius: 8px; font-family: Orbitron; font-size: 1rem; cursor: pointer;">
-                        ${game.ownedCars.map((c, i) => `
-                            <option value="${i}" ${c === car ? 'selected' : ''} style="background: #1a1a1a; color: #fff;">
-                                ${c.name} - ${game.getCarPower(c)} HP
-                            </option>
-                        `).join('')}
-                    </select>
-                    <div style="margin-top: 15px; padding: 15px; background: rgba(0,217,255,0.1); border-radius: 8px; text-align: center;">
-                        <div style="font-family: Orbitron; font-size: 1.5rem; color: #ffa500; margin-bottom: 5px;">
-                            ${car.name}
+                <div style="background: rgba(0,0,0,0.3); padding: 20px; border-radius: 10px; margin-bottom: 20px; text-align: center;">
+                    <div style="font-family: Orbitron; font-size: 1.5rem; color: #ffa500; margin-bottom: 10px;">
+                        Beta Racer
+                    </div>
+                    <div style="display: flex; justify-content: center; gap: 30px; color: rgba(255,255,255,0.8);">
+                        <div>
+                            <div style="font-size: 0.8rem; color: rgba(255,255,255,0.5);">Potenza</div>
+                            <div style="font-family: Orbitron; font-size: 1.2rem; color: #00d9ff;">380 HP</div>
                         </div>
-                        <div style="color: rgba(255,255,255,0.7);">
-                            ${power} HP • ${1000 + (car.stats.body * 2)} kg
+                        <div>
+                            <div style="font-size: 0.8rem; color: rgba(255,255,255,0.5);">Peso</div>
+                            <div style="font-family: Orbitron; font-size: 1.2rem; color: #00d9ff;">1250 kg</div>
                         </div>
                     </div>
                 </div>
@@ -328,19 +315,6 @@ const BetaModule = (() => {
     };
 
     const attachListeners = (game) => {
-        // Car selector
-        const carSelector = document.getElementById('car-selector');
-        if (carSelector) {
-            console.log('✅ Selector auto trovato');
-            carSelector.addEventListener('change', (e) => {
-                const newIndex = parseInt(e.target.value);
-                state.selectedCar = game.ownedCars[newIndex];
-                console.log('🚗 Auto cambiata:', state.selectedCar.name);
-                // Re-render per aggiornare stats
-                render(document.getElementById('betaContainer'), game);
-            });
-        }
-
         // Sliders
         const downforce = document.getElementById('downforce');
         if (downforce) {
@@ -407,18 +381,17 @@ const BetaModule = (() => {
 
         console.log('✅ Avvio simulazione...');
         console.log('Setup:', state.setup);
-        console.log('Auto:', state.selectedCar?.name);
         
         btn.disabled = true;
         btn.textContent = '⏳ SIMULAZIONE...';
 
         try {
-            const carIndex = game.ownedCars.indexOf(state.selectedCar);
-            console.log('📤 Invio richiesta simulazione, carIndex:', carIndex);
+            console.log('📤 Invio richiesta simulazione');
+            console.log('🔧 Setup:', state.setup);
             
             const result = await api('run-simulation', {
                 method: 'POST',
-                body: JSON.stringify({ carIndex, setup: state.setup })
+                body: JSON.stringify({ setup: state.setup }) // ✅ Solo setup
             });
 
             console.log('📥 Risultato ricevuto:', result);
