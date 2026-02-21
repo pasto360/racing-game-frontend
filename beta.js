@@ -25,7 +25,8 @@ const BetaModule = (() => {
 
     let state = {
         circuit: null,
-        selectedCar: null,
+        hasRacedToday: false,
+        attemptsThisWeek: 0,
         setup: {
             tires: 'medium',
             downforce: 50,
@@ -44,23 +45,24 @@ const BetaModule = (() => {
     const render = async (container, gameInstance) => {
         try {
             // ✅ Ricarica dati solo se non abbiamo già un risultato
-            if (!state.hasRaced || !state.circuit) {
+            if (!state.hasRacedToday || !state.circuit) {
                 const data = await api('weekly-challenge');
                 
                 state.circuit = data.circuit;
-                state.hasRaced = data.hasRaced;
+                state.hasRacedToday = data.hasRacedToday;
                 state.result = data.result;
+                state.attemptsThisWeek = data.attemptsThisWeek || 0;
                 state.leaderboard = data.leaderboard;
             }
 
             container.innerHTML = `
                 ${renderCircuit()}
-                ${!state.hasRaced ? renderSetup(gameInstance) : ''}
-                ${state.hasRaced && state.result ? renderResults() : ''}
+                ${!state.hasRacedToday ? renderSetup(gameInstance) : ''}
+                ${state.result ? renderResults() : ''}
                 ${renderLeaderboard()}
             `;
             
-            console.log('📊 Stato render - hasRaced:', state.hasRaced, 'result:', !!state.result);
+            console.log('📊 Stato - hasRacedToday:', state.hasRacedToday, 'tentativi settimana:', state.attemptsThisWeek);
 
             attachListeners(gameInstance);
 
