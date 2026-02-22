@@ -271,14 +271,6 @@ const BetaModule = (() => {
                         <div class="result-stat-label">Posizione</div>
                         <div class="result-stat-value">${r.position}°</div>
                     </div>
-                    <div class="result-stat">
-                        <div class="result-stat-label">Premio</div>
-                        <div class="result-stat-value" style="font-size: 1.2rem;">
-                            ${r.reward.money > 0 ? `💰 ${r.reward.money.toLocaleString()}<br>` : ''}
-                            ${r.reward.parts > 0 ? `🔩 ${r.reward.parts.toLocaleString()}` : ''}
-                            ${r.reward.money === 0 && r.reward.parts === 0 ? '-' : ''}
-                        </div>
-                    </div>
                 </div>
                 ${r.dnf ? `
                     <div style="background: rgba(255,69,0,0.2); border: 2px solid #ff4500; border-radius: 8px; padding: 20px; text-align: center; margin-top: 20px;">
@@ -414,13 +406,7 @@ const BetaModule = (() => {
             state.attemptsThisWeek++;
             state.leaderboard = result.leaderboard;
 
-            // Aggiungi premi
-            if (result.result.reward.money > 0) {
-                game.resources.money.value += result.result.reward.money;
-            }
-            if (result.result.reward.parts > 0) {
-                game.resources.parts.value += result.result.reward.parts;
-            }
+            // ⚠️ Premi assegnati solo lunedì al top 3 dal reset settimanale
             game.render();
             
             console.log('💾 Salvo stato...');
