@@ -43,16 +43,14 @@ const BetaModule = (() => {
 
     const render = async (container, gameInstance) => {
         try {
-            // ✅ Ricarica dati solo se non abbiamo già un risultato
-            if (!state.hasRacedToday || !state.circuit) {
-                const data = await api('weekly-challenge');
-                
-                state.circuit = data.circuit;
-                state.hasRacedToday = data.hasRacedToday;
-                state.result = data.result;
-                state.attemptsThisWeek = data.attemptsThisWeek || 0;
-                state.leaderboard = data.leaderboard;
-            }
+            // ✅ SEMPRE ricarica da API (no cache) per evitare bypass con refresh
+            const data = await api('weekly-challenge');
+            
+            state.circuit = data.circuit;
+            state.hasRacedToday = data.hasRacedToday;
+            state.result = data.result;
+            state.attemptsThisWeek = data.attemptsThisWeek || 0;
+            state.leaderboard = data.leaderboard;
 
             container.innerHTML = `
                 ${renderCircuit()}
@@ -201,7 +199,10 @@ const BetaModule = (() => {
                         <span>⛽ Carburante</span>
                         <span id="fuel-val">${state.setup.fuel} L</span>
                     </div>
-                    <input type="range" class="setup-slider" id="fuel" min="20" max="100" value="${state.setup.fuel}">
+                    <input type="range" class="setup-slider" id="fuel" min="20" max="110" value="${state.setup.fuel}" step="5">
+                    <div style="font-size: 0.75rem; color: rgba(255,255,255,0.4); margin-top: 5px;">
+                        Serbatoio max: 110L • ~70L per 20 giri • Più fuel = più peso
+                    </div>
                 </div>
 
                 <div class="setup-param">
@@ -238,6 +239,26 @@ const BetaModule = (() => {
                             <label for="gear-long">Lungo</label>
                         </div>
                     </div>
+                </div>
+
+                <!-- PREVIEW CALCOLI -->
+                <div style="background: rgba(0,217,255,0.05); border: 2px solid rgba(0,217,255,0.2); border-radius: 10px; padding: 15px; margin-top: 20px;">
+                    <div style="font-family: Orbitron; color: #00d9ff; margin-bottom: 10px; text-align: center;">📊 Previsione Gara</div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; text-align: center;">
+                        <div>
+                            <div style="font-size: 0.7rem; color: rgba(255,255,255,0.5);">Consumo/Giro</div>
+                            <div id="preview-consumption" style="font-family: Orbitron; font-size: 1rem; color: #ffa500;">3.4 L</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.7rem; color: rgba(255,255,255,0.5);">Giri Possibili</div>
+                            <div id="preview-laps" style="font-family: Orbitron; font-size: 1rem; color: #00d9ff;">14</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.7rem; color: rgba(255,255,255,0.5);">Peso Totale</div>
+                            <div id="preview-weight" style="font-family: Orbitron; font-size: 1rem; color: #fff;">1300 kg</div>
+                        </div>
+                    </div>
+                    <div id="preview-warning" style="font-size: 0.75rem; text-align: center; margin-top: 10px;"></div>
                 </div>
 
                 <button class="simulate-btn" id="run-btn">🏁 AVVIA SIMULAZIONE</button>
@@ -320,12 +341,59 @@ const BetaModule = (() => {
     };
 
     const attachListeners = (game) => {
+        // Funzione calcolo preview
+        const updatePreview = () => {
+            const circuit = state.circuit;
+            if (!circuit) return;
+            
+            const setup = state.setup;
+            const baseWeight = 1250;
+            const totalWeight = baseWeight + setup.fuel;
+            
+            // Calcola consumo stimato
+            let fuelPerLap = 3.4;
+            fuelPerLap += circuit.tightCorners * 0.08;
+            fuelPerLap += setup.downforce * 0.015;
+            if (setup.tires === 'soft') fuelPerLap *= 1.08;
+            if (setup.engineMap === 'power') fuelPerLap *= 1.12;
+            if (setup.engineMap === 'eco') fuelPerLap *= 0.92;
+            
+            const possibleLaps = Math.floor(setup.fuel / fuelPerLap);
+            
+            // Aggiorna UI
+            const consEl = document.getElementById('preview-consumption');
+            const lapsEl = document.getElementById('preview-laps');
+            const weightEl = document.getElementById('preview-weight');
+            const warnEl = document.getElementById('preview-warning');
+            
+            if (consEl) consEl.textContent = fuelPerLap.toFixed(1) + ' L';
+            if (lapsEl) lapsEl.textContent = possibleLaps;
+            if (weightEl) weightEl.textContent = totalWeight + ' kg';
+            
+            if (warnEl) {
+                if (possibleLaps < circuit.laps) {
+                    warnEl.textContent = `⚠️ DNF al giro ${possibleLaps}! Serve ${(fuelPerLap * circuit.laps).toFixed(0)}L per finire`;
+                    warnEl.style.color = '#ff4500';
+                } else if (possibleLaps === circuit.laps) {
+                    warnEl.textContent = '⚠️ Carburante al limite! Rischio DNF se consumi aumentano';
+                    warnEl.style.color = '#ffa500';
+                } else if (possibleLaps > circuit.laps + 3) {
+                    warnEl.textContent = '💡 Carburante in eccesso → Peso extra inutile';
+                    warnEl.style.color = '#00d9ff';
+                } else {
+                    warnEl.textContent = '✅ Carburante ottimale';
+                    warnEl.style.color = '#0f0';
+                }
+            }
+        };
+        
         // Sliders
         const downforce = document.getElementById('downforce');
         if (downforce) {
             downforce.addEventListener('input', (e) => {
                 state.setup.downforce = parseInt(e.target.value);
                 document.getElementById('downforce-val').textContent = `${state.setup.downforce}%`;
+                updatePreview();
             });
         }
 
@@ -334,6 +402,7 @@ const BetaModule = (() => {
             fuel.addEventListener('input', (e) => {
                 state.setup.fuel = parseInt(e.target.value);
                 document.getElementById('fuel-val').textContent = `${state.setup.fuel} L`;
+                updatePreview();
             });
         }
 
@@ -356,12 +425,25 @@ const BetaModule = (() => {
 
         // Radio
         document.querySelectorAll('input[name="tires"]').forEach(r => {
-            r.addEventListener('change', (e) => state.setup.tires = e.target.value);
+            r.addEventListener('change', (e) => {
+                state.setup.tires = e.target.value;
+                updatePreview();
+            });
         });
 
         document.querySelectorAll('input[name="gear"]').forEach(r => {
             r.addEventListener('change', (e) => state.setup.gearRatio = e.target.value);
         });
+        
+        document.querySelectorAll('input[name="engine"]').forEach(r => {
+            r.addEventListener('change', (e) => {
+                state.setup.engineMap = e.target.value;
+                updatePreview();
+            });
+        });
+        
+        // Inizializza preview
+        updatePreview();
 
         // Run button
         const btn = document.getElementById('run-btn');
