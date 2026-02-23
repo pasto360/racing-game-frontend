@@ -27,7 +27,8 @@ const BetaModule = (() => {
         circuit: null,
         hasRacedToday: false,
         attemptsThisWeek: 0,
-        result: null,
+        attempts: [],
+        bestResult: null,
         setup: {
             tires: 'medium',
             downforce: 50,
@@ -41,20 +42,23 @@ const BetaModule = (() => {
         leaderboard: []
     };
 
-    const render = async (container, gameInstance) => {
+    const render = async (container, gameInstance, skipAPICall = false) => {
         try {
-            // ✅ SEMPRE ricarica da API (no cache) per evitare bypass con refresh
-            const data = await api('weekly-challenge');
-            
-            state.circuit = data.circuit;
-            state.hasRacedToday = data.hasRacedToday;
-            state.result = data.result;
-            state.attemptsThisWeek = data.attemptsThisWeek || 0;
-            state.leaderboard = data.leaderboard;
+            // ✅ Ricarica da API solo se non skipAPICall
+            if (!skipAPICall) {
+                const data = await api('weekly-challenge');
+                
+                state.circuit = data.circuit;
+                state.hasRacedToday = data.hasRacedToday;
+                state.attempts = data.attempts || [];
+                state.bestResult = data.bestResult || null;
+                state.attemptsThisWeek = data.attemptsThisWeek || 0;
+                state.leaderboard = data.leaderboard;
+            }
 
             container.innerHTML = `
                 ${renderCircuit()}
-                ${state.result ? renderResults() : ''}
+                ${state.attempts.length > 0 ? renderAttempts() : ''}
                 ${!state.hasRacedToday ? renderSetup(gameInstance) : ''}
                 ${renderLeaderboard()}
             `;
@@ -262,6 +266,79 @@ const BetaModule = (() => {
                 </div>
 
                 <button class="simulate-btn" id="run-btn">🏁 AVVIA SIMULAZIONE</button>
+            </div>
+        `;
+    };
+
+    const renderAttempts = () => {
+        if (!state.attempts || state.attempts.length === 0) return '';
+
+        const formatTime = (s) => {
+            const m = Math.floor(s / 60);
+            const sec = (s % 60).toFixed(3);
+            return `${m}:${sec.padStart(6, '0')}`;
+        };
+        
+        const formatDate = (dateStr) => {
+            const d = new Date(dateStr);
+            return d.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+        };
+        
+        // Trova miglior tentativo (non-DNF con tempo minore)
+        const validAttempts = state.attempts.filter(a => !a.dnf && a.totalTime > 0);
+        const best = validAttempts.length > 0 
+            ? validAttempts.reduce((min, a) => a.totalTime < min.totalTime ? a : min)
+            : null;
+
+        return `
+            <div class="results-container" style="margin-bottom: 30px;">
+                <div class="results-title">📊 I TUOI TENTATIVI (${state.attempts.length})</div>
+                
+                ${state.attempts.map((a, i) => {
+                    const isBest = best && a === best;
+                    return `
+                        <div style="
+                            background: ${isBest ? 'rgba(0,217,255,0.1)' : 'rgba(0,0,0,0.3)'};
+                            border: 2px solid ${isBest ? '#00d9ff' : 'rgba(255,255,255,0.1)'};
+                            border-radius: 10px;
+                            padding: 15px;
+                            margin-bottom: 10px;
+                        ">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <span style="font-size: 0.85rem; color: rgba(255,255,255,0.5);">
+                                    ${formatDate(a.date)}
+                                </span>
+                                ${isBest ? '<span style="color: #00d9ff; font-family: Orbitron;">⭐ MIGLIORE</span>' : ''}
+                            </div>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px;">
+                                <div>
+                                    <div style="font-size: 0.75rem; color: rgba(255,255,255,0.5);">Tempo</div>
+                                    <div style="font-family: Orbitron; font-size: 1.1rem; color: ${a.dnf ? '#ff4500' : '#ffa500'};">
+                                        ${a.dnf ? 'DNF' : formatTime(a.totalTime)}
+                                    </div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 0.75rem; color: rgba(255,255,255,0.5);">Miglior Giro</div>
+                                    <div style="font-family: Orbitron; font-size: 1.1rem;">${formatTime(a.bestLap)}</div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 0.75rem; color: rgba(255,255,255,0.5);">Posizione</div>
+                                    <div style="font-family: Orbitron; font-size: 1.1rem;">${a.position}°</div>
+                                </div>
+                            </div>
+                            ${a.dnf ? `<div style="color: #ff4500; font-size: 0.85rem; margin-top: 8px;">⛽ Carburante esaurito al giro ${a.dnfLap}</div>` : ''}
+                        </div>
+                    `;
+                }).join('')}
+                
+                ${best ? `
+                    <div style="background: rgba(0,255,0,0.05); border: 2px solid rgba(0,255,0,0.3); border-radius: 10px; padding: 15px; text-align: center; margin-top: 15px;">
+                        <div style="font-size: 0.85rem; color: rgba(255,255,255,0.6); margin-bottom: 5px;">In Classifica</div>
+                        <div style="font-family: Orbitron; font-size: 1.3rem; color: #0f0;">
+                            ${formatTime(best.totalTime)}
+                        </div>
+                    </div>
+                ` : ''}
             </div>
         `;
     };
@@ -484,9 +561,15 @@ const BetaModule = (() => {
             console.log('📥 Risultato ricevuto:', result);
 
             state.hasRacedToday = true;
-            state.result = result.result;
+            state.attempts.unshift(result.result); // Aggiungi in cima
             state.attemptsThisWeek++;
             state.leaderboard = result.leaderboard;
+            
+            // Aggiorna bestResult
+            const validAttempts = state.attempts.filter(a => !a.dnf && a.totalTime > 0);
+            state.bestResult = validAttempts.length > 0 
+                ? validAttempts.reduce((min, a) => a.totalTime < min.totalTime ? a : min)
+                : null;
 
             // ⚠️ Premi assegnati solo lunedì al top 3 dal reset settimanale
             game.render();
@@ -494,9 +577,9 @@ const BetaModule = (() => {
             console.log('💾 Salvo stato...');
             await window.saveGameToServer(true);
 
-            // Re-render
-            console.log('🎨 Re-render pagina beta');
-            await render(document.getElementById('betaContainer'), game);
+            // Re-render (senza ricaricare da API)
+            console.log('🎨 Re-render pagina beta con risultato');
+            await render(document.getElementById('betaContainer'), game, true);
 
         } catch (error) {
             console.error('❌ Errore simulazione:', error);
