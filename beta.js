@@ -42,19 +42,19 @@ const BetaModule = (() => {
         leaderboard: []
     };
 
-    const render = async (container, gameInstance, skipAPICall = false) => {
+    const render = async (container, gameInstance) => {
         try {
-            // ✅ Ricarica da API solo se non skipAPICall
-            if (!skipAPICall) {
-                const data = await api('weekly-challenge');
-                
-                state.circuit = data.circuit;
-                state.hasRacedToday = data.hasRacedToday;
-                state.attempts = data.attempts || [];
-                state.bestResult = data.bestResult || null;
-                state.attemptsThisWeek = data.attemptsThisWeek || 0;
-                state.leaderboard = data.leaderboard;
-            }
+            // ✅ SEMPRE ricarica da API per sicurezza anti-cheat
+            const data = await api('weekly-challenge');
+            
+            state.circuit = data.circuit;
+            state.hasRacedToday = data.hasRacedToday;
+            state.attempts = data.attempts || [];
+            state.bestResult = data.bestResult || null;
+            state.attemptsThisWeek = data.attemptsThisWeek || 0;
+            state.leaderboard = data.leaderboard;
+
+            console.log('🔒 hasRacedToday:', state.hasRacedToday, '- Tentativi:', state.attempts.length);
 
             container.innerHTML = `
                 ${renderCircuit()}
@@ -560,26 +560,15 @@ const BetaModule = (() => {
 
             console.log('📥 Risultato ricevuto:', result);
 
-            state.hasRacedToday = true;
-            state.attempts.unshift(result.result); // Aggiungi in cima
-            state.attemptsThisWeek++;
-            state.leaderboard = result.leaderboard;
-            
-            // Aggiorna bestResult
-            const validAttempts = state.attempts.filter(a => !a.dnf && a.totalTime > 0);
-            state.bestResult = validAttempts.length > 0 
-                ? validAttempts.reduce((min, a) => a.totalTime < min.totalTime ? a : min)
-                : null;
-
-            // ⚠️ Premi assegnati solo lunedì al top 3 dal reset settimanale
+            // ✅ Non aggiorniamo lo state locale - lasciamo che l'API lo gestisca
             game.render();
             
             console.log('💾 Salvo stato...');
             await window.saveGameToServer(true);
 
-            // Re-render (senza ricaricare da API)
-            console.log('🎨 Re-render pagina beta con risultato');
-            await render(document.getElementById('betaContainer'), game, true);
+            // Re-render (ricarica TUTTO dall'API con stato aggiornato)
+            console.log('🎨 Re-render pagina beta');
+            await render(document.getElementById('betaContainer'), game);
 
         } catch (error) {
             console.error('❌ Errore simulazione:', error);
