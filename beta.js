@@ -1,296 +1,593 @@
-// SERVER_BETA.JS - 1 TENTATIVO AL GIORNO
-const express = require('express');
-const router = express.Router();
-const fs = require('fs');
-const path = require('path');
+// =====================================================
+// BETA.JS - Simulatore Gara (MVP)
+// =====================================================
 
-let authenticateToken = null;
-let pool = null;
+const BetaModule = (() => {
 
-const circuitsPath = path.join(__dirname, 'beta_circuits.json');
-let circuits = [];
-try {
-    circuits = JSON.parse(fs.readFileSync(circuitsPath, 'utf8')).circuits;
-    console.log('✅ Circuiti beta caricati:', circuits.length);
-} catch (error) {
-    console.error('❌ Errore caricamento circuiti:', error.message);
-}
+    const getApiUrl = () => {
+        // Usa API_URL globale dal gioco principale (già configurato in index.html)
+        return window.API_URL || 'http://localhost:3000';
+    };
 
-const getWeeklyCircuit = () => {
-    const now = new Date();
-    const weekNumber = Math.floor((now - new Date(now.getFullYear(), 0, 1)) / 604800000);
-    return circuits[weekNumber % circuits.length];
-};
+    const api = async (endpoint, options = {}) => {
+        const token = window.authToken || localStorage.getItem('authToken');
+        const response = await fetch(`${getApiUrl()}/api/beta/${endpoint}`, {
+            ...options,
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+                ...(options.headers || {})
+            }
+        });
+        if (!response.ok) throw new Error(`API Error: ${response.status}`);
+        return response.json();
+    };
 
-const getWeekNumber = () => {
-    const now = new Date();
-    return Math.floor((now - new Date(now.getFullYear(), 0, 1)) / 604800000);
-};
+    let state = {
+        circuit: null,
+        hasRacedToday: false,
+        attemptsThisWeek: 0,
+        attempts: [],
+        bestResult: null,
+        setup: {
+            tires: 'medium',
+            downforce: 50,
+            fuel: 50,
+            tirePressure: 2.2,
+            suspension: 0,
+            gearRatio: 'medium',
+            brakeBias: 55,
+            engineMap: 'balanced'
+        },
+        leaderboard: []
+    };
 
-// GET /api/beta/weekly-challenge
-router.get('/weekly-challenge', (req, res, next) => {
-    if (!authenticateToken) return res.status(500).json({ error: 'Auth not initialized' });
-    authenticateToken(req, res, next);
-}, async (req, res) => {
-    try {
-        const userId = req.user?.userId;
-        const circuit = getWeeklyCircuit();
-        const weekNumber = getWeekNumber();
-        
-        const now = new Date();
-        const todayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0));
-
-        let hasRacedToday = false;
-        let attempts = [];
-        let bestAttempt = null;
-        let leaderboard = [];
-
+    const render = async (container, gameInstance) => {
         try {
-            // Check tentativo di oggi (UTC)
-            const todayCheck = await pool.query(`
-                SELECT id FROM beta_race_results
-                WHERE user_id = $1 AND week_number = $2 AND created_at >= $3
-            `, [userId, weekNumber, todayStart.toISOString()]);
+            // ✅ SEMPRE ricarica da API per sicurezza anti-cheat
+            const data = await api('weekly-challenge');
             
-            hasRacedToday = todayCheck.rows.length > 0;
+            state.circuit = data.circuit;
+            state.hasRacedToday = data.hasRacedToday;
+            state.attempts = data.attempts || [];
+            state.bestResult = data.bestResult || null;
+            state.attemptsThisWeek = data.attemptsThisWeek || 0;
+            state.leaderboard = data.leaderboard;
+
+            console.log('🔒 hasRacedToday:', state.hasRacedToday, '- Tentativi:', state.attempts.length);
+
+            container.innerHTML = `
+                ${renderCircuit()}
+                ${state.attempts.length > 0 ? renderAttempts() : ''}
+                ${!state.hasRacedToday ? renderSetup(gameInstance) : ''}
+                ${renderLeaderboard()}
+            `;
             
-            console.log('🔍 Check oggi - userId:', userId, 'week:', weekNumber, 'todayStart:', todayStart.toISOString());
-            console.log('🔍 Risultati trovati:', todayCheck.rows.length, '→ hasRacedToday:', hasRacedToday);
+            console.log('📊 Stato - hasRacedToday:', state.hasRacedToday, 'tentativi settimana:', state.attemptsThisWeek);
 
-            // Carica TUTTI i tentativi della settimana (ordinati dal più recente)
-            const allAttempts = await pool.query(`
-                SELECT total_time, best_lap, position, dnf, dnf_lap, created_at
-                FROM beta_race_results
-                WHERE user_id = $1 AND week_number = $2
-                ORDER BY created_at DESC
-            `, [userId, weekNumber]);
+            attachListeners(gameInstance);
 
-            const attempts = allAttempts.rows.map(r => ({
-                totalTime: parseFloat(r.total_time) || 0,
-                bestLap: parseFloat(r.best_lap),
-                position: r.position,
-                dnf: r.dnf,
-                dnfLap: r.dnf_lap,
-                date: r.created_at,
-                reward: { money: 0, parts: 0 }
-            }));
-            
-            // Miglior risultato (non-DNF con tempo minore)
-            const validAttempts = attempts.filter(a => !a.dnf && a.totalTime > 0);
-            const bestAttempt = validAttempts.length > 0 
-                ? validAttempts.reduce((min, a) => a.totalTime < min.totalTime ? a : min)
-                : null;
+        } catch (error) {
+            console.error('Errore:', error);
+            container.innerHTML = `
+                <div class="beta-empty">
+                    <span class="beta-icon">❌</span>
+                    <h3>Errore Caricamento</h3>
+                    <p>${error.message}</p>
+                </div>
+            `;
+        }
+    };
 
-            // Classifica: MIGLIOR tempo per utente
-            const leaderboardResult = await pool.query(`
-                SELECT 
-                    u.username, 
-                    u.id as user_id, 
-                    MIN(brr.total_time) as total_time, 
-                    MIN(brr.best_lap) as best_lap,
-                    COUNT(*) as attempts
-                FROM beta_race_results brr
-                JOIN users u ON u.id = brr.user_id
-                WHERE brr.week_number = $1 AND brr.dnf = FALSE
-                GROUP BY u.username, u.id
-                ORDER BY total_time ASC
-                LIMIT 50
-            `, [weekNumber]);
+    const renderCircuit = () => {
+        const c = state.circuit;
+        if (!c) return '';
 
-            leaderboard = leaderboardResult.rows.map(r => ({
-                username: r.username,
-                userId: r.user_id,
-                totalTime: parseFloat(r.total_time),
-                bestLap: parseFloat(r.best_lap),
-                attempts: parseInt(r.attempts),
-                carName: 'Thunderbolt R-9'
-            }));
-            
-            console.log('📊 Classifica caricata:', leaderboard.length, 'utenti');
-        } catch (dbError) {
-            console.log('⚠️ DB error (ignorato):', dbError.message);
+        return `
+            <div class="circuit-header">
+                <div class="circuit-name">🏁 ${c.name}</div>
+                <div class="circuit-country">${c.country}</div>
+                <p style="color: rgba(255,255,255,0.7); font-style: italic;">${c.description}</p>
+                
+                <!-- BOX AUTO -->
+                <div style="background: rgba(255,165,0,0.1); border: 2px solid rgba(255,165,0,0.3); border-radius: 10px; padding: 15px; margin: 15px 0;">
+                    <div style="font-family: Orbitron; font-size: 1.1rem; color: #ffa500; margin-bottom: 10px; text-align: center;">
+                        🏎️ THUNDERBOLT R-9
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; text-align: center;">
+                        <div>
+                            <div style="font-size: 0.75rem; color: rgba(255,255,255,0.5);">Potenza</div>
+                            <div style="font-family: Orbitron; font-size: 1rem; color: #00d9ff;">380 HP</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.75rem; color: rgba(255,255,255,0.5);">Peso</div>
+                            <div style="font-family: Orbitron; font-size: 1rem; color: #00d9ff;">1250 kg</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.75rem; color: rgba(255,255,255,0.5);">Consumo Base</div>
+                            <div style="font-family: Orbitron; font-size: 1rem; color: #00d9ff;">3.4 L/giro</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.75rem; color: rgba(255,255,255,0.5);">Rapporto P/P</div>
+                            <div style="font-family: Orbitron; font-size: 1rem; color: #ffa500;">0.304</div>
+                        </div>
+                    </div>
+                    <div style="font-size: 0.7rem; color: rgba(255,255,255,0.4); text-align: center; margin-top: 8px;">
+                        ⚠️ Consumo e prestazioni variano in base al setup
+                    </div>
+                </div>
+                
+                <div class="circuit-stats">
+                    <div class="circuit-stat">
+                        <div class="circuit-stat-label">Lunghezza</div>
+                        <div class="circuit-stat-value">${(c.length / 1000).toFixed(1)} km</div>
+                    </div>
+                    <div class="circuit-stat">
+                        <div class="circuit-stat-label">Giri</div>
+                        <div class="circuit-stat-value">${c.laps}</div>
+                    </div>
+                    <div class="circuit-stat">
+                        <div class="circuit-stat-label">Curve Strette</div>
+                        <div class="circuit-stat-value">${c.tightCorners} 🔴</div>
+                    </div>
+                    <div class="circuit-stat">
+                        <div class="circuit-stat-label">Curve Medie</div>
+                        <div class="circuit-stat-value">${c.mediumCorners} 🟡</div>
+                    </div>
+                    <div class="circuit-stat">
+                        <div class="circuit-stat-label">Curve Veloci</div>
+                        <div class="circuit-stat-value">${c.fastCorners} 🟢</div>
+                    </div>
+                    <div class="circuit-stat">
+                        <div class="circuit-stat-label">Rettilinei</div>
+                        <div class="circuit-stat-value">${c.longStraights + c.shortStraights}</div>
+                    </div>
+                </div>
+
+                ${!state.hasRacedToday ? `
+                    <div style="margin-top: 20px; padding: 15px; background: rgba(0,217,255,0.1); border-radius: 8px; border-left: 4px solid #00d9ff;">
+                        <strong style="color: #00d9ff;">🏁 Tentativo Disponibile Oggi</strong><br>
+                        <span style="color: rgba(255,255,255,0.7); font-size: 0.9rem;">
+                            1 tentativo al giorno. Migliora il tuo miglior tempo settimanale!
+                        </span>
+                        ${state.attemptsThisWeek > 0 ? `<br><span style="color: rgba(255,255,255,0.5); font-size: 0.85rem; margin-top: 5px; display: inline-block;">📊 Tentativi questa settimana: ${state.attemptsThisWeek}</span>` : ''}
+                    </div>
+                ` : `
+                    <div style="margin-top: 20px; padding: 15px; background: rgba(255,69,0,0.1); border-radius: 8px; border-left: 4px solid #ff4500;">
+                        <strong style="color: #ff4500;">✅ Hai già corso oggi</strong><br>
+                        <span style="color: rgba(255,255,255,0.7); font-size: 0.9rem;">
+                            Nuovo tentativo disponibile domani alle 00:00
+                        </span>
+                        ${state.attemptsThisWeek > 0 ? `<br><span style="color: rgba(255,255,255,0.5); font-size: 0.85rem; margin-top: 5px; display: inline-block;">📊 Tentativi questa settimana: ${state.attemptsThisWeek}</span>` : ''}
+                    </div>
+                `}
+            </div>
+        `;
+    };
+
+    const renderSetup = (game) => {
+        return `
+            <div class="setup-section">
+                <div class="setup-title">⚙️ Setup Auto</div>
+
+                <div class="setup-param">
+                    <div class="setup-param-label">
+                        <span>🏁 Gomme</span>
+                    </div>
+                    <div class="setup-radio-group">
+                        <div class="setup-radio">
+                            <input type="radio" name="tires" id="tires-hard" value="hard" ${state.setup.tires === 'hard' ? 'checked' : ''}>
+                            <label for="tires-hard">Dure</label>
+                        </div>
+                        <div class="setup-radio">
+                            <input type="radio" name="tires" id="tires-medium" value="medium" ${state.setup.tires === 'medium' ? 'checked' : ''}>
+                            <label for="tires-medium">Medie</label>
+                        </div>
+                        <div class="setup-radio">
+                            <input type="radio" name="tires" id="tires-soft" value="soft" ${state.setup.tires === 'soft' ? 'checked' : ''}>
+                            <label for="tires-soft">Morbide</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="setup-param">
+                    <div class="setup-param-label">
+                        <span>✈️ Deportanza</span>
+                        <span id="downforce-val">${state.setup.downforce}%</span>
+                    </div>
+                    <input type="range" class="setup-slider" id="downforce" min="0" max="100" value="${state.setup.downforce}">
+                </div>
+
+                <div class="setup-param">
+                    <div class="setup-param-label">
+                        <span>⛽ Carburante</span>
+                        <span id="fuel-val">${state.setup.fuel} L</span>
+                    </div>
+                    <input type="range" class="setup-slider" id="fuel" min="20" max="110" value="${state.setup.fuel}" step="5">
+                    <div style="font-size: 0.75rem; color: rgba(255,255,255,0.4); margin-top: 5px;">
+                        Serbatoio max: 110L • ~70L per 20 giri • Più fuel = più peso
+                    </div>
+                </div>
+
+                <div class="setup-param">
+                    <div class="setup-param-label">
+                        <span>💨 Pressione</span>
+                        <span id="pressure-val">${state.setup.tirePressure} bar</span>
+                    </div>
+                    <input type="range" class="setup-slider" id="pressure" min="1.8" max="2.5" step="0.1" value="${state.setup.tirePressure}">
+                </div>
+
+                <div class="setup-param">
+                    <div class="setup-param-label">
+                        <span>🔧 Sospensioni</span>
+                        <span id="suspension-val">${state.setup.suspension > 0 ? '+' : ''}${state.setup.suspension} mm</span>
+                    </div>
+                    <input type="range" class="setup-slider" id="suspension" min="-30" max="30" step="10" value="${state.setup.suspension}">
+                </div>
+
+                <div class="setup-param">
+                    <div class="setup-param-label">
+                        <span>⚙️ Rapporto</span>
+                    </div>
+                    <div class="setup-radio-group">
+                        <div class="setup-radio">
+                            <input type="radio" name="gear" id="gear-short" value="short" ${state.setup.gearRatio === 'short' ? 'checked' : ''}>
+                            <label for="gear-short">Corto</label>
+                        </div>
+                        <div class="setup-radio">
+                            <input type="radio" name="gear" id="gear-medium" value="medium" ${state.setup.gearRatio === 'medium' ? 'checked' : ''}>
+                            <label for="gear-medium">Medio</label>
+                        </div>
+                        <div class="setup-radio">
+                            <input type="radio" name="gear" id="gear-long" value="long" ${state.setup.gearRatio === 'long' ? 'checked' : ''}>
+                            <label for="gear-long">Lungo</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PREVIEW CALCOLI -->
+                <div style="background: rgba(0,217,255,0.05); border: 2px solid rgba(0,217,255,0.2); border-radius: 10px; padding: 15px; margin-top: 20px;">
+                    <div style="font-family: Orbitron; color: #00d9ff; margin-bottom: 10px; text-align: center;">📊 Previsione Gara</div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; text-align: center;">
+                        <div>
+                            <div style="font-size: 0.7rem; color: rgba(255,255,255,0.5);">Consumo/Giro</div>
+                            <div id="preview-consumption" style="font-family: Orbitron; font-size: 1rem; color: #ffa500;">3.4 L</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.7rem; color: rgba(255,255,255,0.5);">Giri Possibili</div>
+                            <div id="preview-laps" style="font-family: Orbitron; font-size: 1rem; color: #00d9ff;">14</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 0.7rem; color: rgba(255,255,255,0.5);">Peso Totale</div>
+                            <div id="preview-weight" style="font-family: Orbitron; font-size: 1rem; color: #fff;">1300 kg</div>
+                        </div>
+                    </div>
+                    <div id="preview-warning" style="font-size: 0.75rem; text-align: center; margin-top: 10px;"></div>
+                </div>
+
+                <button class="simulate-btn" id="run-btn" ${state.hasRacedToday ? 'disabled' : ''} 
+                    style="${state.hasRacedToday ? 'opacity: 0.5; cursor: not-allowed;' : ''}">
+                    ${state.hasRacedToday ? '🔒 GIÀ CORSO OGGI' : '🏁 AVVIA SIMULAZIONE'}
+                </button>
+            </div>
+        `;
+    };
+
+    const renderAttempts = () => {
+        if (!state.attempts || state.attempts.length === 0) return '';
+
+        const formatTime = (s) => {
+            const m = Math.floor(s / 60);
+            const sec = (s % 60).toFixed(3);
+            return `${m}:${sec.padStart(6, '0')}`;
+        };
+        
+        const formatDate = (dateStr) => {
+            const d = new Date(dateStr);
+            return d.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+        };
+        
+        // Trova miglior tentativo (non-DNF con tempo minore)
+        const validAttempts = state.attempts.filter(a => !a.dnf && a.totalTime > 0);
+        const best = validAttempts.length > 0 
+            ? validAttempts.reduce((min, a) => a.totalTime < min.totalTime ? a : min)
+            : null;
+
+        return `
+            <div class="results-container" style="margin-bottom: 30px;">
+                <div class="results-title">📊 I TUOI TENTATIVI (${state.attempts.length})</div>
+                
+                ${state.attempts.map((a, i) => {
+                    const isBest = best && a === best;
+                    return `
+                        <div style="
+                            background: ${isBest ? 'rgba(0,217,255,0.1)' : 'rgba(0,0,0,0.3)'};
+                            border: 2px solid ${isBest ? '#00d9ff' : 'rgba(255,255,255,0.1)'};
+                            border-radius: 10px;
+                            padding: 15px;
+                            margin-bottom: 10px;
+                        ">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                                <span style="font-size: 0.85rem; color: rgba(255,255,255,0.5);">
+                                    ${formatDate(a.date)}
+                                </span>
+                                ${isBest ? '<span style="color: #00d9ff; font-family: Orbitron;">⭐ MIGLIORE</span>' : ''}
+                            </div>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 10px;">
+                                <div>
+                                    <div style="font-size: 0.75rem; color: rgba(255,255,255,0.5);">Tempo</div>
+                                    <div style="font-family: Orbitron; font-size: 1.1rem; color: ${a.dnf ? '#ff4500' : '#ffa500'};">
+                                        ${a.dnf ? 'DNF' : formatTime(a.totalTime)}
+                                    </div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 0.75rem; color: rgba(255,255,255,0.5);">Miglior Giro</div>
+                                    <div style="font-family: Orbitron; font-size: 1.1rem;">${formatTime(a.bestLap)}</div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 0.75rem; color: rgba(255,255,255,0.5);">Posizione</div>
+                                    <div style="font-family: Orbitron; font-size: 1.1rem;">${a.position}°</div>
+                                </div>
+                            </div>
+                            ${a.dnf ? `<div style="color: #ff4500; font-size: 0.85rem; margin-top: 8px;">⛽ Carburante esaurito al giro ${a.dnfLap}</div>` : ''}
+                        </div>
+                    `;
+                }).join('')}
+                
+                ${best ? `
+                    <div style="background: rgba(0,255,0,0.05); border: 2px solid rgba(0,255,0,0.3); border-radius: 10px; padding: 15px; text-align: center; margin-top: 15px;">
+                        <div style="font-size: 0.85rem; color: rgba(255,255,255,0.6); margin-bottom: 5px;">In Classifica</div>
+                        <div style="font-family: Orbitron; font-size: 1.3rem; color: #0f0;">
+                            ${formatTime(best.totalTime)}
+                        </div>
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    };
+
+    const renderResults = () => {
+        const r = state.result;
+        if (!r) return '';
+
+        const formatTime = (s) => {
+            const m = Math.floor(s / 60);
+            const sec = (s % 60).toFixed(3);
+            return `${m}:${sec.padStart(6, '0')}`;
+        };
+
+        return `
+            <div class="results-container">
+                <div class="results-title">⭐ TUO MIGLIOR TEMPO QUESTA SETTIMANA</div>
+                <div class="results-main">
+                    <div class="result-stat">
+                        <div class="result-stat-label">Tempo Totale</div>
+                        <div class="result-stat-value">${r.dnf ? 'DNF' : formatTime(r.totalTime)}</div>
+                    </div>
+                    <div class="result-stat">
+                        <div class="result-stat-label">Miglior Giro</div>
+                        <div class="result-stat-value">${formatTime(r.bestLap)}</div>
+                    </div>
+                    <div class="result-stat">
+                        <div class="result-stat-label">Posizione</div>
+                        <div class="result-stat-value">${r.position}°</div>
+                    </div>
+                </div>
+                ${r.dnf ? `
+                    <div style="background: rgba(255,69,0,0.2); border: 2px solid #ff4500; border-radius: 8px; padding: 20px; text-align: center; margin-top: 20px;">
+                        <div style="font-size: 2rem; margin-bottom: 10px;">❌</div>
+                        <div style="font-family: Orbitron; font-size: 1.3rem; color: #ff4500; margin-bottom: 5px;">DNF - NON CLASSIFICATO</div>
+                        <div style="color: rgba(255,255,255,0.7);">Carburante esaurito al giro ${r.dnfLap}/${state.circuit.laps}</div>
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    };
+
+    const renderLeaderboard = () => {
+        if (!state.leaderboard || state.leaderboard.length === 0) {
+            return '<div class="leaderboard"><div class="leaderboard-title">🏆 Classifica</div><p style="text-align:center;color:rgba(255,255,255,0.5);padding:40px;">Nessun risultato</p></div>';
         }
 
-        res.json({ 
-            circuit, 
-            hasRacedToday, 
-            attempts,
-            bestResult: bestAttempt,
-            attemptsThisWeek: attempts.length,
-            leaderboard 
+        const formatTime = (s) => {
+            const m = Math.floor(s / 60);
+            const sec = (s % 60).toFixed(3);
+            return `${m}:${sec.padStart(6, '0')}`;
+        };
+
+        const userId = window.game?.userId;
+
+        return `
+            <div class="leaderboard">
+                <div class="leaderboard-title">🏆 Classifica Mondiale</div>
+                ${state.leaderboard.slice(0, 20).map((e, i) => {
+                    const pos = i + 1;
+                    const isCurrent = e.userId === userId;
+                    let icon = pos;
+                    if (pos === 1) icon = '🥇';
+                    else if (pos === 2) icon = '🥈';
+                    else if (pos === 3) icon = '🥉';
+
+                    return `
+                        <div class="leaderboard-entry ${isCurrent ? 'current-user' : ''}">
+                            <div class="leaderboard-position">${icon}</div>
+                            <div class="leaderboard-username">${e.username} ${isCurrent ? '(Tu)' : ''}</div>
+                            <div class="leaderboard-time">${formatTime(e.totalTime)}</div>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
+    };
+
+    const attachListeners = (game) => {
+        // Funzione calcolo preview
+        const updatePreview = () => {
+            const circuit = state.circuit;
+            if (!circuit) return;
+            
+            const setup = state.setup;
+            const baseWeight = 1250;
+            const totalWeight = baseWeight + setup.fuel;
+            
+            // Calcola consumo stimato
+            let fuelPerLap = 3.4;
+            fuelPerLap += circuit.tightCorners * 0.08;
+            fuelPerLap += setup.downforce * 0.015;
+            if (setup.tires === 'soft') fuelPerLap *= 1.08;
+            if (setup.engineMap === 'power') fuelPerLap *= 1.12;
+            if (setup.engineMap === 'eco') fuelPerLap *= 0.92;
+            
+            const possibleLaps = Math.floor(setup.fuel / fuelPerLap);
+            
+            // Aggiorna UI
+            const consEl = document.getElementById('preview-consumption');
+            const lapsEl = document.getElementById('preview-laps');
+            const weightEl = document.getElementById('preview-weight');
+            const warnEl = document.getElementById('preview-warning');
+            
+            if (consEl) consEl.textContent = fuelPerLap.toFixed(1) + ' L';
+            if (lapsEl) lapsEl.textContent = possibleLaps;
+            if (weightEl) weightEl.textContent = totalWeight + ' kg';
+            
+            if (warnEl) {
+                if (possibleLaps < circuit.laps) {
+                    warnEl.textContent = `⚠️ DNF al giro ${possibleLaps}! Serve ${(fuelPerLap * circuit.laps).toFixed(0)}L per finire`;
+                    warnEl.style.color = '#ff4500';
+                } else if (possibleLaps === circuit.laps) {
+                    warnEl.textContent = '⚠️ Carburante al limite! Rischio DNF se consumi aumentano';
+                    warnEl.style.color = '#ffa500';
+                } else if (possibleLaps > circuit.laps + 3) {
+                    warnEl.textContent = '💡 Carburante in eccesso → Peso extra inutile';
+                    warnEl.style.color = '#00d9ff';
+                } else {
+                    warnEl.textContent = '✅ Carburante ottimale';
+                    warnEl.style.color = '#0f0';
+                }
+            }
+        };
+        
+        // Sliders
+        const downforce = document.getElementById('downforce');
+        if (downforce) {
+            downforce.addEventListener('input', (e) => {
+                state.setup.downforce = parseInt(e.target.value);
+                document.getElementById('downforce-val').textContent = `${state.setup.downforce}%`;
+                updatePreview();
+            });
+        }
+
+        const fuel = document.getElementById('fuel');
+        if (fuel) {
+            fuel.addEventListener('input', (e) => {
+                state.setup.fuel = parseInt(e.target.value);
+                document.getElementById('fuel-val').textContent = `${state.setup.fuel} L`;
+                updatePreview();
+            });
+        }
+
+        const pressure = document.getElementById('pressure');
+        if (pressure) {
+            pressure.addEventListener('input', (e) => {
+                state.setup.tirePressure = parseFloat(e.target.value);
+                document.getElementById('pressure-val').textContent = `${state.setup.tirePressure} bar`;
+            });
+        }
+
+        const suspension = document.getElementById('suspension');
+        if (suspension) {
+            suspension.addEventListener('input', (e) => {
+                state.setup.suspension = parseInt(e.target.value);
+                const sign = state.setup.suspension > 0 ? '+' : '';
+                document.getElementById('suspension-val').textContent = `${sign}${state.setup.suspension} mm`;
+            });
+        }
+
+        // Radio
+        document.querySelectorAll('input[name="tires"]').forEach(r => {
+            r.addEventListener('change', (e) => {
+                state.setup.tires = e.target.value;
+                updatePreview();
+            });
         });
 
-    } catch (error) {
-        console.error('❌ Errore weekly-challenge:', error);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// POST /api/beta/run-simulation
-router.post('/run-simulation', (req, res, next) => {
-    if (!authenticateToken) return res.status(500).json({ error: 'Auth not initialized' });
-    authenticateToken(req, res, next);
-}, async (req, res) => {
-    try {
-        const userId = req.user?.userId;
-        const { setup } = req.body;
-        const weekNumber = getWeekNumber();
-        
-        // ✅ Check giornaliero con timezone UTC (evita bypass)
-        const now = new Date();
-        const todayStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0));
-
-        console.log('🏁 Simulazione userId:', userId, '- Oggi UTC:', todayStart.toISOString());
-
-        // Check se ha già corso OGGI
-        try {
-            const todayResult = await pool.query(`
-                SELECT id FROM beta_race_results 
-                WHERE user_id = $1 AND week_number = $2 AND created_at >= $3
-            `, [userId, weekNumber, todayStart.toISOString()]);
-            
-            if (todayResult.rows.length > 0) {
-                return res.status(400).json({ error: 'Hai già corso oggi! Riprova domani per migliorare il tuo tempo.' });
-            }
-        } catch (dbError) {
-            console.log('⚠️ Check giornaliero ignorato');
-        }
-
-        const power = 380;
-        const baseWeight = 1250;
-        const circuit = getWeeklyCircuit();
-
-        // FISICA (identica)
-        let maxSpeed = (power / (baseWeight + setup.fuel)) * 200;
-        maxSpeed -= setup.downforce * 0.5;
-        if (setup.gearRatio === 'short') maxSpeed -= 10;
-        if (setup.gearRatio === 'long') maxSpeed += 10;
-        
-        let grip = 1.0;
-        if (setup.tires === 'soft') grip = 1.05;
-        if (setup.tires === 'hard') grip = 0.98;
-        grip += (2.2 - setup.tirePressure) * 0.05;
-        
-        // ✅ Consumo base: 3.4 L/giro (modificato da setup)
-        let fuelPerLap = 3.4;
-        fuelPerLap += circuit.tightCorners * 0.08;  // Curve strette aumentano consumo
-        fuelPerLap += setup.downforce * 0.015;       // Deportanza aumenta consumo
-        if (setup.tires === 'soft') fuelPerLap *= 1.08;     // Gomme morbide +8%
-        if (setup.engineMap === 'power') fuelPerLap *= 1.12; // Mappatura aggressiva +12%
-        if (setup.engineMap === 'eco') fuelPerLap *= 0.92;   // Mappatura eco -8%
-        
-        let tireWearPerLap = (setup.tires === 'soft' ? 0.005 : setup.tires === 'hard' ? 0.002 : 0.003);
-        tireWearPerLap += circuit.tightCorners * 0.0005;
-        
-        let totalTime = 0;
-        let bestLap = 999;
-        let fuel = setup.fuel;
-        let tireWear = 0;
-        let dnf = false;
-        let dnfLap = 0;
-        
-        for (let lap = 1; lap <= circuit.laps; lap++) {
-            if (fuel < fuelPerLap) {
-                dnf = true;
-                dnfLap = lap;
-                break;
-            }
-            
-            const currentGrip = grip * (1 - tireWear);
-            const currentWeight = baseWeight + fuel;
-            
-            let lapTime = 60 + Math.random() * 5;
-            lapTime *= (circuit.length / 5000);
-            lapTime *= (1200 / currentWeight);
-            lapTime *= (1 / currentGrip);
-            lapTime += (100 - setup.downforce) * 0.05;
-            lapTime -= maxSpeed * 0.01;
-            
-            if (circuit.bumps >= 3 && setup.suspension === -30) lapTime += 0.5;
-            
-            totalTime += lapTime;
-            if (lapTime < bestLap) bestLap = lapTime;
-            
-            fuel -= fuelPerLap;
-            tireWear += tireWearPerLap;
-        }
-        
-        // Calcola posizione STIMATA (la vera classifica si basa sul tempo reale)
-        const avgTime = (circuit.length / 1000) * circuit.laps * 70;
-        const variance = dnf ? 999 : (totalTime - avgTime) / avgTime;
-        let estimatedPosition = Math.floor(25 + variance * 50);
-        estimatedPosition = Math.max(1, Math.min(50, estimatedPosition));
-        
-        // ⚠️ PREMI SOLO A FINE SETTIMANA (lunedì reset)
-        // Non dare premi ora - saranno assegnati dal reset settimanale al top 3
-        const reward = { money: 0, parts: 0 };
-        
-        // Salva tentativo
-        try {
-            await pool.query(`
-                INSERT INTO beta_race_results 
-                (user_id, week_number, circuit_id, total_time, best_lap, position, dnf, dnf_lap, setup, car_name, car_power)
-                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-            `, [
-                userId, weekNumber, circuit.id,
-                dnf ? null : totalTime, bestLap, estimatedPosition, dnf, dnfLap,
-                JSON.stringify(setup), 'Thunderbolt R-9', power
-            ]);
-            
-            console.log('✅ Risultato salvato - DNF:', dnf, 'Tempo:', totalTime);
-        } catch (dbError) {
-            console.error('⚠️ Salvataggio DB fallito:', dbError.message);
-        }
-        
-        // Ricarica classifica
-        let leaderboard = [];
-        try {
-            const leaderboardResult = await pool.query(`
-                SELECT 
-                    u.username, 
-                    u.id as user_id, 
-                    MIN(brr.total_time) as total_time, 
-                    MIN(brr.best_lap) as best_lap
-                FROM beta_race_results brr
-                JOIN users u ON u.id = brr.user_id
-                WHERE brr.week_number = $1 AND brr.dnf = FALSE
-                GROUP BY u.username, u.id
-                ORDER BY total_time ASC
-                LIMIT 50
-            `, [weekNumber]);
-            
-            leaderboard = leaderboardResult.rows.map(r => ({
-                username: r.username,
-                userId: r.user_id,
-                totalTime: parseFloat(r.total_time),
-                bestLap: parseFloat(r.best_lap),
-                carName: 'Beta Racer'
-            }));
-        } catch (dbError) {}
-        
-        console.log('✅ Simulazione OK - Tempo:', totalTime.toFixed(3), 'DNF:', dnf);
-        
-        res.json({
-            result: {
-                totalTime: dnf ? 0 : totalTime,
-                bestLap,
-                position: estimatedPosition,
-                dnf,
-                dnfLap,
-                date: new Date().toISOString(),
-                reward: { money: 0, parts: 0 } // Premi solo a fine settimana
-            },
-            leaderboard
+        document.querySelectorAll('input[name="gear"]').forEach(r => {
+            r.addEventListener('change', (e) => state.setup.gearRatio = e.target.value);
         });
         
-    } catch (error) {
-        console.error('❌ Errore simulazione:', error);
-        res.status(500).json({ error: error.message });
-    }
-});
+        document.querySelectorAll('input[name="engine"]').forEach(r => {
+            r.addEventListener('change', (e) => {
+                state.setup.engineMap = e.target.value;
+                updatePreview();
+            });
+        });
+        
+        // Inizializza preview
+        updatePreview();
 
-module.exports = router;
-module.exports.setDependencies = (authFn, dbPool) => {
-    authenticateToken = authFn;
-    pool = dbPool;
-};
+        // Run button
+        const btn = document.getElementById('run-btn');
+        if (btn) {
+            console.log('✅ Pulsante simulazione trovato, attacco listener');
+            btn.addEventListener('click', () => {
+                console.log('🏁 Click su AVVIA SIMULAZIONE');
+                runSimulation(game);
+            });
+        } else {
+            console.error('❌ Pulsante run-btn non trovato!');
+        }
+    };
+
+    const runSimulation = async (game) => {
+        console.log('🚀 runSimulation chiamata!');
+        const btn = document.getElementById('run-btn');
+        if (!btn) {
+            console.error('❌ Pulsante non trovato in runSimulation');
+            return;
+        }
+        
+        // 🔒 BLOCCO SICUREZZA
+        if (state.hasRacedToday) {
+            alert('⛔ Hai già corso oggi! Riprova domani.');
+            return;
+        }
+
+        console.log('✅ Avvio simulazione...');
+        console.log('Setup:', state.setup);
+        
+        btn.disabled = true;
+        btn.textContent = '⏳ SIMULAZIONE...';
+
+        try {
+            console.log('📤 Invio richiesta simulazione');
+            console.log('🔧 Setup:', state.setup);
+            
+            const result = await api('run-simulation', {
+                method: 'POST',
+                body: JSON.stringify({ setup: state.setup }) // ✅ Solo setup
+            });
+
+            console.log('📥 Risultato ricevuto:', result);
+
+            // ✅ Non aggiorniamo lo state locale - lasciamo che l'API lo gestisca
+            game.render();
+            
+            console.log('💾 Salvo stato...');
+            await window.saveGameToServer(true);
+
+            // Re-render (ricarica TUTTO dall'API con stato aggiornato)
+            console.log('🎨 Re-render pagina beta');
+            await render(document.getElementById('betaContainer'), game);
+
+        } catch (error) {
+            console.error('❌ Errore simulazione:', error);
+            console.error('Stack:', error.stack);
+            alert('❌ Errore: ' + error.message);
+            btn.disabled = false;
+            btn.textContent = '🏁 AVVIA SIMULAZIONE';
+        }
+    };
+
+    return { render, api, runSimulation };
+
+})();
