@@ -4,6 +4,8 @@ const BetaModule = (() => {
     
     const api = async (endpoint, options = {}) => {
         const token = localStorage.getItem('token');
+        console.log('🔑 Token presente:', !!token, 'lunghezza:', token?.length);
+        
         const response = await fetch(`${API_URL}/api/beta/${endpoint}`, {
             ...options,
             headers: { 
@@ -12,7 +14,14 @@ const BetaModule = (() => {
                 ...(options.headers || {})
             }
         });
-        if (!response.ok) throw new Error(`API Error: ${response.status}`);
+        
+        console.log('📡 Response status:', response.status);
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('❌ API Error:', response.status, errorText);
+            throw new Error(`API Error: ${response.status}`);
+        }
         return response.json();
     };
 
