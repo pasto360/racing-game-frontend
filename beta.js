@@ -5,11 +5,12 @@ const BetaModule = (() => {
     const api = async (endpoint, options = {}) => {
         const token = localStorage.getItem('token');
         const response = await fetch(`${API_URL}/api/beta/${endpoint}`, {
+            ...options,
             headers: { 
                 'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-            },
-            ...options
+                'Content-Type': 'application/json',
+                ...(options.headers || {})
+            }
         });
         if (!response.ok) throw new Error(`API Error: ${response.status}`);
         return response.json();
