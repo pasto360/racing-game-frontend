@@ -55,11 +55,31 @@ const BetaModule = (() => {
             state.leaderboard = data.leaderboard;
 
             console.log('🔒 hasRacedToday:', state.hasRacedToday, '- Tentativi:', state.attempts.length);
+            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+            console.log('📊 STATE COMPLETO:');
+            console.log('   hasRacedToday:', state.hasRacedToday);
+            console.log('   attempts.length:', state.attempts.length);
+            console.log('   attemptsThisWeek:', state.attemptsThisWeek);
+            console.log('   Setup visibile?', !state.hasRacedToday);
+            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
             container.innerHTML = `
                 ${renderCircuit()}
                 ${state.attempts.length > 0 ? renderAttempts() : ''}
-                ${!state.hasRacedToday ? renderSetup(gameInstance) : ''}
+                ${!state.hasRacedToday ? renderSetup(gameInstance) : `
+                    <div style="background: rgba(255,69,0,0.1); border: 2px solid #ff4500; border-radius: 10px; padding: 30px; text-align: center; margin: 20px 0;">
+                        <div style="font-size: 3rem; margin-bottom: 15px;">🔒</div>
+                        <div style="font-family: Orbitron; font-size: 1.5rem; color: #ff4500; margin-bottom: 10px;">
+                            Setup Non Disponibile
+                        </div>
+                        <div style="color: rgba(255,255,255,0.7);">
+                            Hai già corso oggi. Nuovo tentativo disponibile domani alle 00:00 UTC.
+                        </div>
+                        <div style="margin-top: 15px; font-size: 0.9rem; color: rgba(255,255,255,0.5);">
+                            Tentativi questa settimana: ${state.attemptsThisWeek}
+                        </div>
+                    </div>
+                `}
                 ${renderLeaderboard()}
             `;
             
