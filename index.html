@@ -5575,61 +5575,9 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                 saveGameToServer(true);
             },
             
-            async renderBetaPage() {
+            renderBetaPage() {
                 const container = document.getElementById('betaContainer');
                 if (!container) return;
-                
-                // ✅ Verifica se ha già corso oggi PRIMA di caricare
-                try {
-                    const response = await fetch(`${API_URL}/api/beta/weekly-challenge`, {
-                        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-                    });
-                    const data = await response.json();
-                    
-                    if (data.hasRacedToday) {
-                        // 🚫 Blocca accesso
-                        container.innerHTML = `
-                            <div style="text-align:center; padding: 60px 20px; max-width: 500px; margin: 0 auto;">
-                                <div style="font-size: 4rem; margin-bottom: 20px;">✅</div>
-                                <h2 style="font-family: Orbitron; color: var(--accent-yellow); margin-bottom: 15px;">
-                                    Gara Completata Oggi
-                                </h2>
-                                <p style="color: var(--text-secondary); margin-bottom: 20px;">
-                                    Hai già corso oggi! Nuovo tentativo disponibile domani.
-                                </p>
-                                <div style="background: rgba(0,217,255,0.1); padding: 20px; border-radius: 10px; margin-bottom: 20px;">
-                                    <div style="font-size: 0.9rem; color: rgba(255,255,255,0.7);">
-                                        Tentativi questa settimana: <strong>${data.attemptsThisWeek || 0}</strong>
-                                    </div>
-                                    ${data.bestResult ? `
-                                        <div style="margin-top: 10px; font-family: Orbitron;">
-                                            Miglior tempo: <strong style="color: #00d9ff;">${(data.bestResult.totalTime / 60).toFixed(2)} min</strong>
-                                        </div>
-                                    ` : ''}
-                                </div>
-                                <p style="color: rgba(255,255,255,0.5); font-size: 0.9rem;">
-                                    Reindirizzamento alla home tra <span id="countdown">5</span> secondi...
-                                </p>
-                            </div>
-                        `;
-                        
-                        // Countdown
-                        let seconds = 5;
-                        const countdownEl = document.getElementById('countdown');
-                        const interval = setInterval(() => {
-                            seconds--;
-                            if (countdownEl) countdownEl.textContent = seconds;
-                            if (seconds <= 0) {
-                                clearInterval(interval);
-                                this.changePage('workshop');
-                            }
-                        }, 1000);
-                        
-                        return;
-                    }
-                } catch (error) {
-                    console.error('❌ Errore verifica Beta:', error);
-                }
                 
                 // ✅ Carica il modulo beta esterno se non ancora caricato
                 if (typeof BetaModule === 'undefined') {
@@ -5642,7 +5590,7 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                     return;
                 }
                 
-                // Delega il rendering al modulo beta esterno
+                // Delega TUTTO al modulo beta esterno
                 BetaModule.render(container, game);
             },
             
