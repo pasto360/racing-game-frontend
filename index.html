@@ -5601,9 +5601,9 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                                     <div style="font-size: 0.9rem; color: rgba(255,255,255,0.7);">
                                         Tentativi questa settimana: <strong>${data.attemptsThisWeek || 0}</strong>
                                     </div>
-                                    ${data.result ? `
+                                    ${data.bestResult ? `
                                         <div style="margin-top: 10px; font-family: Orbitron;">
-                                            Miglior tempo: <strong style="color: #00d9ff;">${(data.result.totalTime / 60).toFixed(2)} min</strong>
+                                            Miglior tempo: <strong style="color: #00d9ff;">${(data.bestResult.totalTime / 60).toFixed(2)} min</strong>
                                         </div>
                                     ` : ''}
                                 </div>
