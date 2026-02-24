@@ -60,19 +60,18 @@ const BetaModule = (() => {
             // Banner rosso se ha già corso oggi
             if (state.hasRacedToday) {
                 container.innerHTML = `
-                    <div style="max-width: 600px; margin: 40px auto; text-align: center;">
-                        <div style="background: linear-gradient(135deg, #ff4500 0%, #ff6347 100%); padding: 40px; border-radius: 15px; box-shadow: 0 10px 30px rgba(255,69,0,0.3);">
-                            <div style="font-size: 5rem; margin-bottom: 20px;">🔒</div>
-                            <h2 style="font-family: Orbitron; font-size: 2rem; color: white; margin-bottom: 15px;">
+                    <div style="max-width: 500px; margin: 20px auto;">
+                        <div style="background: linear-gradient(135deg, #ff4500 0%, #ff6347 100%); padding: 25px; border-radius: 12px; box-shadow: 0 8px 20px rgba(255,69,0,0.3); text-align: center;">
+                            <div style="font-size: 3rem; margin-bottom: 10px;">🔒</div>
+                            <h2 style="font-family: Orbitron; font-size: 1.4rem; color: white; margin-bottom: 10px;">
                                 Gara Completata!
                             </h2>
-                            <p style="color: rgba(255,255,255,0.9); font-size: 1.1rem; margin-bottom: 25px;">
-                                Hai già corso oggi.<br>
-                                Nuovo tentativo disponibile <strong>domani</strong>.
+                            <p style="color: rgba(255,255,255,0.9); font-size: 0.95rem; margin-bottom: 15px;">
+                                Hai già corso oggi. Nuovo tentativo <strong>domani</strong>.
                             </p>
-                            <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 10px;">
-                                <div style="color: rgba(255,255,255,0.8);">Tentativi questa settimana</div>
-                                <div style="font-family: Orbitron; font-size: 2rem; color: white; margin-top: 5px;">
+                            <div style="background: rgba(0,0,0,0.2); padding: 12px; border-radius: 8px;">
+                                <div style="color: rgba(255,255,255,0.8); font-size: 0.85rem;">Tentativi questa settimana</div>
+                                <div style="font-family: Orbitron; font-size: 1.5rem; color: white; margin-top: 3px;">
                                     ${state.attempts.length}
                                 </div>
                             </div>
