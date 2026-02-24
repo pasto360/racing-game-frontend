@@ -3,8 +3,14 @@ const BetaModule = (() => {
     const API_URL = window.API_URL || 'https://racing-game-backend-production-a5dd.up.railway.app';
     
     const api = async (endpoint, options = {}) => {
-        const token = localStorage.getItem('token');
+        // ✅ USA LO STESSO SISTEMA DI PVP
+        const token = localStorage.getItem('authToken');
+        
         console.log('🔑 Token presente:', !!token, 'lunghezza:', token?.length);
+        
+        if (!token) {
+            throw new Error('Non sei autenticato. Fai login.');
+        }
         
         const response = await fetch(`${API_URL}/api/beta/${endpoint}`, {
             ...options,
