@@ -1867,8 +1867,20 @@ async function loadGameFromServer(retryCount = 0) {
 }
 
 let saveTimeout = null;
+let lastSaveTime = 0;
+const MIN_SAVE_INTERVAL = 3000; // 3 secondi
+
 async function saveGameToServer(showIndicator = true) {
     if (!authToken) return;
+
+    // Rate limiter: max 1 save ogni 3 sec
+    const now = Date.now();
+    if (now - lastSaveTime < MIN_SAVE_INTERVAL) {
+        console.log('⏳ Save troppo frequente, schedulo...');
+        if (saveTimeout) clearTimeout(saveTimeout);
+        saveTimeout = setTimeout(() => saveGameToServer(showIndicator), MIN_SAVE_INTERVAL);
+        return;
+    }
 
     if (saveTimeout) clearTimeout(saveTimeout);
 
@@ -1922,6 +1934,7 @@ async function saveGameToServer(showIndicator = true) {
 
             if (!response.ok) throw new Error('Errore salvataggio');
 
+            lastSaveTime = Date.now(); // ✅ Aggiorna timestamp
             console.log('💾 Salvataggio completato');
 
             if (showIndicator && saveIndicator) {
