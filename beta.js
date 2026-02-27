@@ -155,7 +155,7 @@ const BetaModule = (() => {
                                 <span style="font-size: 0.85rem; color: rgba(255,255,255,0.5);">${formatDate(a.date)}</span>
                                 ${isBest ? '<span style="color: #00d9ff;">⭐ MIGLIORE → IN CLASSIFICA</span>' : ''}
                             </div>
-                            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                                 <div>
                                     <div style="font-size: 0.7rem; color: rgba(255,255,255,0.5);">Tempo</div>
                                     <div style="font-family: Orbitron; color: ${a.dnf ? '#ff4500' : '#ffa500'};">${a.dnf ? 'DNF' : formatTime(a.totalTime)}</div>
@@ -163,10 +163,6 @@ const BetaModule = (() => {
                                 <div>
                                     <div style="font-size: 0.7rem; color: rgba(255,255,255,0.5);">Miglior Giro</div>
                                     <div style="font-family: Orbitron;">${formatTime(a.bestLap)}</div>
-                                </div>
-                                <div>
-                                    <div style="font-size: 0.7rem; color: rgba(255,255,255,0.5);">Posizione</div>
-                                    <div style="font-family: Orbitron;">${a.position}°</div>
                                 </div>
                             </div>
                             ${a.dnf ? `<div style="color: #ff4500; font-size: 0.85rem; margin-top: 8px;">⛽ Carburante esaurito al giro ${a.dnfLap}</div>` : ''}
