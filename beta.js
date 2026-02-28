@@ -153,7 +153,7 @@ const BetaModule = (() => {
                         <div style="background: ${isBest ? 'rgba(0,217,255,0.1)' : 'rgba(0,0,0,0.3)'}; border: 2px solid ${isBest ? '#00d9ff' : 'rgba(255,255,255,0.1)'}; padding: 15px; border-radius: 8px; margin-bottom: 10px;">
                             <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
                                 <span style="font-size: 0.85rem; color: rgba(255,255,255,0.5);">${formatDate(a.date)}</span>
-                                ${isBest ? '<span style="color: #00d9ff;">⭐ MIGLIORE → IN CLASSIFICA</span>' : ''}
+                                ${isBest ? '<span style="color: #00d9ff;">⭐ MIGLIORE</span>' : ''}
                             </div>
                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
                                 <div>
@@ -210,8 +210,8 @@ const BetaModule = (() => {
                         <span>⛽ Carburante</span>
                         <span id="fuel-val" style="font-family: Orbitron; color: #00d9ff;">${state.setup.fuel}L</span>
                     </label>
-                    <input type="range" id="fuel" min="20" max="110" value="${state.setup.fuel}" step="5" style="width: 100%;">
-                    <div style="font-size: 0.75rem; color: rgba(255,255,255,0.5); margin-top: 5px;">Serbatoio max: 110L • ~70L per 20 giri • Più fuel = più peso</div>
+                    <input type="range" id="fuel" min="20" max="130" value="${state.setup.fuel}" step="5" style="width: 100%;">
+                    <div style="font-size: 0.75rem; color: rgba(255,255,255,0.5); margin-top: 5px;">Serbatoio max: 130L • ~70L per 20 giri • Più fuel = più peso</div>
                 </div>
                 
                 <!-- Mappatura Motore 1-10 -->
