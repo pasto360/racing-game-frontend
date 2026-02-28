@@ -1757,7 +1757,11 @@ async function loadGameFromServer(retryCount = 0) {
             });
         }
         
-        game.currentDriver = data.currentDriver;
+        // ✅ Driver (nuovo sistema con livelli)
+        if (data.driver) {
+            game.driver = { ...game.driver, ...data.driver };
+        }
+        game.currentDriver = null; // Legacy, non più usato
         
         if (data.sponsors && Array.isArray(data.sponsors)) {
             data.sponsors.forEach((serverSponsor, index) => {
@@ -1902,8 +1906,7 @@ async function saveGameToServer(showIndicator = true) {
                         resources: game.resources,
                         workshop: game.workshop,
                         ownedCars: game.ownedCars,
-                        drivers: game.drivers,
-                        currentDriver: game.currentDriver,
+                        driver: game.driver, // ✅ Nuovo sistema pilota
                         sponsors: game.sponsors,
                         currentSponsor: game.currentSponsor,
                         technologies: game.technologies,
@@ -2146,14 +2149,35 @@ async function loadLeaderboard() {
             victoryStories: [],
             defeatStories: [],
 
-            drivers: [
-                { name: 'Mario Rossi', icon: '🏃', bonus: { type: 'energy', value: -5 }, cost: 5000, description: 'Pilota efficiente', unlocked: true },
-                { name: 'Luca Bianchi', icon: '💰', bonus: { type: 'money', value: 0.2 }, cost: 8000, description: 'Porta sponsor', unlocked: true },
-                { name: 'Sara Verdi', icon: '🔧', bonus: { type: 'repair', value: -0.1 }, cost: 10000, description: 'Esperta meccanica', unlocked: false, unlockCondition: { reputation: 100 } },
-                { name: 'Andrea Neri', icon: '⭐', bonus: { type: 'reputation', value: 0.15 }, cost: 12000, description: 'Star del racing', unlocked: false, unlockCondition: { reputation: 200 } },
-                { name: 'Paolo Ferrari', icon: '🏆', bonus: { type: 'winBonus', value: 0.25 }, cost: 20000, description: 'Campione veterano', unlocked: false, unlockCondition: { reputation: 500 } }
-            ],
+            // ✅ PILOTA CON LIVELLI (0-6)
+            driver: {
+                name: 'Il Tuo Pilota',
+                icon: '🏎️',
+                level: 0,
+                maxLevel: 6,
+                upgrading: false,
+                upgradeEndTime: 0,
+                // Bonus per livello
+                bonuses: {
+                    1: { type: 'energy', value: -5, description: '-5 energia per gara' },
+                    2: { type: 'money', value: 0.2, description: '+20% denaro gare' },
+                    3: { type: 'repair', value: -0.1, description: '-10% costo riparazione' },
+                    4: { type: 'reputation', value: 0.15, description: '+15% reputazione' },
+                    5: { type: 'all', value: 0.25, description: '+25% tutte ricompense' },
+                    6: { type: 'winChance', value: 0.05, description: '+5% vittoria gare' }
+                },
+                // Costi e tempi per livello
+                upgradeCosts: {
+                    1: { money: 5000, time: 24 },      // 24 ore
+                    2: { money: 10000, time: 48 },     // 48 ore
+                    3: { money: 20000, time: 72 },     // 72 ore
+                    4: { money: 35000, time: 96 },     // 96 ore
+                    5: { money: 50000, time: 120 },    // 120 ore
+                    6: { money: 75000, time: 144 }     // 144 ore
+                }
+            },
 
+            // Rimosso vecchio sistema drivers
             currentDriver: null,
 
             sponsors: [
