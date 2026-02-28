@@ -1749,19 +1749,11 @@ async function loadGameFromServer(retryCount = 0) {
             });
         }
         
-        if (data.drivers && Array.isArray(data.drivers)) {
-            data.drivers.forEach((serverDriver, index) => {
-                if (game.drivers[index]) {
-                    game.drivers[index].unlocked = serverDriver.unlocked;
-                }
-            });
-        }
-        
-        // ✅ Driver (nuovo sistema con livelli)
+        // ✅ Driver - nuovo sistema con livelli (drivers vecchio rimosso)
         if (data.driver) {
             game.driver = { ...game.driver, ...data.driver };
         }
-        game.currentDriver = null; // Legacy, non più usato
+        game.currentDriver = null; // Legacy
         
         if (data.sponsors && Array.isArray(data.sponsors)) {
             data.sponsors.forEach((serverSponsor, index) => {
