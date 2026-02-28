@@ -3291,30 +3291,7 @@ async function loadLeaderboard() {
                 this.render();
             },
 
-            hireDriver(driverIndex) {
-                const driver = this.drivers[driverIndex];
-                if (!driver.unlocked) return;
-
-                if (this.currentDriver) {
-                    alert('Hai già un pilota! Licenzialo prima.');
-                    return;
-                }
-
-                if (this.canAfford({ money: driver.cost })) {
-                    this.spendResources({ money: driver.cost });
-                    this.currentDriver = driver;
-                    this.showUnlockNotification(`👤 Assunto: ${driver.name}!`);
-                    this.render();
-                } else {
-                    alert('Fondi insufficienti!');
-                }
-            },
-
-            fireDriver() {
-                if (!confirm('Sei sicuro di voler licenziare il tuo pilota?')) return;
-                this.currentDriver = null;
-                this.render();
-            },
+            // ✅ hireDriver() e fireDriver() rimossi - ora usa driver con livelli
 
             activateSponsor(sponsorIndex) {
                 const sponsor = this.sponsors[sponsorIndex];
@@ -4061,18 +4038,7 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                     }
                 });
 
-                this.drivers.forEach(driver => {
-                    if (!driver.unlocked && driver.unlockCondition) {
-                        const canUnlock = Object.keys(driver.unlockCondition).every(res =>
-                            this.resources[res].value >= driver.unlockCondition[res]
-                        );
-                        
-                        if (canUnlock) {
-                            driver.unlocked = true;
-                            // ✅ Sblocca silenziosamente (no notifica)
-                        }
-                    }
-                });
+                // ✅ Driver non ha più unlock - rimosso
 
                 this.sponsors.forEach(sponsor => {
                     if (!sponsor.unlocked && this.races.wins >= sponsor.requirement) {
@@ -4648,59 +4614,20 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
 
             renderTeam() {
                 const driversContainer = document.getElementById('driversSection');
-                driversContainer.innerHTML = this.drivers.map((driver, index) => {
-                    const locked = !driver.unlocked;
-                    // Fix: confronta per nome invece che per reference
-                    const isActive = this.currentDriver && this.currentDriver.name === driver.name;
-                    const canHire = this.canAfford({ money: driver.cost });
-
-                    let bonusText = '';
-                    if (driver.bonus.type === 'energy') {
-                        bonusText = `${driver.bonus.value} energia per gara`;
-                    } else if (driver.bonus.type === 'money') {
-                        bonusText = `+${(driver.bonus.value * 100).toFixed(0)}% denaro gare`;
-                    } else if (driver.bonus.type === 'repair') {
-                        bonusText = `${(driver.bonus.value * 100).toFixed(0)}% costo riparazione`;
-                    } else if (driver.bonus.type === 'reputation') {
-                        bonusText = `+${(driver.bonus.value * 100).toFixed(0)}% reputazione`;
-                    } else if (driver.bonus.type === 'winBonus') {
-                        bonusText = `+${(driver.bonus.value * 100).toFixed(0)}% tutte ricompense`;
-                    }
-
-                    return `
-                        <div class="team-card ${locked ? 'locked' : ''} ${isActive ? 'active' : ''}">
-                            <div style="font-size: 3rem; margin-bottom: 10px;">
-                                ${driver.icon}
-                            </div>
-                            <div style="font-family: 'Orbitron'; font-size: 1.2rem; font-weight: 700; margin-bottom: 10px;">
-                                ${driver.name}
-                            </div>
-                            <div style="color: var(--text-secondary); margin-bottom: 15px;">
-                                ${driver.description}
-                            </div>
-                            ${!locked ? `
-                                <div style="color: var(--accent-green); margin-bottom: 15px;">
-                                    ${bonusText}
-                                </div>
-                                ${isActive ? `
-                                    <button class="btn" onclick="game.fireDriver()">
-                                        Licenzia
-                                    </button>
-                                ` : `
-                                    <button class="btn btn-purple" onclick="game.hireDriver(${index})" ${!canHire || this.currentDriver ? 'disabled' : ''}>
-                                        Assumi (${driver.cost}€)
-                                    </button>
-                                `}
-                            ` : `
-                                <div style="color: var(--text-secondary); margin-top: 15px;">
-                                    🔒 ${Object.keys(driver.unlockCondition).map(res =>
-                                        `${this.resources[res].icon} ${driver.unlockCondition[res]}`
-                                    ).join(', ')}
-                                </div>
-                            `}
+                // ✅ TODO: Implementare renderDriver() come da DRIVER_SYSTEM_INTEGRATION.md
+                driversContainer.innerHTML = `
+                    <div style="background: var(--bg-card); border: 2px solid var(--accent-cyan); border-radius: 12px; padding: 25px; text-align: center;">
+                        <div style="font-size: 4rem; margin-bottom: 10px;">🏎️</div>
+                        <h3 style="font-family: Orbitron; color: var(--accent-cyan);">Il Tuo Pilota</h3>
+                        <div style="font-family: Orbitron; font-size: 1.5rem; color: var(--accent-yellow); margin: 15px 0;">
+                            LIVELLO ${this.driver.level} / ${this.driver.maxLevel}
                         </div>
-                    `;
-                }).join('');
+                        <div style="color: var(--text-secondary); margin-top: 10px;">
+                            Sistema di livellamento in sviluppo.<br>
+                            Segui le istruzioni in DRIVER_SYSTEM_INTEGRATION.md
+                        </div>
+                    </div>
+                `;
 
                 const sponsorsContainer = document.getElementById('sponsorsSection');
                 sponsorsContainer.innerHTML = this.sponsors.map((sponsor, index) => {
