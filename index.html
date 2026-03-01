@@ -1927,7 +1927,11 @@ async function saveGameToServer(showIndicator = true) {
                 return;
             }
 
-            if (!response.ok) throw new Error('Errore salvataggio');
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('❌ Errore salvataggio:', response.status, errorText);
+                throw new Error('Errore salvataggio');
+            }
 
             lastSaveTime = Date.now(); // ✅ Aggiorna timestamp
             console.log('💾 Salvataggio completato');
