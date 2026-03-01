@@ -1514,6 +1514,14 @@
     </div>
 
     <script>
+// ✅ Silenza errori estensioni Chrome (non bloccano il gioco)
+window.addEventListener('error', (e) => {
+    if (e.message && e.message.includes('message channel closed')) {
+        e.preventDefault();
+        return true;
+    }
+});
+
 // ===== CONFIGURAZIONE CLOUD =====
 const API_URL = 'https://racing-game-backend-production-a5dd.up.railway.app';
 window.API_URL = API_URL; // ✅ Esponi per beta.js
