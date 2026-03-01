@@ -3304,8 +3304,8 @@ async function loadLeaderboard() {
                 const minutesLeft = Math.floor((timeLeft % 3600000) / 60000);
                 
                 const nextLevel = driver.level + 1;
-                const canUpgrade = nextLevel <= driver.maxLevel && !upgrading;
-                const cost = canUpgrade ? driver.upgradeCosts[nextLevel] : null;
+                const canUpgradeMore = nextLevel <= driver.maxLevel; // ✅ Può ancora salire?
+                const cost = canUpgradeMore ? driver.upgradeCosts[nextLevel] : null;
                 const canAfford = cost && this.resources.money.value >= cost.money;
                 
                 let activeBonuses = [];
@@ -3328,7 +3328,7 @@ async function loadLeaderboard() {
                             </div>
                         ` : ''}
                         
-                        ${canUpgrade ? (upgrading ? `
+                        ${canUpgradeMore ? (upgrading ? `
                             <div style="background: rgba(255,140,0,0.1); padding: 20px; border-radius: 10px; text-align: center;">
                                 <div style="font-size: 2rem; margin-bottom: 10px;">⏳</div>
                                 <div style="font-weight: 700; margin-bottom: 10px;">Allenamento in corso...</div>
