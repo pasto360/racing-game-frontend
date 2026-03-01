@@ -1749,9 +1749,15 @@ async function loadGameFromServer(retryCount = 0) {
             });
         }
         
-        // ✅ Driver - nuovo sistema con livelli (drivers vecchio rimosso)
-        if (data.driver) {
-            game.driver = { ...game.driver, ...data.driver };
+        // ✅ Driver - merge intelligente (preserva bonuses e upgradeCosts locali)
+        if (data.driver && typeof data.driver === 'object' && !Array.isArray(data.driver)) {
+            // Solo level, upgrading, upgradeEndTime dal server
+            game.driver.level = data.driver.level || 0;
+            game.driver.upgrading = data.driver.upgrading || false;
+            game.driver.upgradeEndTime = data.driver.upgradeEndTime || 0;
+            console.log('✅ Driver caricato:', game.driver.level, '/', game.driver.maxLevel);
+        } else {
+            console.log('⚠️ Driver dal server non valido:', typeof data.driver, Array.isArray(data.driver));
         }
         game.currentDriver = null; // Legacy
         
