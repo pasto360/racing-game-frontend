@@ -1526,21 +1526,21 @@ window.addEventListener('error', (e) => {
     }
 });
 
-// ===== CONFIGURAZIONE CLOUD =====
-const API_URL = 'https://racing-game-backend-production-a5dd.up.railway.app';
-window.API_URL = API_URL; // ✅ Esponi per beta.js
-let authToken = localStorage.getItem('authToken');
-let currentUser = JSON.parse(localStorage.getItem('user') || 'null');
+// ===== CONFIGURAZIONE SUPABASE =====
+// Variabili Railway non più necessarie
+// const API_URL = 'https://racing-game-backend-production-a5dd.up.railway.app';
+// window.API_URL = API_URL;
+// let authToken = localStorage.getItem('authToken');
+// let currentUser = JSON.parse(localStorage.getItem('user') || 'null');
 
-console.log('🎮 Cloud Edition - Avvio applicazione');
+console.log('🎮 Supabase Edition - Avvio applicazione');
 console.log('🔑 Token presente:', !!authToken);
 
 // ===== AUTENTICAZIONE =====
 function handleLogout() {
     if (confirm('Sei sicuro di voler uscire?')) {
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('user');
-        location.reload();
+        logoutDirect()
+        window.location.href = 'login.html'
     }
 }
 
@@ -1711,267 +1711,12 @@ async function loadGameFromServer() {
     return await loadGameFromSupabase()
 }
 
-// ===== LEGACY RAILWAY FUNCTION (NON USATA) =====
-async function loadGameFromServer_OLD(retryCount = 0) {
-    try {
-        console.log('📥 Caricamento dati dal server...');
-        
-        const response = await fetch(`${API_URL}/api/game/state`, {
-            headers: { 'Authorization': `Bearer ${authToken}` }
-        });
-        
-        // Gestione errore 429 (Too Many Requests)
-        if (response.status === 429) {
-            if (retryCount < 3) {
-                const delay = Math.pow(2, retryCount) * 1000; // 1s, 2s, 4s
-                console.log(`⏳ Rate limit raggiunto. Riprovo tra ${delay/1000}s...`);
-                await new Promise(resolve => setTimeout(resolve, delay));
-                return loadGameFromServer(retryCount + 1);
-            } else {
-                throw new Error('Troppe richieste al server. Riprova tra un minuto.');
-            }
-        }
-        
-        if (!response.ok) {
-            throw new Error('Errore caricamento');
-        }
-        
-        const data = await response.json();
-        console.log('✅ Dati caricati dal server:', data);
-        
-        if (data.resources) {
-            Object.keys(data.resources).forEach(key => {
-                if (game.resources[key]) {
-                    game.resources[key].value = data.resources[key].value || 0;
-                }
-            });
-        }
-        
-        if (data.workshop) {
-            Object.keys(data.workshop).forEach(key => {
-                if (game.workshop[key]) {
-                    game.workshop[key].level = data.workshop[key].level || 0;
-                    game.workshop[key].unlocked = data.workshop[key].unlocked || false;
-                }
-            });
-        }
-        
-        if (data.ownedCars && Array.isArray(data.ownedCars)) {
-            game.ownedCars = data.ownedCars.map(serverCar => {
-                const templateCar = game.availableCars.find(c => c.name === serverCar.name);
-                return {
-                    ...serverCar,
-                    image: templateCar ? templateCar.image : serverCar.image
-                };
-            });
-        }
-        
-        // ✅ Driver - merge intelligente (preserva bonuses e upgradeCosts locali)
-        if (data.driver && typeof data.driver === 'object' && !Array.isArray(data.driver)) {
-            // Solo level, upgrading, upgradeEndTime dal server
-            game.driver.level = data.driver.level || 0;
-            game.driver.upgrading = data.driver.upgrading || false;
-            game.driver.upgradeEndTime = data.driver.upgradeEndTime || 0;
-            console.log('✅ Driver caricato:', game.driver.level, '/', game.driver.maxLevel);
-        } else {
-            console.log('⚠️ Driver dal server non valido:', typeof data.driver, Array.isArray(data.driver));
-        }
-        game.currentDriver = null; // Legacy
-        
-        if (data.sponsors && Array.isArray(data.sponsors)) {
-            data.sponsors.forEach((serverSponsor, index) => {
-                if (game.sponsors[index]) {
-                    game.sponsors[index].unlocked = serverSponsor.unlocked;
-                }
-            });
-        }
-        
-        game.currentSponsor = data.currentSponsor;
-        game.sponsorRacesLeft = data.sponsorRacesLeft || 0;
-        
-        if (data.technologies && Array.isArray(data.technologies)) {
-            data.technologies.forEach((serverTech) => {
-                const localTech = game.technologies.find(t => t.id === serverTech.id);
-                if (localTech) {
-                    localTech.researched = serverTech.researched || false;
-                }
-            });
-        }
-        
-        game.races = data.races || game.races;
-        // ✅ Championship: merge dati server ma mantieni valori aggiornati
-        if (data.championship) {
-            game.championship = {
-                ...game.championship, // Valori di default aggiornati
-                ...data.championship, // Dati salvati dal server
-                entryFee: 3500,      // ✅ FORZA valore aggiornato
-                prizePool: 7000      // ✅ FORZA valore aggiornato
-            };
-        }
-        game.raceHistory = data.raceHistory || [];
-        
-        // ✅ NUOVI CAMPI v5.2
-        // ✅ Merge trackTraining (preserva name, icon, bonus, maxLevel dalle definitions)
-        if (data.trackTraining) {
-            Object.keys(game.trackTraining).forEach(key => {
-                if (data.trackTraining[key]) {
-                    game.trackTraining[key].level = data.trackTraining[key].level || 0;
-                }
-            });
-        }
-        game.trackQueue = data.trackQueue || game.trackQueue;
-        
-        // ✅ MERGE MISSIONI (preserva nuove definizioni, carica solo completed/progress dal DB)
-        if (data.missions) {
-            Object.keys(game.missions).forEach(key => {
-                if (data.missions[key]) {
-                    game.missions[key].completed = data.missions[key].completed || false;
-                    game.missions[key].progress = data.missions[key].progress || 0;
-                }
-            });
-        }
-        
-        game.pvpStats = data.pvpStats || game.pvpStats;
-        game.upgradesCount = data.upgradesCount || 0;
-        game.championshipsWon = data.championshipsWon || 0;
-        
-        // ✅ EVENTI
-        game.eventProgress = data.eventProgress || {};
-        
-        // PRODUZIONE OFFLINE
-        const lastSaveTime = data.lastSaveTime || Date.now();
-        const now = Date.now();
-        const offlineTime = (now - lastSaveTime) / 1000;
-        
-        if (offlineTime > 60) {
-            console.log(`⏰ Tempo offline: ${(offlineTime / 60).toFixed(1)} minuti`);
-            
-            const offlineHours = offlineTime / 3600;
-            
-            Object.keys(game.workshop).forEach(key => {
-                const section = game.workshop[key];
-                if (section.level > 0 && section.production) {
-                    Object.keys(section.production).forEach(resource => {
-                        if (game.resources[resource]) {
-                            const productionPerHour = section.production[resource] * section.level;
-                            const offlineProduction = productionPerHour * offlineHours;
-                            
-                            game.resources[resource].value += offlineProduction;
-                        }
-                    });
-                }
-            });
-            
-            const energyRecovered = offlineTime / 60;
-            game.resources.energy.value = Math.min(
-                game.resources.energy.value + energyRecovered,
-                game.resources.energy.max
-            );
-            
-            const hours = Math.floor(offlineHours);
-            const minutes = Math.floor((offlineHours - hours) * 60);
-            let timeMsg = hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
-            
-            setTimeout(() => {
-                game.showUnlockNotification(`⏰ Produzione offline: ${timeMsg}`);
-            }, 1000);
-        }
-        
-        return true;
-        
-    } catch (error) {
-        console.error('❌ Errore caricamento dal server:', error);
-        return false;
-    }
-}
-
 let saveTimeout = null;
 let lastSaveTime = 0;
 const MIN_SAVE_INTERVAL = 3000; // 3 secondi
 
 async function saveGameToServer(showIndicator = true) {
     return await saveGameToSupabase(showIndicator)
-}
-
-// ===== LEGACY RAILWAY FUNCTION (NON USATA) =====
-async function saveGameToServer_OLD(showIndicator = true) {
-    if (!authToken) return;
-
-    // Rate limiter: max 1 save ogni 3 sec
-    const now = Date.now();
-    if (now - lastSaveTime < MIN_SAVE_INTERVAL) {
-        console.log('⏳ Save troppo frequente, schedulo...');
-        if (saveTimeout) clearTimeout(saveTimeout);
-        saveTimeout = setTimeout(() => saveGameToServer(showIndicator), MIN_SAVE_INTERVAL);
-        return;
-    }
-
-    if (saveTimeout) clearTimeout(saveTimeout);
-
-    saveTimeout = setTimeout(async () => {
-        try {
-            const saveIndicator = document.getElementById('saveIndicator');
-            if (showIndicator && saveIndicator) {
-                saveIndicator.classList.add('show');
-            }
-
-            const response = await fetch(`${API_URL}/api/game/state`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${authToken}`
-                },
-                body: JSON.stringify({
-                    gameState: {
-                        resources: game.resources,
-                        workshop: game.workshop,
-                        ownedCars: game.ownedCars,
-                        driver: game.driver, // ✅ Nuovo sistema pilota
-                        sponsors: game.sponsors,
-                        currentSponsor: game.currentSponsor,
-                        technologies: game.technologies,
-                        races: game.races,
-                        championship: game.championship,
-                        raceHistory: game.raceHistory,
-                        // ✅ NUOVI CAMPI v5.2
-                        trackTraining: game.trackTraining,
-                        trackQueue: game.trackQueue,
-                        missions: game.missions,
-                        pvpStats: game.pvpStats,
-                        upgradesCount: game.upgradesCount,
-                        championshipsWon: game.championshipsWon,
-                        // ✅ EVENTI
-                        eventProgress: game.eventProgress
-                    }
-                })
-            });
-
-            // Se rate limit, fallisce silenziosamente (riproverà al prossimo salvataggio automatico)
-            if (response.status === 429) {
-                console.log('⏳ Rate limit durante salvataggio. Riproverà automaticamente.');
-                if (showIndicator && saveIndicator) {
-                    saveIndicator.classList.remove('show');
-                }
-                return;
-            }
-
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error('❌ Errore salvataggio:', response.status, errorText);
-                throw new Error('Errore salvataggio');
-            }
-
-            lastSaveTime = Date.now(); // ✅ Aggiorna timestamp
-            console.log('💾 Salvataggio completato');
-
-            if (showIndicator && saveIndicator) {
-                setTimeout(() => saveIndicator.classList.remove('show'), 1500);
-            }
-
-        } catch (error) {
-            console.error('❌ Errore salvataggio:', error);
-        }
-    }, 500);
 }
 
 // Cache leaderboard - 3 aggiornamenti al giorno (ogni 8 ore)
