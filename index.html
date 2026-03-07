@@ -1711,9 +1711,7 @@ async function loadGameFromServer() {
     return await loadGameFromSupabase()
 }
 
-let saveTimeout = null;
-let lastSaveTime = 0;
-const MIN_SAVE_INTERVAL = 3000; // 3 secondi
+// Rate limiting gestito da supabase-game-direct.js
 
 async function saveGameToServer(showIndicator = true) {
     return await saveGameToSupabase(showIndicator)
