@@ -1527,182 +1527,22 @@ window.addEventListener('error', (e) => {
 });
 
 // ===== CONFIGURAZIONE SUPABASE =====
-// Variabili Railway non più necessarie
-// const API_URL = 'https://racing-game-backend-production-a5dd.up.railway.app';
-// window.API_URL = API_URL;
-// let authToken = localStorage.getItem('authToken');
-// let currentUser = JSON.parse(localStorage.getItem('user') || 'null');
+// API_URL mantenuto SOLO per funzionalità non ancora migrate: leaderboard, PvP
+const API_URL = 'https://racing-game-backend-production-a5dd.up.railway.app';
+
+// Funzione helper per ottenere token Supabase
+function getAuthToken() {
+    const session = getSession();
+    return session?.access_token || null;
+}
 
 console.log('🎮 Supabase Edition - Avvio applicazione');
-console.log('🔑 Token presente:', !!authToken);
 
 // ===== AUTENTICAZIONE =====
 function handleLogout() {
     if (confirm('Sei sicuro di voler uscire?')) {
         logoutDirect()
         window.location.href = 'login.html'
-    }
-}
-
-async function showAuthModal() {
-    // Controlla stato server prima di mostrare form
-    let serverStatus = 'aperto';
-    let userCount = 0;
-    
-    try {
-        const statusRes = await fetch(`${API_URL}/api/auth/status`);
-        if (statusRes.ok) {
-            const data = await statusRes.json();
-            serverStatus = data.registrationOpen ? 'aperto' : 'chiuso';
-            userCount = data.userCount || 0;
-        }
-    } catch (err) {
-        console.log('Impossibile verificare stato server, assumo aperto');
-    }
-    
-    const statusBadge = serverStatus === 'aperto' 
-        ? `<div style="background: linear-gradient(135deg, #00ff88, #00cc66); color: #000; padding: 8px 20px; border-radius: 20px; font-weight: 700; display: inline-block; margin-bottom: 20px;">✓ SERVER 1 APERTO</div>`
-        : `<div style="background: linear-gradient(135deg, #ff3333, #cc0000); color: #fff; padding: 8px 20px; border-radius: 20px; font-weight: 700; display: inline-block; margin-bottom: 20px;">✗ SERVER 1 CHIUSO</div>`;
-    
-    const html = `
-        <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 9999; display: flex; justify-content: center; align-items: center;">
-            <div style="background: #1a1a1a; padding: 40px; border-radius: 20px; border: 3px solid #ff3333; max-width: 400px; width: 90%;">
-                <h2 style="font-family: Orbitron; text-align: center; margin-bottom: 10px; color: #ff3333;">🏁 RACING GAME CLOUD</h2>
-                <div style="text-align: center; margin-bottom: 20px;">
-                    ${statusBadge}
-                </div>
-                
-                <div id="loginForm">
-                    <input type="text" id="loginUsername" placeholder="Username" style="width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 2px solid #333; background: #0a0a0a; color: white; font-size: 1rem;">
-                    <input type="password" id="loginPassword" placeholder="Password" style="width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 2px solid #333; background: #0a0a0a; color: white; font-size: 1rem;">
-                    <button onclick="handleLogin()" style="width: 100%; padding: 15px; margin: 10px 0; background: linear-gradient(135deg, #ff3333, #cc0000); border: none; border-radius: 8px; color: white; font-weight: 700; cursor: pointer; font-size: 1rem;">LOGIN</button>
-                    <button onclick="showRegisterForm()" style="width: 100%; padding: 15px; margin: 10px 0; background: #333; border: none; border-radius: 8px; color: white; cursor: pointer;" ${serverStatus === 'chiuso' ? 'disabled' : ''}>
-                        ${serverStatus === 'chiuso' ? 'Registrazioni chiuse' : 'Registrati'}
-                    </button>
-                </div>
-                
-                <div id="registerForm" style="display: none;">
-                    ${serverStatus === 'chiuso' ? `
-                        <div style="text-align: center; padding: 30px; color: #ff3333;">
-                            <div style="font-size: 3rem; margin-bottom: 15px;">🔒</div>
-                            <div style="font-size: 1.2rem; font-weight: 700; margin-bottom: 10px;">Server al completo</div>
-                            <div style="font-size: 0.9rem; color: #a0a0a0;">Il Server 1 ha raggiunto il limite massimo di utenti. Nuovi server saranno disponibili presto!</div>
-                            <button onclick="showLoginForm()" style="width: 100%; padding: 15px; margin: 20px 0 0 0; background: #333; border: none; border-radius: 8px; color: white; cursor: pointer;">Torna al Login</button>
-                        </div>
-                    ` : `
-                        <input type="text" id="regUsername" placeholder="Username" style="width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 2px solid #333; background: #0a0a0a; color: white; font-size: 1rem;">
-                        <input type="email" id="regEmail" placeholder="Email" style="width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 2px solid #333; background: #0a0a0a; color: white; font-size: 1rem;">
-                        <input type="password" id="regPassword" placeholder="Password (min 6 caratteri)" style="width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 2px solid #333; background: #0a0a0a; color: white; font-size: 1rem;">
-                        <button onclick="handleRegister()" style="width: 100%; padding: 15px; margin: 10px 0; background: linear-gradient(135deg, #00ff88, #00cc66); border: none; border-radius: 8px; color: white; font-weight: 700; cursor: pointer; font-size: 1rem;">REGISTRATI</button>
-                        <button onclick="showLoginForm()" style="width: 100%; padding: 15px; margin: 10px 0; background: #333; border: none; border-radius: 8px; color: white; cursor: pointer;">Torna al Login</button>
-                    `}
-                </div>
-                
-                <div id="authMessage" style="margin-top: 20px; text-align: center; color: #ff3333;"></div>
-            </div>
-        </div>
-    `;
-    document.body.insertAdjacentHTML('beforeend', html);
-}
-
-function showRegisterForm() {
-    document.getElementById('loginForm').style.display = 'none';
-    document.getElementById('registerForm').style.display = 'block';
-}
-
-function showLoginForm() {
-    document.getElementById('loginForm').style.display = 'block';
-    document.getElementById('registerForm').style.display = 'none';
-}
-
-async function handleLogin() {
-    const username = document.getElementById('loginUsername').value;
-    const password = document.getElementById('loginPassword').value;
-    const msgEl = document.getElementById('authMessage');
-    
-    if (!username || !password) {
-        msgEl.textContent = 'Compila tutti i campi!';
-        return;
-    }
-    
-    try {
-        msgEl.textContent = 'Login in corso...';
-        msgEl.style.color = '#00ff88';
-        
-        const response = await fetch(`${API_URL}/api/auth/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password })
-        });
-        
-        const data = await response.json();
-        
-        if (!response.ok) {
-            msgEl.style.color = '#ff3333';
-            msgEl.textContent = data.error;
-            return;
-        }
-        
-        authToken = data.token;
-        currentUser = data.user;
-        localStorage.setItem('authToken', authToken);
-        localStorage.setItem('user', JSON.stringify(currentUser));
-        
-        msgEl.style.color = '#00ff88';
-        msgEl.textContent = 'Login riuscito! Caricamento gioco...';
-        
-        document.querySelector('[style*="position: fixed"]').remove();
-        await game.init();
-        
-    } catch (error) {
-        msgEl.style.color = '#ff3333';
-        msgEl.textContent = 'Errore connessione al server';
-        console.error('Errore login:', error);
-    }
-}
-
-async function handleRegister() {
-    const username = document.getElementById('regUsername').value;
-    const email = document.getElementById('regEmail').value;
-    const password = document.getElementById('regPassword').value;
-    const msgEl = document.getElementById('authMessage');
-    
-    if (!username || !email || !password) {
-        msgEl.textContent = 'Compila tutti i campi!';
-        return;
-    }
-    
-    if (password.length < 6) {
-        msgEl.textContent = 'Password troppo corta (minimo 6 caratteri)!';
-        return;
-    }
-    
-    try {
-        msgEl.textContent = 'Registrazione in corso...';
-        msgEl.style.color = '#00ff88';
-        
-        const response = await fetch(`${API_URL}/api/auth/register`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, email, password })
-        });
-        
-        const data = await response.json();
-        
-        if (!response.ok) {
-            msgEl.style.color = '#ff3333';
-            msgEl.textContent = data.error;
-            return;
-        }
-        
-        msgEl.style.color = '#00ff88';
-        msgEl.textContent = 'Registrazione completata! Ora fai login.';
-        setTimeout(showLoginForm, 2000);
-        
-    } catch (error) {
-        msgEl.style.color = '#ff3333';
-        msgEl.textContent = 'Errore connessione al server';
-        console.error('Errore registrazione:', error);
     }
 }
 
@@ -1779,7 +1619,7 @@ async function loadLeaderboard() {
         
         console.log('📊 Caricando classifica dal server...');
         const response = await fetch(`${API_URL}/api/game/leaderboard`, {
-            headers: { 'Authorization': `Bearer ${authToken}` }
+            headers: { 'Authorization': `Bearer ${getAuthToken()}` }
         });
         
         if (!response.ok) throw new Error('Errore caricamento classifica');
@@ -4987,9 +4827,8 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                     
                     container.innerHTML = '<p style="color: #a0a0a0; text-align: center; padding: 40px;">⏳ Caricamento...</p>';
                     
-                    const token = localStorage.getItem('authToken');
                     const response = await fetch(`${API_URL}/api/game/leaderboard-weekly`, {
-                        headers: { 'Authorization': `Bearer ${token}` }
+                        headers: { 'Authorization': `Bearer ${getAuthToken()}` }
                     });
                     
                     if (!response.ok) {
@@ -5560,10 +5399,9 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
 
             async checkCanChallenge() {
                 try {
-                    const token = localStorage.getItem('authToken');
                     const response = await fetch(`${API_URL}/api/pvp/can-challenge`, {
                         headers: {
-                            'Authorization': `Bearer ${token}`
+                            'Authorization': `Bearer ${getAuthToken()}`
                         }
                     });
                     
@@ -5660,13 +5498,11 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                 }, 1000);
 
                 try {
-                    const token = localStorage.getItem('authToken');
-                    
                     const response = await fetch(`${API_URL}/api/pvp/challenge`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`
+                            'Authorization': `Bearer ${getAuthToken()}`
                         },
                         body: JSON.stringify({ defenderId: defenderId })
                     });
