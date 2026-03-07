@@ -326,7 +326,7 @@
             
             try {
                 // ✅ USA SUPABASE
-                const success = await registerWithSupabase(username, email, password);
+                const success = await registerDirect(username, email, password);
                 
                 if (success) {
                     successDiv.textContent = '✅ Registrazione completata! Ora puoi effettuare il login.';
