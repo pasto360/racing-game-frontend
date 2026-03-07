@@ -1190,6 +1190,8 @@
 </head>
 <body>
     <script src="supabase-client.js"></script>
+    <script src="supabase-direct.js"></script>
+    <script src="supabase-game-direct.js"></script>
     <div class="save-indicator" id="saveIndicator">💾 Salvataggio...</div>
     
     <div class="container" id="gameContainer" style="display: none;">
@@ -1705,7 +1707,12 @@ async function handleRegister() {
 }
 
 // ===== API CLOUD =====
-async function loadGameFromServer(retryCount = 0) {
+async function loadGameFromServer() {
+    return await loadGameFromSupabase()
+}
+
+// ===== LEGACY RAILWAY FUNCTION (NON USATA) =====
+async function loadGameFromServer_OLD(retryCount = 0) {
     try {
         console.log('📥 Caricamento dati dal server...');
         
@@ -1883,6 +1890,11 @@ let lastSaveTime = 0;
 const MIN_SAVE_INTERVAL = 3000; // 3 secondi
 
 async function saveGameToServer(showIndicator = true) {
+    return await saveGameToSupabase(showIndicator)
+}
+
+// ===== LEGACY RAILWAY FUNCTION (NON USATA) =====
+async function saveGameToServer_OLD(showIndicator = true) {
     if (!authToken) return;
 
     // Rate limiter: max 1 save ogni 3 sec
@@ -6215,17 +6227,14 @@ function closeMobileMenu() {
     }
 }
 
-window.addEventListener('load', async () => {
-    console.log('🚀 Applicazione caricata');
-    
-    if (!authToken) {
-        console.log('⚠️ Nessun token - Mostra login');
-        showAuthModal();
-    } else {
-        console.log('✅ Token trovato - Inizializza gioco');
-        await game.init();
+(async () => {
+    const session = getSession()
+    if (!session) {
+        window.location.href = 'login.html'
+        return
     }
-});
+    await game.init()
+})()
     </script>
 </body>
 </html>
