@@ -1648,12 +1648,13 @@ async function loadLeaderboard() {
 
 // ===== FINE CONFIGURAZIONE API =====
 
-// Metadati workshop (nome, icona per UI)
+// Metadati workshop - NON USATO (i dati sono già in game.workshop)
+// Mantenuto per compatibilità con renderWorkshop che usa WORKSHOP_META[key]
 const WORKSHOP_META = {
     engine: { name: 'Motore', icon: '⚙️', image: 'engine.jpg' },
-    electronics: { name: 'Elettronica', icon: '🔌', image: 'electronics.jpg' },
-    body: { name: 'Carrozzeria', icon: '🛡️', image: 'body.jpg' },
-    aerodynamics: { name: 'Aerodinamica', icon: '💨', image: 'aero.jpg' }
+    electronics: { name: 'Elettronica', icon: '💻', image: 'electronics.jpg' },
+    body: { name: 'Carrozzeria', icon: '🎨', image: 'body.jpg' },
+    aerodynamics: { name: 'Aerodinamica', icon: '🌪️', image: 'aero.jpg' }
 };
 
         const game = {

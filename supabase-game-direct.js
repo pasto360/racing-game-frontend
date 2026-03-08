@@ -50,7 +50,19 @@ async function loadGameFromSupabase() {
             })
         }
         
-        if (data.workshop) game.workshop = data.workshop
+        // Workshop - Merge dati Supabase con metadati statici
+        if (data.workshop) {
+            Object.keys(data.workshop).forEach(key => {
+                if (game.workshop[key]) {
+                    // Mantieni metadati statici, aggiorna solo level e unlocked
+                    game.workshop[key].level = data.workshop[key].level || 0;
+                    game.workshop[key].unlocked = data.workshop[key].unlocked !== undefined 
+                        ? data.workshop[key].unlocked 
+                        : game.workshop[key].unlocked;
+                }
+            });
+        }
+        
         if (data.owned_cars) game.ownedCars = data.owned_cars
         
         // Driver
