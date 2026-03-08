@@ -90,7 +90,14 @@ async function loadGameFromSupabase() {
             })
         }
         
-        if (data.races) game.races = data.races
+        // Races - Merge dati dinamici (preserva cooldown statico)
+        if (data.races) {
+            game.races.completed = data.races.completed || 0;
+            game.races.wins = data.races.wins || 0;
+            game.races.lastRaceTime = data.races.lastRaceTime || 0;
+            // Mantiene: cooldown (30000)
+        }
+        
         if (data.championship) game.championship = data.championship
         if (data.race_history) game.raceHistory = data.race_history
         
