@@ -22,7 +22,6 @@ async function loginDirect(username, password) {
         console.log('✅ Utente trovato:', users.username);
 
         // 2. Verifica password con bcrypt
-        const bcrypt = dcodeIO.bcrypt;
         const passwordMatch = bcrypt.compareSync(password, users.password_hash);
 
         if (!passwordMatch) {
@@ -70,7 +69,6 @@ async function registerDirect(username, password) {
         }
 
         // 2. Hash password con bcrypt
-        const bcrypt = dcodeIO.bcrypt;
         const salt = bcrypt.genSaltSync(10);
         const passwordHash = bcrypt.hashSync(password, salt);
 
