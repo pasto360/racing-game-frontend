@@ -178,14 +178,21 @@
         .toggle-form a:hover {
             text-decoration: underline;
         }
+
+        #loading {
+            text-align: center;
+            padding: 20px;
+            color: var(--accent-cyan);
+        }
     </style>
 </head>
 <body>
-    <script src="https://cdn.jsdelivr.net/npm/bcryptjs@2.4.3/dist/bcrypt.min.js"></script>
-    <script src="supabase-client.js"></script>
-    <script src="supabase-direct.js"></script>
+    <div id="loading">
+        <div style="font-size: 3rem; margin-bottom: 20px;">⏳</div>
+        <div>Caricamento librerie...</div>
+    </div>
 
-    <div class="login-container">
+    <div class="login-container" style="display: none;" id="loginContainer">
         <h1>🏎️ Racing Game</h1>
 
         <!-- Login Form -->
@@ -223,14 +230,61 @@
         <div id="message" class="message"></div>
     </div>
 
+    <!-- Carica bcrypt.js PRIMA di tutto -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bcryptjs/2.4.3/bcrypt.min.js" 
+            integrity="sha512-HRi0oQRiiQkkGLdLamAQiBIZ3+rYsIBzF9xHzQJqG3w/yKGSqjJ3yYAcmhbqe3L9N2GK8MXYdFbFgCXO0FzDMRg==" 
+            crossorigin="anonymous" 
+            referrerpolicy="no-referrer"></script>
+    
     <script>
-        console.log('🔍 Controllo sessione esistente...');
-        
-        // Se già loggato, vai al gioco
-        const session = getSession();
-        if (session) {
-            console.log('✅ Sessione trovata, reindirizzo a index.html');
-            window.location.href = 'index.html';
+        // Attendi che bcrypt sia caricato
+        function waitForBcrypt() {
+            return new Promise((resolve) => {
+                const check = () => {
+                    if (typeof bcrypt !== 'undefined') {
+                        console.log('✅ bcrypt caricato!');
+                        resolve();
+                    } else {
+                        setTimeout(check, 100);
+                    }
+                };
+                check();
+            });
+        }
+
+        waitForBcrypt().then(() => {
+            // Carica supabase scripts
+            const scripts = [
+                'supabase-client.js',
+                'supabase-direct.js'
+            ];
+
+            let loaded = 0;
+            scripts.forEach(src => {
+                const script = document.createElement('script');
+                script.src = src;
+                script.onload = () => {
+                    loaded++;
+                    if (loaded === scripts.length) {
+                        initPage();
+                    }
+                };
+                document.body.appendChild(script);
+            });
+        });
+
+        function initPage() {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('loginContainer').style.display = 'block';
+            
+            console.log('🔍 Controllo sessione esistente...');
+            
+            // Se già loggato, vai al gioco
+            const session = getSession();
+            if (session) {
+                console.log('✅ Sessione trovata, reindirizzo a index.html');
+                window.location.href = 'index.html';
+            }
         }
 
         function showMessage(text, isError = false) {
