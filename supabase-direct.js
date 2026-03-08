@@ -1,180 +1,206 @@
-// ========================================
-// SUPABASE DIRECT - SENZA AUTH
-// Sistema semplificato per integer user_id
-// ========================================
+// ===== SISTEMA AUTENTICAZIONE DIRETTA SUPABASE =====
+// Sistema di login/registrazione che bypassa Supabase Auth
+// e usa direttamente la tabella `users` con username/password
 
-// LOGIN
-async function loginDirect(email, password) {
+// Login diretto (username + password)
+async function loginDirect(username, password) {
     try {
-        console.log('🔐 Login diretto su Supabase...')
+        console.log('🔐 Login diretto su Supabase...');
         
-        // Query diretta su tabella users
-        const { data, error } = await window.supabase
+        // 1. Cerca utente per USERNAME (non email)
+        const { data: users, error: fetchError } = await supabase
             .from('users')
             .select('id, username, email, password_hash')
-            .eq('email', email)
-            .single()
-        
-        if (error || !data) {
-            throw new Error('Email non trovata')
+            .eq('username', username) // ← CAMBIATO DA email A username
+            .single();
+
+        if (fetchError || !users) {
+            console.error('❌ Errore ricerca utente:', fetchError);
+            throw new Error('Username non trovato');
         }
-        
-        // Verifica password (hash SHA-256 semplice)
-        const hashedPassword = await hashPassword(password)
-        
-        if (data.password_hash !== hashedPassword) {
-            throw new Error('Password errata')
+
+        console.log('✅ Utente trovato:', users.username);
+
+        // 2. Verifica password con bcrypt
+        const bcrypt = dcodeIO.bcrypt;
+        const passwordMatch = bcrypt.compareSync(password, users.password_hash);
+
+        if (!passwordMatch) {
+            throw new Error('Password errata');
         }
-        
-        console.log('✅ Login OK:', data.id)
-        
-        // Crea sessione locale (senza JWT per ora)
+
+        console.log('✅ Password corretta');
+
+        // 3. Crea sessione locale (salva in localStorage)
         const session = {
-            userId: data.id,
-            username: data.username,
-            email: data.email,
-            timestamp: Date.now()
-        }
-        
-        // Salva in localStorage
-        localStorage.setItem('supabase_session', JSON.stringify(session))
-        localStorage.setItem('authToken', 'supabase_' + data.id) // Compatibilità
-        localStorage.setItem('user', JSON.stringify({
-            id: data.id,
-            username: data.username,
-            email: data.email
-        }))
-        
-        // Aggiorna last_login
-        await window.supabase
-            .from('users')
-            .update({ last_login: new Date().toISOString() })
-            .eq('id', data.id)
-        
-        return {
-            userId: data.id,
-            username: data.username,
-            email: data.email
-        }
-        
+            user: {
+                id: users.id,
+                username: users.username,
+                email: users.email
+            },
+            access_token: generateToken(users.id),
+            expires_at: Date.now() + (7 * 24 * 60 * 60 * 1000) // 7 giorni
+        };
+
+        localStorage.setItem('supabase_session', JSON.stringify(session));
+        console.log('✅ Sessione creata');
+
+        return { success: true, user: session.user };
+
     } catch (error) {
-        console.error('❌ Errore login:', error)
-        throw error
+        console.error('❌ Errore login:', error);
+        return { success: false, error: error.message };
     }
 }
 
-// REGISTRAZIONE
-async function registerDirect(username, email, password) {
+// Registrazione diretta (username + password)
+async function registerDirect(username, password) {
     try {
-        console.log('📝 Registrazione su Supabase...')
-        
-        // Verifica se email esiste già
-        const { data: existing } = await window.supabase
+        console.log('📝 Registrazione diretta su Supabase...');
+
+        // 1. Verifica che username non esista già
+        const { data: existing } = await supabase
             .from('users')
             .select('id')
-            .eq('email', email)
-            .single()
-        
+            .eq('username', username)
+            .single();
+
         if (existing) {
-            throw new Error('Email già registrata')
+            throw new Error('Username già esistente');
         }
+
+        // 2. Hash password con bcrypt
+        const bcrypt = dcodeIO.bcrypt;
+        const salt = bcrypt.genSaltSync(10);
+        const passwordHash = bcrypt.hashSync(password, salt);
+
+        console.log('✅ Password hashata');
+
+        // 3. Crea utente (email fittizia per soddisfare NOT NULL)
+        const email = `${username}@racing-game.local`;
         
-        // Hash password
-        const hashedPassword = await hashPassword(password)
-        
-        // Inserisci utente
-        const { data: newUser, error: userError } = await window.supabase
+        const { data: newUser, error: insertError } = await supabase
             .from('users')
-            .insert({
+            .insert([{
                 username: username,
                 email: email,
-                password_hash: hashedPassword,
+                password_hash: passwordHash,
                 created_at: new Date().toISOString()
-            })
+            }])
             .select()
-            .single()
-        
-        if (userError) throw userError
-        
-        console.log('✅ Utente creato:', newUser.id)
-        
-        // Crea game_state iniziale
-        const { error: gameError } = await window.supabase
-            .from('game_state')
-            .insert({
-                user_id: newUser.id,
-                resources: {
-                    money: { value: 5000, icon: '💰' },
-                    parts: { value: 100, icon: '🔩' },
-                    reputation: { value: 0, icon: '⭐' },
-                    energy: { value: 100, max: 100, icon: '⚡' }
-                },
-                workshop: { engine: 0, electronics: 0, body: 0, aerodynamics: 0 },
-                owned_cars: [],
-                driver: { level: 0, upgrading: false, upgradeEndTime: 0 },
-                sponsors: [],
-                current_sponsor: null,
-                technologies: [],
-                races: { completed: 0, wins: 0, lastRaceTime: 0, cooldown: 30000 },
-                championship: { active: false, currentRace: 0, totalRaces: 5, wins: 0, results: [] },
-                race_history: [],
-                track_training: {},
-                track_queue: null,
-                missions: {},
-                pvp_stats: { wins: 0, losses: 0, total: 0 },
-                upgrades_count: 0,
-                championships_won: 0,
-                event_progress: {}
-            })
-        
-        if (gameError) throw gameError
-        
-        return true
-        
-    } catch (error) {
-        console.error('❌ Errore registrazione:', error)
-        throw error
-    }
-}
+            .single();
 
-// HASH PASSWORD (SHA-256 semplice)
-async function hashPassword(password) {
-    const msgBuffer = new TextEncoder().encode(password)
-    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer)
-    const hashArray = Array.from(new Uint8Array(hashBuffer))
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
-}
-
-// LOGOUT
-function logoutDirect() {
-    localStorage.removeItem('supabase_session')
-    localStorage.removeItem('authToken')
-    localStorage.removeItem('user')
-    window.location.href = 'login.html'
-}
-
-// GET SESSION
-function getSession() {
-    const sessionStr = localStorage.getItem('supabase_session')
-    if (!sessionStr) return null
-    
-    try {
-        const session = JSON.parse(sessionStr)
-        
-        // Verifica se non è scaduta (24 ore)
-        const now = Date.now()
-        const age = now - session.timestamp
-        const maxAge = 24 * 60 * 60 * 1000 // 24 ore
-        
-        if (age > maxAge) {
-            localStorage.removeItem('supabase_session')
-            return null
+        if (insertError) {
+            console.error('❌ Errore inserimento utente:', insertError);
+            throw new Error(insertError.message);
         }
-        
-        return session
-    } catch {
-        return null
+
+        console.log('✅ Utente creato:', newUser);
+
+        // 4. Crea game_state iniziale
+        const initialGameState = {
+            user_id: newUser.id,
+            resources: {
+                money: { value: 15000 },
+                parts: { value: 150 },
+                reputation: { value: 0 },
+                energy: { value: 100 }
+            },
+            workshop: {
+                engine: { level: 0, unlocked: true },
+                electronics: { level: 0, unlocked: false },
+                body: { level: 0, unlocked: false },
+                aerodynamics: { level: 0, unlocked: false }
+            },
+            ownedCars: [],
+            driver: { level: 0, upgrading: false, upgradeEndTime: 0 },
+            sponsors: [],
+            technologies: [],
+            races: { completed: 0, wins: 0, lastRaceTime: 0 },
+            championship: { active: false, currentRace: 0, wins: 0, results: [] },
+            trackTraining: {},
+            trackQueue: null,
+            missions: {},
+            pvpStats: { wins: 0, losses: 0, total: 0 },
+            upgradesCount: 0,
+            championshipsWon: 0,
+            eventProgress: {},
+            raceHistory: []
+        };
+
+        const { error: stateError } = await supabase
+            .from('game_state')
+            .insert([{
+                user_id: newUser.id,
+                resources: initialGameState.resources,
+                workshop: initialGameState.workshop,
+                owned_cars: initialGameState.ownedCars,
+                driver: initialGameState.driver,
+                sponsors: initialGameState.sponsors,
+                technologies: initialGameState.technologies,
+                races: initialGameState.races,
+                championship: initialGameState.championship,
+                track_training: initialGameState.trackTraining,
+                track_queue: initialGameState.trackQueue,
+                missions: initialGameState.missions,
+                pvp_stats: initialGameState.pvpStats,
+                upgrades_count: initialGameState.upgradesCount,
+                championships_won: initialGameState.championshipsWon,
+                event_progress: initialGameState.eventProgress,
+                race_history: initialGameState.raceHistory,
+                last_save_time: new Date().toISOString()
+            }]);
+
+        if (stateError) {
+            console.warn('⚠️ Errore creazione game_state iniziale:', stateError);
+        } else {
+            console.log('✅ Game state iniziale creato');
+        }
+
+        return { success: true, user: newUser };
+
+    } catch (error) {
+        console.error('❌ Errore registrazione:', error);
+        return { success: false, error: error.message };
     }
 }
 
-console.log('✅ Sistema Supabase Direct caricato')
+// Logout
+function logoutDirect() {
+    localStorage.removeItem('supabase_session');
+    console.log('✅ Logout effettuato');
+}
+
+// Ottieni sessione corrente
+function getSession() {
+    const sessionStr = localStorage.getItem('supabase_session');
+    if (!sessionStr) return null;
+
+    try {
+        const session = JSON.parse(sessionStr);
+        
+        // Verifica scadenza
+        if (session.expires_at && Date.now() > session.expires_at) {
+            console.log('⚠️ Sessione scaduta');
+            logoutDirect();
+            return null;
+        }
+
+        return session;
+    } catch (error) {
+        console.error('❌ Errore parsing sessione:', error);
+        logoutDirect();
+        return null;
+    }
+}
+
+// Genera token semplice (per compatibilità)
+function generateToken(userId) {
+    return btoa(JSON.stringify({
+        user_id: userId,
+        issued_at: Date.now(),
+        random: Math.random().toString(36)
+    }));
+}
+
+console.log('✅ Sistema Supabase Direct caricato');
