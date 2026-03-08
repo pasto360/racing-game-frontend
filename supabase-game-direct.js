@@ -93,9 +93,28 @@ async function loadGameFromSupabase() {
         if (data.races) game.races = data.races
         if (data.championship) game.championship = data.championship
         if (data.race_history) game.raceHistory = data.race_history
-        if (data.track_training) game.trackTraining = data.track_training
+        
+        // Track Training - Merge solo level (mantieni metadati statici)
+        if (data.track_training) {
+            Object.keys(data.track_training).forEach(key => {
+                if (game.trackTraining[key]) {
+                    game.trackTraining[key].level = data.track_training[key].level || 0;
+                }
+            });
+        }
+        
         if (data.track_queue) game.trackQueue = data.track_queue
-        if (data.missions) game.missions = data.missions
+        
+        // Missions - Merge solo progress e completed (mantieni metadati statici)
+        if (data.missions) {
+            Object.keys(data.missions).forEach(key => {
+                if (game.missions[key]) {
+                    game.missions[key].progress = data.missions[key].progress || 0;
+                    game.missions[key].completed = data.missions[key].completed || false;
+                }
+            });
+        }
+        
         if (data.pvp_stats) game.pvpStats = data.pvp_stats
         if (data.upgrades_count !== undefined) game.upgradesCount = data.upgrades_count
         if (data.championships_won !== undefined) game.championshipsWon = data.championships_won
