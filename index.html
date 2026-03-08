@@ -1614,24 +1614,48 @@ async function loadLeaderboard() {
         
         // Se cache valida per questo slot, usa quella
         if (leaderboardCache && leaderboardCacheSlot === currentSlot) {
-            // ✅ Cache valida - nessun log per evitare spam
             return leaderboardCache;
         }
         
-        console.log('📊 Caricando classifica dal server...');
-        const response = await fetch(`${API_URL}/api/game/leaderboard`, {
-            headers: { 'Authorization': `Bearer ${getAuthToken()}` }
-        });
+        console.log('📊 Caricando classifica da Supabase...');
         
-        if (!response.ok) throw new Error('Errore caricamento classifica');
+        // Query top 100 utenti ordinati per reputazione
+        const { data, error } = await supabase
+            .from('game_state')
+            .select(`
+                user_id,
+                resources,
+                championships_won,
+                races,
+                users!inner(username)
+            `)
+            .order('resources->reputation->value', { ascending: false })
+            .limit(100);
         
-        const data = await response.json();
+        if (error) throw error;
         
-        // Salva in cache con slot corrente
-        leaderboardCache = data;
+        // Formatta dati
+        const leaderboard = data.map((entry, index) => ({
+            rank: index + 1,
+            username: entry.users.username,
+            reputation: entry.resources?.reputation?.value || 0,
+            championships: entry.championships_won || 0,
+            wins: entry.races?.wins || 0
+        }));
+        
+        // Salva in cache
+        leaderboardCache = leaderboard;
         leaderboardCacheSlot = currentSlot;
         
-        console.log(`✅ Classifica aggiornata (slot ${currentSlot})! Prossimo aggiornamento tra ${getNextLeaderboardUpdate()}`);
+        console.log(`✅ Classifica caricata: ${leaderboard.length} giocatori`);
+        return leaderboard;
+        
+    } catch (error) {
+        console.error('Errore caricamento classifica:', error);
+        if (leaderboardCache) {
+            return leaderboardCache;
+        }
+        return null;
         
         return data;
         
