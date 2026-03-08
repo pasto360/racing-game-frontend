@@ -1653,17 +1653,7 @@ async function loadLeaderboard() {
     } catch (error) {
         console.error('Errore caricamento classifica:', error);
         if (leaderboardCache) {
-            return leaderboardCache;
-        }
-        return null;
-        
-        return data;
-        
-    } catch (error) {
-        console.error('Errore caricamento classifica:', error);
-        // Se c'è cache vecchia, usala comunque
-        if (leaderboardCache) {
-            console.log('⚠️ Usando cache classifica (vecchia) - Server non disponibile');
+            console.log('⚠️ Usando cache classifica (vecchia)');
             return leaderboardCache;
         }
         return null;
