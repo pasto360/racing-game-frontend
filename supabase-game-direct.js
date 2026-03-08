@@ -17,21 +17,23 @@ async function loadGameFromSupabase() {
         const userId = session.user.id;
         console.log('👤 User ID:', userId);
         
-        // Carica game_state
+        // Carica game_state con header corretto per JSONB
         const { data, error } = await supabase
             .from('game_state')
             .select('*')
             .eq('user_id', userId)
-            .single()
+            .maybeSingle(); // Usa maybeSingle() invece di single() per evitare errori
         
         if (error) {
-            if (error.code === 'PGRST116') {
-                // Nessun record trovato - crea nuovo stato
-                console.log('📝 Primo accesso - creo nuovo stato')
-                await createInitialGameState(userId)
-                return await loadGameFromSupabase() // Richiama ricorsivamente
-            }
-            throw error
+            console.error('❌ Errore query:', error);
+            throw error;
+        }
+        
+        if (!data) {
+            // Nessun record trovato - crea nuovo stato
+            console.log('📝 Primo accesso - creo nuovo stato')
+            await createInitialGameState(userId)
+            return await loadGameFromSupabase() // Richiama ricorsivamente
         }
         
         console.log('✅ Stato caricato da Supabase')
@@ -144,8 +146,8 @@ async function saveGameToSupabase(showIndicator = true) {
             pvp_stats: game.pvpStats,
             upgrades_count: game.upgradesCount,
             championships_won: game.championshipsWon,
-            event_progress: game.eventProgress,
-            last_save_time: new Date().toISOString()
+            event_progress: game.eventProgress
+            // last_save_time aggiornato automaticamente da trigger DB
         };
         
         // Upsert (insert or update)
@@ -196,8 +198,8 @@ async function createInitialGameState(userId) {
         upgrades_count: 0,
         championships_won: 0,
         event_progress: {},
-        race_history: [],
-        last_save_time: new Date().toISOString()
+        race_history: []
+        // last_save_time gestito automaticamente da DEFAULT NOW() nel DB
     };
     
     const { error } = await supabase
