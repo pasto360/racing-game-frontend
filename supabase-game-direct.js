@@ -1,32 +1,49 @@
-// CARICA GIOCO
+// ========================================
+// CARICAMENTO E SALVATAGGIO GIOCO - SUPABASE DIRECT
+// Usa sessione localStorage invece di Supabase Auth
+// ========================================
+
+// CARICA STATO GIOCO
 async function loadGameFromSupabase() {
     try {
-        const session = getSession()
-        if (!session) {
-            window.location.href = 'login.html'
-            return false
+        console.log('📥 Caricamento da Supabase...')
+        
+        // Ottieni user ID dalla sessione LOCALE (non Supabase Auth)
+        const session = getSession();
+        if (!session || !session.user || !session.user.id) {
+            throw new Error('Sessione non valida - rieffettua login');
         }
         
-        const { data, error } = await window.supabase
+        const userId = session.user.id;
+        console.log('👤 User ID:', userId);
+        
+        // Carica game_state
+        const { data, error } = await supabase
             .from('game_state')
             .select('*')
-            .eq('user_id', session.userId)
+            .eq('user_id', userId)
             .single()
         
         if (error) {
             if (error.code === 'PGRST116') {
-                await createInitialGameState(session.userId)
-                return await loadGameFromSupabase()
+                // Nessun record trovato - crea nuovo stato
+                console.log('📝 Primo accesso - creo nuovo stato')
+                await createInitialGameState(userId)
+                return await loadGameFromSupabase() // Richiama ricorsivamente
             }
             throw error
         }
         
-        // Merge dati (come prima)
+        console.log('✅ Stato caricato da Supabase')
+        
+        // Merge con game object
         if (data.resources) {
             Object.keys(data.resources).forEach(key => {
                 if (game.resources[key]) {
                     game.resources[key].value = data.resources[key].value
-                    if (data.resources[key].max) game.resources[key].max = data.resources[key].max
+                    if (data.resources[key].max) {
+                        game.resources[key].max = data.resources[key].max
+                    }
                 }
             })
         }
@@ -34,22 +51,28 @@ async function loadGameFromSupabase() {
         if (data.workshop) game.workshop = data.workshop
         if (data.owned_cars) game.ownedCars = data.owned_cars
         
-        if (data.driver && typeof data.driver === 'object') {
+        // Driver
+        if (data.driver && typeof data.driver === 'object' && !Array.isArray(data.driver)) {
             game.driver.level = data.driver.level || 0
             game.driver.upgrading = data.driver.upgrading || false
             game.driver.upgradeEndTime = data.driver.upgradeEndTime || 0
         }
         
         if (data.sponsors) {
-            data.sponsors.forEach((s, i) => {
-                if (game.sponsors[i]) game.sponsors[i].unlocked = s.unlocked
+            data.sponsors.forEach((serverSponsor, index) => {
+                if (game.sponsors[index]) {
+                    game.sponsors[index].unlocked = serverSponsor.unlocked
+                }
             })
         }
         
         if (data.current_sponsor) game.currentSponsor = data.current_sponsor
+        
         if (data.technologies) {
-            data.technologies.forEach((t, i) => {
-                if (game.technologies[i]) game.technologies[i].researched = t.researched
+            data.technologies.forEach((serverTech, index) => {
+                if (game.technologies[index]) {
+                    game.technologies[index].researched = serverTech.researched
+                }
             })
         }
         
@@ -60,36 +83,51 @@ async function loadGameFromSupabase() {
         if (data.track_queue) game.trackQueue = data.track_queue
         if (data.missions) game.missions = data.missions
         if (data.pvp_stats) game.pvpStats = data.pvp_stats
-        if (data.upgrades_count) game.upgradesCount = data.upgrades_count
-        if (data.championships_won) game.championshipsWon = data.championships_won
+        if (data.upgrades_count !== undefined) game.upgradesCount = data.upgrades_count
+        if (data.championships_won !== undefined) game.championshipsWon = data.championships_won
         if (data.event_progress) game.eventProgress = data.event_progress
         
-        console.log('✅ Gioco caricato')
         return true
         
     } catch (error) {
         console.error('❌ Errore caricamento:', error)
-        return false
+        throw error
     }
 }
 
-// SALVA GIOCO
-let lastSaveTime = 0
+// SALVA STATO GIOCO
+let lastSaveTime = 0;
+const SAVE_COOLDOWN = 2000; // 2 secondi tra un salvataggio e l'altro
+
 async function saveGameToSupabase(showIndicator = true) {
     try {
-        const now = Date.now()
-        if (now - lastSaveTime < 3000) {
-            console.log('⏳ Save troppo frequente')
-            return
+        // Rate limiting
+        const now = Date.now();
+        if (now - lastSaveTime < SAVE_COOLDOWN) {
+            console.log('⏳ Salvataggio troppo frequente, attendi...');
+            return false;
+        }
+        lastSaveTime = now;
+        
+        if (showIndicator) {
+            const indicator = document.getElementById('saveIndicator');
+            if (indicator) {
+                indicator.style.display = 'block';
+                setTimeout(() => indicator.style.display = 'none', 1500);
+            }
         }
         
-        const session = getSession()
-        if (!session) return false
+        // Ottieni user ID dalla sessione LOCALE
+        const session = getSession();
+        if (!session || !session.user || !session.user.id) {
+            throw new Error('Sessione non valida');
+        }
         
-        const saveIndicator = document.getElementById('saveIndicator')
-        if (showIndicator && saveIndicator) saveIndicator.classList.add('show')
+        const userId = session.user.id;
         
+        // Prepara dati
         const gameState = {
+            user_id: userId,
             resources: game.resources,
             workshop: game.workshop,
             owned_cars: game.ownedCars,
@@ -107,55 +145,68 @@ async function saveGameToSupabase(showIndicator = true) {
             upgrades_count: game.upgradesCount,
             championships_won: game.championshipsWon,
             event_progress: game.eventProgress,
-            last_save: new Date().toISOString()
-        }
+            last_save_time: new Date().toISOString()
+        };
         
-        const { error } = await window.supabase
+        // Upsert (insert or update)
+        const { error } = await supabase
             .from('game_state')
-            .update(gameState)
-            .eq('user_id', session.userId)
+            .upsert(gameState, {
+                onConflict: 'user_id'
+            });
         
-        if (error) throw error
+        if (error) throw error;
         
-        lastSaveTime = Date.now()
-        console.log('💾 Salvato')
-        
-        if (showIndicator && saveIndicator) {
-            setTimeout(() => saveIndicator.classList.remove('show'), 1500)
-        }
-        
-        return true
+        console.log('💾 Stato salvato su Supabase');
+        return true;
         
     } catch (error) {
-        console.error('❌ Errore save:', error)
-        return false
+        console.error('❌ Errore salvataggio:', error);
+        return false;
     }
 }
 
 // CREA STATO INIZIALE
 async function createInitialGameState(userId) {
-    const initial = {
+    const initialState = {
         user_id: userId,
-        resources: { money: { value: 5000, icon: '💰' }, parts: { value: 100, icon: '🔩' }, reputation: { value: 0, icon: '⭐' }, energy: { value: 100, max: 100, icon: '⚡' } },
-        workshop: { engine: 0, electronics: 0, body: 0, aerodynamics: 0 },
+        resources: {
+            money: { value: 15000 },
+            parts: { value: 150 },
+            reputation: { value: 0 },
+            energy: { value: 100 }
+        },
+        workshop: {
+            engine: { level: 0, unlocked: true },
+            electronics: { level: 0, unlocked: false },
+            body: { level: 0, unlocked: false },
+            aerodynamics: { level: 0, unlocked: false }
+        },
         owned_cars: [],
         driver: { level: 0, upgrading: false, upgradeEndTime: 0 },
         sponsors: [],
         current_sponsor: null,
         technologies: [],
-        races: { completed: 0, wins: 0, lastRaceTime: 0, cooldown: 30000 },
-        championship: { active: false, currentRace: 0, totalRaces: 5, wins: 0, results: [] },
-        race_history: [],
+        races: { completed: 0, wins: 0, lastRaceTime: 0 },
+        championship: { active: false, currentRace: 0, wins: 0, results: [] },
         track_training: {},
         track_queue: null,
         missions: {},
         pvp_stats: { wins: 0, losses: 0, total: 0 },
         upgrades_count: 0,
         championships_won: 0,
-        event_progress: {}
-    }
+        event_progress: {},
+        race_history: [],
+        last_save_time: new Date().toISOString()
+    };
     
-    await window.supabase.from('game_state').insert(initial)
+    const { error } = await supabase
+        .from('game_state')
+        .insert([initialState]);
+    
+    if (error) throw error;
+    
+    console.log('✅ Stato iniziale creato');
 }
 
-console.log('✅ Gioco Direct caricato')
+console.log('✅ Gioco Direct caricato');
