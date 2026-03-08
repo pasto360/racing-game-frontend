@@ -98,7 +98,15 @@ async function loadGameFromSupabase() {
             // Mantiene: cooldown (30000)
         }
         
-        if (data.championship) game.championship = data.championship
+        // Championship - Merge dati dinamici (preserva entryFee, totalRaces, prizePool)
+        if (data.championship) {
+            game.championship.active = data.championship.active || false;
+            game.championship.currentRace = data.championship.currentRace || 0;
+            game.championship.wins = data.championship.wins || 0;
+            game.championship.results = data.championship.results || [];
+            // Mantiene: totalRaces (5), entryFee (3500), prizePool (7000)
+        }
+        
         if (data.race_history) game.raceHistory = data.race_history
         
         // Track Training - Merge solo level (mantieni metadati statici)
