@@ -1647,6 +1647,15 @@ async function loadLeaderboard() {
 }
 
 // ===== FINE CONFIGURAZIONE API =====
+
+// Metadati workshop (nome, icona per UI)
+const WORKSHOP_META = {
+    engine: { name: 'Motore', icon: '⚙️', image: 'engine.jpg' },
+    electronics: { name: 'Elettronica', icon: '🔌', image: 'electronics.jpg' },
+    body: { name: 'Carrozzeria', icon: '🛡️', image: 'body.jpg' },
+    aerodynamics: { name: 'Aerodinamica', icon: '💨', image: 'aero.jpg' }
+};
+
         const game = {
     currentPage: 'workshop',
     selectedCarIndex: 0,
@@ -3870,6 +3879,7 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                             <div class="side-menu">
                                 ${workshopSections.map((key, idx) => {
                                     const section = this.workshop[key];
+                                    const meta = WORKSHOP_META[key]; // Metadati UI
                                     // Mappa immagini per reparto
                                     const imageMap = {
                                         'engine': 'engine.jpg',
@@ -3890,9 +3900,9 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                                                     // Cambia immagine
                                                     const img = document.getElementById('workshop-image');
                                                     img.src = 'images/sections/${imageName}';
-                                                    img.alt = '${section.name}';
+                                                    img.alt = '${meta.name}';
                                                 ">
-                                            ${section.icon}<br>${section.name.split(' ').pop()}
+                                            ${meta.icon}<br>${meta.name.split(' ').pop()}
                                         </button>
                                     `;
                                 }).join('')}
