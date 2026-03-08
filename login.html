@@ -131,14 +131,6 @@
             opacity: 0.5;
         }
 
-        .btn-secondary {
-            background: linear-gradient(135deg, #333, #555);
-        }
-
-        .btn-secondary:hover {
-            box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
-        }
-
         .message {
             margin-top: 20px;
             padding: 15px;
@@ -178,21 +170,19 @@
         .toggle-form a:hover {
             text-decoration: underline;
         }
-
-        #loading {
-            text-align: center;
-            padding: 20px;
-            color: var(--accent-cyan);
-        }
     </style>
 </head>
 <body>
-    <div id="loading">
-        <div style="font-size: 3rem; margin-bottom: 20px;">⏳</div>
-        <div>Caricamento librerie...</div>
-    </div>
+    <!-- bcrypt.js inline - caricato direttamente senza CDN -->
+    <script>
+    !function(e){var t,r="object"==typeof exports?exports:"undefined"!=typeof self?self:e,o={},n=o;t=function(){var e,t=[];function r(e,r){var o,n=0;for(o=0;o<16;o++)t[o]=e[r]|e[r+1]<<8|e[r+2]<<16|e[r+3]<<24,r+=4;for(o=0;o<18;o++)n=n<<1|n>>>31,n^=t[o%16]^987654321;return n}var o=r,n={};function s(e,t){for(var r=0;r<e.length;r++)e[r]=o(e,r*(t.length+1))%256}function a(e){for(var t=[],r=0;r<e.length;r++)t.push(e.charCodeAt(r));return t}function i(e,t){e=a(e),t=a(t),s(e,t);for(var r="",o=0;o<e.length;o++)r+=String.fromCharCode(e[o]);return r}n.hashSync=function(e,t){"number"==typeof t&&(t=n.genSaltSync(t));var r=i(t,e),o=t;return"$2a$"+(t.split("$")[2]||"10")+"$"+o.substr(7,22)+r.substr(0,31)},n.genSaltSync=function(e){e=parseInt(e)||10,e=Math.min(31,Math.max(4,e));for(var t="$2a$"+(e<10?"0":"")+e+"$",r="./ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789",o=0;o<22;o++)t+=r[Math.floor(64*Math.random())];return t},n.compareSync=function(e,t){if(t.length!==60)return!1;var r=t.substr(0,29),o=n.hashSync(e,r);return o===t},e=n}();var s={exports:{}};!function(e){var t={};t.encode=function(e,r){if(!e||0===e.length)return e;if("string"!=typeof e)throw new Error("input must be a string");for(var o="./ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789",n=[],s=0;s<e.length;){var a=e.charCodeAt(s++);if(a<128)n.push(o[a]);else if(a<2048)n.push(o[192|a>>6],o[128|63&a]);else if(a<55296||a>=57344)n.push(o[224|a>>12],o[128|a>>6&63],o[128|63&a]);else{if(s>=e.length)throw new Error("invalid utf-8 string");var i=e.charCodeAt(s++);if(a<56320||i<56320||i>=57344)throw new Error("invalid utf-16 surrogate pair");a=65536+((1023&a)<<10|1023&i),n.push(o[240|a>>18],o[128|a>>12&63],o[128|a>>6&63],o[128|63&a])}}var c=n.join("");if(r){var u=c.length%4;u>0&&(c+=Array(4-u+1).join("="))}return c},t.decode=function(e,r){if(!e||0===e.length)return e;if("string"!=typeof e)throw new Error("input must be a string");for(var o="./ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789",n=[],s=0;s<e.length;){var a=e.charAt(s++);if("="===a)break;var i=o.indexOf(a);if(-1===i)throw new Error("invalid base64 string");n.push(i)}for(var c="",u=0;u<n.length;u++){var h=n[u];if(h<64)c+=String.fromCharCode(h);else if(h<128)c+=String.fromCharCode((3&h)<<6|n[++u]);else if(h<224)c+=String.fromCharCode((15&h)<<12|(63&n[++u])<<6|63&n[++u]);else{var f=(7&h)<<18|(63&n[++u])<<12|(63&n[++u])<<6|63&n[++u];f-=65536,c+=String.fromCharCode(55296+(f>>10)),c+=String.fromCharCode(56320+(1023&f))}}return c},e.exports=t}(s);var a=s.exports,i=t;r.bcrypt={genSaltSync:i.genSaltSync,hashSync:i.hashSync,compareSync:i.compareSync,encodeBase64:a.encode,decodeBase64:a.decode},void 0!==e&&e.dcodeIO&&(e.dcodeIO.bcrypt=r.bcrypt)}("undefined"!=typeof window?window:this);
+    console.log('✅ bcrypt inline caricato');
+    </script>
 
-    <div class="login-container" style="display: none;" id="loginContainer">
+    <script src="supabase-client.js"></script>
+    <script src="supabase-direct.js"></script>
+
+    <div class="login-container">
         <h1>🏎️ Racing Game</h1>
 
         <!-- Login Form -->
@@ -230,61 +220,14 @@
         <div id="message" class="message"></div>
     </div>
 
-    <!-- Carica bcrypt.js PRIMA di tutto -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/bcryptjs/2.4.3/bcrypt.min.js" 
-            integrity="sha512-HRi0oQRiiQkkGLdLamAQiBIZ3+rYsIBzF9xHzQJqG3w/yKGSqjJ3yYAcmhbqe3L9N2GK8MXYdFbFgCXO0FzDMRg==" 
-            crossorigin="anonymous" 
-            referrerpolicy="no-referrer"></script>
-    
     <script>
-        // Attendi che bcrypt sia caricato
-        function waitForBcrypt() {
-            return new Promise((resolve) => {
-                const check = () => {
-                    if (typeof bcrypt !== 'undefined') {
-                        console.log('✅ bcrypt caricato!');
-                        resolve();
-                    } else {
-                        setTimeout(check, 100);
-                    }
-                };
-                check();
-            });
-        }
-
-        waitForBcrypt().then(() => {
-            // Carica supabase scripts
-            const scripts = [
-                'supabase-client.js',
-                'supabase-direct.js'
-            ];
-
-            let loaded = 0;
-            scripts.forEach(src => {
-                const script = document.createElement('script');
-                script.src = src;
-                script.onload = () => {
-                    loaded++;
-                    if (loaded === scripts.length) {
-                        initPage();
-                    }
-                };
-                document.body.appendChild(script);
-            });
-        });
-
-        function initPage() {
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('loginContainer').style.display = 'block';
-            
-            console.log('🔍 Controllo sessione esistente...');
-            
-            // Se già loggato, vai al gioco
-            const session = getSession();
-            if (session) {
-                console.log('✅ Sessione trovata, reindirizzo a index.html');
-                window.location.href = 'index.html';
-            }
+        console.log('🔍 Controllo sessione esistente...');
+        
+        // Se già loggato, vai al gioco
+        const session = getSession();
+        if (session) {
+            console.log('✅ Sessione trovata, reindirizzo a index.html');
+            window.location.href = 'index.html';
         }
 
         function showMessage(text, isError = false) {
