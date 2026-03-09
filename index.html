@@ -4715,13 +4715,13 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
 
                     this._leaderboardCache = data;
 
-                    // Controlla se può sfidare oggi (con cache) - DISABILITATO (Railway)
-                    // if (!this._canChallengeCache || (Date.now() - this._canChallengeCacheTime > 60000)) {
-                    //     this._canChallengeCache = await this.checkCanChallenge();
-                    //     this._canChallengeCacheTime = Date.now();
-                    // }
-                    // const canChallengeData = this._canChallengeCache;
-                    const canChallenge = false; // PvP disabilitato (Railway)
+                    // Controlla quante sfide può fare oggi (cache 60 sec)
+                    if (!this._canChallengeCache || (Date.now() - this._canChallengeCacheTime > 60000)) {
+                        this._canChallengeCache = await checkDailyChallenges();
+                        this._canChallengeCacheTime = Date.now();
+                    }
+                    const canChallengeData = this._canChallengeCache;
+                    const canChallenge = canChallengeData ? canChallengeData.canChallenge : false;
 
                 // data è già l'array leaderboard
                 const leaderboard = data;
@@ -5439,17 +5439,8 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
             },
 
             async challengePlayer(defenderId, defenderUsername) {
-                if (this.resources.energy.value < 20) {
-                    alert('⚡ Energia insufficiente!\n\nServono 20 energia per sfidare un giocatore.');
-                    return;
-                }
-
-                // Salva dati sfida per confirmChallenge
-                this._pendingChallenge = { defenderId, defenderUsername };
-                
-                // Mostra modal conferma
-                document.getElementById('challengeOpponentName').textContent = defenderUsername;
-                document.getElementById('challengeModal').classList.add('active');
+                // Usa il nuovo sistema PvP Supabase
+                await challengePlayer(defenderId, defenderUsername);
             },
 
             closeChallengeModal() {
@@ -5832,5 +5823,8 @@ function closeMobileMenu() {
     await game.init()
 })()
     </script>
+    
+    <!-- Sistema PvP Supabase -->
+    <script src="pvp-supabase.js"></script>
 </body>
 </html>
