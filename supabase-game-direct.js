@@ -48,6 +48,12 @@ async function loadGameFromSupabase() {
                     }
                 }
             })
+            
+            // Ripristina energia minima al login (almeno 50)
+            if (game.resources.energy.value < 50) {
+                game.resources.energy.value = 50
+                console.log('⚡ Energia ripristinata a 50')
+            }
         }
         
         // Workshop - Merge dati Supabase con metadati statici

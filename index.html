@@ -2159,9 +2159,9 @@ const WORKSHOP_META = {
             }
         });
 
-        // Energia: recupera 1 punto al minuto (mantiene cap a 100)
+        // Energia: recupera 5 punti al minuto (mantiene cap a 100)
         this.resources.energy.value = Math.min(
-            this.resources.energy.value + (deltaSeconds / 60),
+            this.resources.energy.value + (deltaSeconds / 12),  // 5 al minuto
             this.resources.energy.max
         );
 
@@ -4777,16 +4777,7 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                         <!-- Info banner -->
                         <div style="margin-bottom: 15px;">`;
 
-                // Messaggio status sfide
-                if (!canChallenge && canChallengeData) {
-                    const nextTime = new Date(canChallengeData.nextChallengeTime);
-                    const hours = Math.floor((nextTime - new Date()) / (1000 * 60 * 60));
-                    const minutes = Math.floor(((nextTime - new Date()) % (1000 * 60 * 60)) / (1000 * 60));
-                    
-                    html += `<div style="background: rgba(255,51,51,0.2); border: 2px solid var(--accent-red); padding: 12px; border-radius: 10px; text-align: center;">
-                        ⏰ Hai esaurito le sfide giornaliere (3/3) - Reset tra <strong>${hours}h ${minutes}m</strong>
-                    </div>`;
-                }
+                // PvP disabilitato (Railway non disponibile)
 
                 html += `</div>
 
