@@ -258,7 +258,14 @@ async function createInitialGameState(userId) {
         .from('game_state')
         .insert([initialState]);
     
-    if (error) throw error;
+    if (error) {
+        // Se il record esiste già (409 Conflict), prova a caricarlo
+        if (error.code === '23505' || error.message?.includes('duplicate') || error.message?.includes('already exists')) {
+            console.log('⚠️ Record già esistente, carico stato esistente...');
+            return; // La funzione chiamante riproverà a caricare
+        }
+        throw error;
+    }
     
     console.log('✅ Stato iniziale creato');
 }
