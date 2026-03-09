@@ -4791,7 +4791,7 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                             </div>`;
 
                 leaderboard.forEach((player, i) => {
-                    const isMe = currentUser && player.username === currentUser.username;
+                    const isMe = currentUsername && player.username === currentUsername;
                     const rankColor = i === 0 ? '#ffd700' : i === 1 ? '#c0c0c0' : i === 2 ? '#cd7f32' : '#a0a0a0';
                     const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}`;
                     
