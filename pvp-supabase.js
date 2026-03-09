@@ -99,13 +99,22 @@ async function challengePlayer(opponentId, opponentUsername) {
         }
         
         // Carica dati avversario
+        console.log('🔍 Carico dati avversario, user_id:', opponentId);
+        
         const { data: opponentData, error: opponentError } = await supabase
             .from('game_state')
             .select('owned_cars')
             .eq('user_id', opponentId)
             .single();
         
-        if (opponentError || !opponentData?.owned_cars?.[0]) {
+        if (opponentError) {
+            console.error('Errore caricamento avversario:', opponentError);
+            alert('Errore nel caricare i dati dell\'avversario!');
+            return;
+        }
+        
+        if (!opponentData?.owned_cars?.[0]) {
+            console.warn('Avversario senza auto:', opponentData);
             alert('Avversario non ha auto disponibili!');
             return;
         }

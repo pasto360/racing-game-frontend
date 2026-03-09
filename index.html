@@ -1637,6 +1637,7 @@ async function loadLeaderboard() {
         // Formatta dati
         const leaderboard = data.map((entry, index) => ({
             rank: index + 1,
+            user_id: entry.user_id,  // ← IMPORTANTE per PvP
             username: entry.users.username,
             reputation: entry.resources?.reputation?.value || 0,
             championships: entry.championships_won || 0,
