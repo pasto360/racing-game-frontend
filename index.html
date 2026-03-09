@@ -1197,7 +1197,10 @@
     
     <div class="container" id="gameContainer" style="display: none;">
         <header>
-            <button class="logout-btn" onclick="handleLogout()">🚪 LOGOUT</button>
+            <div style="position: absolute; top: 15px; right: 15px; display: flex; flex-direction: column; align-items: flex-end; gap: 5px;">
+                <button class="logout-btn" onclick="handleLogout()">🚪 LOGOUT</button>
+                <div id="usernameDisplay" style="font-size: 0.75rem; color: var(--text-secondary); font-family: 'Segoe UI', sans-serif; opacity: 0.7;"></div>
+            </div>
             <button id="eventBtn" onclick="game.changePage('events')" style="display: none; position: absolute; top: 20px; left: 20px; background: linear-gradient(135deg, rgba(255,140,0,0.3), rgba(255,69,0,0.3)); border: 2px solid var(--accent-yellow); color: var(--accent-yellow); padding: 10px 20px; font-family: Orbitron; font-size: 0.9rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; border-radius: 8px; cursor: pointer; transition: all 0.3s;">
                 🎉 EVENTO
             </button>
@@ -2101,6 +2104,13 @@ const WORKSHOP_META = {
     console.log('✅ Gioco inizializzato');
     
     document.getElementById('gameContainer').style.display = 'block';
+    
+    // Mostra username sotto logout
+    const session = getSession();
+    const usernameDisplay = document.getElementById('usernameDisplay');
+    if (usernameDisplay && session?.user?.username) {
+        usernameDisplay.textContent = session.user.username;
+    }
     
     this.render();
     this.startGameLoop();
