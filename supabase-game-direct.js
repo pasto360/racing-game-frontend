@@ -76,18 +76,19 @@ async function loadGameFromSupabase() {
                 if (gained > 0) {
                     console.log(`⚡ Energia offline: +${gained} (offline ${Math.floor(offlineSeconds / 60)} min)`);
                     
-                    // Mostra notifica energia offline (opzionale)
-                    setTimeout(() => {
-                        if (gained >= 5) {
-                            const hours = Math.floor(offlineSeconds / 3600);
-                            const minutes = Math.floor((offlineSeconds % 3600) / 60);
-                            let timeStr = '';
-                            if (hours > 0) timeStr += `${hours}h `;
-                            if (minutes > 0) timeStr += `${minutes}min`;
-                            
-                            alert(`⚡ Bentornato!\n\nHai recuperato ${gained} energia mentre eri offline (${timeStr})!`);
-                        }
-                    }, 1000);
+                    // Mostra modal energia offline
+                    if (gained >= 5) {
+                        const hours = Math.floor(offlineSeconds / 3600);
+                        const minutes = Math.floor((offlineSeconds % 3600) / 60);
+                        let timeStr = '';
+                        if (hours > 0) timeStr += `${hours}h `;
+                        if (minutes > 0) timeStr += `${minutes}min`;
+                        
+                        // Mostra dopo che il gioco è inizializzato
+                        setTimeout(() => {
+                            showOfflineEnergyModal(gained, timeStr);
+                        }, 1500);
+                    }
                 }
             }
         }
@@ -308,6 +309,58 @@ async function createInitialGameState(userId) {
     }
     
     console.log('✅ Stato iniziale creato');
+}
+
+// Mostra modal energia offline
+function showOfflineEnergyModal(gained, timeStr) {
+    // Crea modal se non esiste
+    let modal = document.getElementById('offlineEnergyModal');
+    if (!modal) {
+        modal = document.createElement('div');
+        modal.className = 'modal';
+        modal.id = 'offlineEnergyModal';
+        modal.innerHTML = `
+            <div class="modal-content" style="max-width: 500px;">
+                <div id="offlineEnergyContent"></div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        
+        // Chiusura con click fuori
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.classList.remove('active');
+            }
+        });
+    }
+    
+    const content = document.getElementById('offlineEnergyContent');
+    content.innerHTML = `
+        <div style="text-align: center; padding: 30px 20px;">
+            <div style="font-size: 4rem; margin-bottom: 20px;">⚡</div>
+            <h2 style="font-family: Orbitron; font-size: 2rem; color: var(--accent-cyan); margin-bottom: 20px;">
+                Bentornato!
+            </h2>
+            
+            <div style="background: linear-gradient(135deg, rgba(0,217,255,0.1), rgba(0,255,136,0.1)); border: 2px solid var(--accent-green); border-radius: 12px; padding: 25px; margin: 20px 0;">
+                <div style="font-size: 1.2rem; color: var(--text-secondary); margin-bottom: 10px;">
+                    Hai recuperato energia mentre eri offline
+                </div>
+                <div style="font-size: 3rem; font-weight: 900; color: var(--accent-green); margin: 15px 0;">
+                    +${gained} ⚡
+                </div>
+                <div style="font-size: 1rem; color: var(--accent-cyan);">
+                    Tempo offline: ${timeStr}
+                </div>
+            </div>
+            
+            <button onclick="document.getElementById('offlineEnergyModal').classList.remove('active')" class="btn btn-primary" style="margin-top: 20px; font-size: 1.1rem; padding: 12px 40px;">
+                Inizia a Giocare!
+            </button>
+        </div>
+    `;
+    
+    modal.classList.add('active');
 }
 
 console.log('✅ Gioco Direct caricato');
