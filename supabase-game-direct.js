@@ -75,20 +75,7 @@ async function loadGameFromSupabase() {
                 const gained = game.resources.energy.value - oldEnergy;
                 if (gained > 0) {
                     console.log(`⚡ Energia offline: +${gained} (offline ${Math.floor(offlineSeconds / 60)} min)`);
-                    
-                    // Mostra modal energia offline
-                    if (gained >= 5) {
-                        const hours = Math.floor(offlineSeconds / 3600);
-                        const minutes = Math.floor((offlineSeconds % 3600) / 60);
-                        let timeStr = '';
-                        if (hours > 0) timeStr += `${hours}h `;
-                        if (minutes > 0) timeStr += `${minutes}min`;
-                        
-                        // Mostra dopo che il gioco è inizializzato
-                        setTimeout(() => {
-                            showOfflineEnergyModal(gained, timeStr);
-                        }, 1500);
-                    }
+                    // Popup rimosso - energia recuperata silenziosamente
                 }
             }
         }

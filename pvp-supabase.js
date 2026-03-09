@@ -85,10 +85,23 @@ function showPvPResult(result, opponentUsername, myCar, opponentCar, won, reward
     const myTotal = myCar.stats.engine + myCar.stats.body + myCar.stats.electronics + myCar.stats.aero;
     const myUpgrades = ((myCar.upgrades?.engine || 0) + (myCar.upgrades?.body || 0) + 
                         (myCar.upgrades?.electronics || 0) + (myCar.upgrades?.aero || 0)) * 5;
+    const myBase = myTotal + myUpgrades;
+    const myVariance = result.challengerScore - myBase; // Variabile casuale
     
     const oppTotal = opponentCar.stats.engine + opponentCar.stats.body + opponentCar.stats.electronics + opponentCar.stats.aero;
     const oppUpgrades = ((opponentCar.upgrades?.engine || 0) + (opponentCar.upgrades?.body || 0) + 
                          (opponentCar.upgrades?.electronics || 0) + (opponentCar.upgrades?.aero || 0)) * 5;
+    const oppBase = oppTotal + oppUpgrades;
+    const oppVariance = result.opponentScore - oppBase; // Variabile casuale
+    
+    // Funzione per formattare varianza
+    const formatVariance = (v) => {
+        if (v > 0) return `+${v}`;
+        return `${v}`; // Negativo già ha il segno -
+    };
+    
+    const session = getSession();
+    const currentUsername = session?.user?.username || 'Tu';
     
     content.innerHTML = `
         <div style="text-align: center; padding: 20px;">
@@ -105,13 +118,16 @@ function showPvPResult(result, opponentUsername, myCar, opponentCar, won, reward
                 <!-- Tua Auto -->
                 <div style="text-align: right;">
                     <div style="font-weight: 700; font-size: 1.1rem; color: var(--accent-cyan); margin-bottom: 10px;">
-                        ${myCar.name}
+                        ${currentUsername}
                     </div>
-                    <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 5px;">
-                        Stats Base: ${myTotal}
+                    <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 3px;">
+                        Potenza auto: ${myTotal}
                     </div>
-                    <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 5px;">
+                    <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 3px;">
                         Upgrade: +${myUpgrades}
+                    </div>
+                    <div style="font-size: 0.85rem; color: ${myVariance >= 0 ? 'var(--accent-green)' : 'var(--accent-red)'}; margin-bottom: 10px;">
+                        Variabile: ${formatVariance(myVariance)}
                     </div>
                     <div style="font-size: 1.5rem; font-weight: 900; color: ${won ? 'var(--accent-green)' : 'var(--accent-red)'}; margin-top: 10px;">
                         ${result.challengerScore}
@@ -128,13 +144,16 @@ function showPvPResult(result, opponentUsername, myCar, opponentCar, won, reward
                 <!-- Auto Avversario -->
                 <div style="text-align: left;">
                     <div style="font-weight: 700; font-size: 1.1rem; color: var(--accent-yellow); margin-bottom: 10px;">
-                        ${opponentCar.name}
+                        ${opponentUsername}
                     </div>
-                    <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 5px;">
-                        Stats Base: ${oppTotal}
+                    <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 3px;">
+                        Potenza auto: ${oppTotal}
                     </div>
-                    <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 5px;">
+                    <div style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 3px;">
                         Upgrade: +${oppUpgrades}
+                    </div>
+                    <div style="font-size: 0.85rem; color: ${oppVariance >= 0 ? 'var(--accent-green)' : 'var(--accent-red)'}; margin-bottom: 10px;">
+                        Variabile: ${formatVariance(oppVariance)}
                     </div>
                     <div style="font-size: 1.5rem; font-weight: 900; color: ${won ? 'var(--accent-red)' : 'var(--accent-green)'}; margin-top: 10px;">
                         ${result.opponentScore}
