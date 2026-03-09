@@ -4715,15 +4715,22 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
 
                     this._leaderboardCache = data;
 
-                    // Controlla se può sfidare oggi (con cache)
-                    if (!this._canChallengeCache || (Date.now() - this._canChallengeCacheTime > 60000)) {
-                        this._canChallengeCache = await this.checkCanChallenge();
-                        this._canChallengeCacheTime = Date.now();
-                    }
-                    const canChallengeData = this._canChallengeCache;
-                    const canChallenge = canChallengeData ? canChallengeData.canChallenge : false;
+                    // Controlla se può sfidare oggi (con cache) - DISABILITATO (Railway)
+                    // if (!this._canChallengeCache || (Date.now() - this._canChallengeCacheTime > 60000)) {
+                    //     this._canChallengeCache = await this.checkCanChallenge();
+                    //     this._canChallengeCacheTime = Date.now();
+                    // }
+                    // const canChallengeData = this._canChallengeCache;
+                    const canChallenge = false; // PvP disabilitato (Railway)
 
-                const { leaderboard, userRank } = data;
+                // data è già l'array leaderboard
+                const leaderboard = data;
+                
+                // Trova posizione utente corrente
+                const session = getSession();
+                const currentUsername = session?.user?.username;
+                const userIndex = leaderboard.findIndex(p => p.username === currentUsername);
+                const userRank = userIndex >= 0 ? userIndex + 1 : null;
                 
                 let html = `
                     <div class="page-container">
@@ -4736,7 +4743,7 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                                 </div>
                                 <div class="stat-box" style="cursor: default;">
                                     <div class="stat-label">TUA POS.</div>
-                                    <div class="stat-value">${userRank ? userRank.rank : leaderboard.findIndex(p => p.username === currentUser?.username) + 1}</div>
+                                    <div class="stat-value">${userRank || '-'}</div>
                                 </div>
                                 <div class="stat-box" style="cursor: default;">
                                     <div class="stat-label">TOP 3</div>
@@ -4853,62 +4860,62 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                     
                     container.innerHTML = '<p style="color: #a0a0a0; text-align: center; padding: 40px;">⏳ Caricamento...</p>';
                     
-                    const response = await fetch(`${API_URL}/api/game/leaderboard-weekly`, {
-                        headers: { 'Authorization': `Bearer ${getAuthToken()}` }
-                    });
+                    // Calcola inizio settimana (lunedì 00:00)
+                    const now = new Date();
+                    const dayOfWeek = now.getDay(); // 0 = domenica, 1 = lunedì, ecc.
+                    const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+                    const monday = new Date(now);
+                    monday.setDate(now.getDate() - daysToMonday);
+                    monday.setHours(0, 0, 0, 0);
                     
-                    if (!response.ok) {
-                        throw new Error('Errore caricamento classifica settimanale');
-                    }
+                    // Calcola numero settimana
+                    const weekNumber = Math.ceil((now - new Date(now.getFullYear(), 0, 1)) / (7 * 24 * 60 * 60 * 1000));
+                    document.getElementById('weekNumber').textContent = weekNumber;
                     
-                    const data = await response.json();
+                    // Query Supabase - giocatori attivi questa settimana
+                    const { data, error } = await supabase
+                        .from('game_state')
+                        .select(`
+                            user_id,
+                            resources,
+                            championships_won,
+                            races,
+                            updated_at,
+                            users!inner(username)
+                        `)
+                        .gte('updated_at', monday.toISOString())
+                        .order('resources->reputation->value', { ascending: false })
+                        .limit(50);
                     
-                    // Aggiorna numero settimana
-                    document.getElementById('weekNumber').textContent = data.weekNumber;
+                    if (error) throw error;
                     
-                    // Mostra vincitori settimana passata
-                    if (data.lastWinners) {
-                        winnersContainer.innerHTML = `
-                            <div style="background: linear-gradient(135deg, rgba(255,215,0,0.15), rgba(255,140,0,0.15)); border: 2px solid var(--accent-yellow); border-radius: 12px; padding: 20px; margin-bottom: 25px;">
-                                <h3 style="text-align: center; color: var(--accent-yellow); font-family: Orbitron; margin-bottom: 15px; font-size: 1.1rem;">
-                                    🏆 VINCITORI SETTIMANA #${data.lastWinners.week_number}
-                                </h3>
-                                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
-                                    <div style="text-align: center;">
-                                        <div style="font-size: 2rem; margin-bottom: 5px;">🥇</div>
-                                        <div style="font-size: 0.9rem; font-weight: 700; color: var(--accent-yellow);">${data.lastWinners.first_place || 'N/A'}</div>
-                                        <div style="font-size: 0.75rem; color: var(--text-secondary);">+500⭐ +5000€</div>
-                                    </div>
-                                    <div style="text-align: center;">
-                                        <div style="font-size: 2rem; margin-bottom: 5px;">🥈</div>
-                                        <div style="font-size: 0.9rem; font-weight: 700; color: #c0c0c0;">${data.lastWinners.second_place || 'N/A'}</div>
-                                        <div style="font-size: 0.75rem; color: var(--text-secondary);">+300⭐ +3000€</div>
-                                    </div>
-                                    <div style="text-align: center;">
-                                        <div style="font-size: 2rem; margin-bottom: 5px;">🥉</div>
-                                        <div style="font-size: 0.9rem; font-weight: 700; color: #cd7f32;">${data.lastWinners.third_place || 'N/A'}</div>
-                                        <div style="font-size: 0.75rem; color: var(--text-secondary);">+100⭐ +1000€</div>
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                    } else {
-                        winnersContainer.innerHTML = '';
-                    }
+                    // Formatta dati
+                    const leaderboard = data.map((entry, index) => ({
+                        rank: index + 1,
+                        username: entry.users.username,
+                        reputation: entry.resources?.reputation?.value || 0,
+                        championships: entry.championships_won || 0,
+                        wins: entry.races?.wins || 0
+                    }));
+                    
+                    // Nascondi vincitori settimana passata (per ora)
+                    winnersContainer.innerHTML = '';
                     
                     // Render classifica corrente
-                    const leaderboard = data.leaderboard || [];
-                    
                     if (leaderboard.length === 0) {
-                        container.innerHTML = '<p style="color: #a0a0a0; text-align: center; padding: 40px;">Nessun dato disponibile</p>';
+                        container.innerHTML = '<p style="color: #a0a0a0; text-align: center; padding: 40px;">Nessun giocatore attivo questa settimana</p>';
                         return;
                     }
+                    
+                    // Trova username corrente
+                    const session = getSession();
+                    const currentUsername = session?.user?.username;
                     
                     let html = '<div style="background: var(--bg-card); border: 2px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 20px;">';
                     
                     leaderboard.forEach((player, index) => {
                         const rank = index + 1;
-                        const isCurrentUser = player.username === currentUser?.username;
+                        const isCurrentUser = player.username === currentUsername;
                         const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : '';
                         
                         html += `
@@ -4927,7 +4934,7 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                                         ${player.reputation} ⭐
                                     </div>
                                     <div style="font-size: 0.75rem; color: var(--text-secondary);">
-                                        questa settimana
+                                        ${player.wins} vittorie
                                     </div>
                                 </div>
                             </div>
@@ -4937,10 +4944,12 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                     html += '</div>';
                     container.innerHTML = html;
                     
+                    console.log('✅ Classifica settimanale caricata:', leaderboard.length, 'giocatori');
+                    
                 } catch (error) {
                     console.error('Errore classifica settimanale:', error);
                     document.getElementById('weeklyLeaderboardContainer').innerHTML = 
-                        '<p style="color: #ff3333; text-align: center; padding: 40px;">❌ Errore caricamento</p>';
+                        '<p style="color: #ff3333; text-align: center; padding: 40px;">❌ Errore caricamento classifica settimanale</p>';
                 }
             },
             
@@ -5055,7 +5064,7 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                                 </div>
                                 <div style="display: flex; justify-content: space-between; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1);">
                                     <span style="color: var(--text-secondary);">Rank mondiale:</span>
-                                    <span style="font-weight: 700; font-size: 1.2rem; color: var(--accent-yellow);">#${this._leaderboardCache?.leaderboard?.findIndex(p => p.username === currentUser?.username) + 1 || '?'}</span>
+                                    <span style="font-weight: 700; font-size: 1.2rem; color: var(--accent-yellow);">#${(() => { const session = getSession(); const username = session?.user?.username; return this._leaderboardCache ? (this._leaderboardCache.findIndex(p => p.username === username) + 1 || '?') : '?'; })()}</span>
                                 </div>
                             </div>
                         </div>
