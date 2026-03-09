@@ -4816,15 +4816,6 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                     </div>`;
                 });
 
-                if (userRank) {
-                    html += `<div style="margin-top: 15px; padding: 12px; background: rgba(0,255,136,0.1); border: 2px solid #00ff88; border-radius: 8px; display: grid; grid-template-columns: 60px 1fr 150px 120px; gap: 10px; align-items: center;">
-                        <div style="text-align: center; font-weight: 700; color: #00ff88;">${userRank.rank}</div>
-                        <div style="color: #00ff88; font-weight: 700;">${userRank.username} (Tu)</div>
-                        <div style="text-align: center; color: #00d9ff; font-weight: 700;">${Number(userRank.reputation).toLocaleString()}</div>
-                        <div style="text-align: center;"><span style="color: #00ff88; font-size: 0.85rem;">—</span></div>
-                    </div>`;
-                }
-
                     html += '</div></div>';
                     container.innerHTML = html;
                     
