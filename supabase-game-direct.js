@@ -56,6 +56,45 @@ async function loadGameFromSupabase() {
             }
         }
         
+        // ⚡ CALCOLO ENERGIA OFFLINE
+        const now = Date.now();
+        const lastLogin = data.last_login || now;
+        const offlineSeconds = Math.floor((now - lastLogin) / 1000);
+        
+        if (offlineSeconds > 60) { // Solo se offline più di 1 minuto
+            // +1 energia al minuto = +1 ogni 60 secondi
+            const offlineEnergy = Math.floor(offlineSeconds / 60);
+            
+            if (offlineEnergy > 0) {
+                const oldEnergy = game.resources.energy.value;
+                game.resources.energy.value = Math.min(
+                    game.resources.energy.value + offlineEnergy,
+                    game.resources.energy.max
+                );
+                
+                const gained = game.resources.energy.value - oldEnergy;
+                if (gained > 0) {
+                    console.log(`⚡ Energia offline: +${gained} (offline ${Math.floor(offlineSeconds / 60)} min)`);
+                    
+                    // Mostra notifica energia offline (opzionale)
+                    setTimeout(() => {
+                        if (gained >= 5) {
+                            const hours = Math.floor(offlineSeconds / 3600);
+                            const minutes = Math.floor((offlineSeconds % 3600) / 60);
+                            let timeStr = '';
+                            if (hours > 0) timeStr += `${hours}h `;
+                            if (minutes > 0) timeStr += `${minutes}min`;
+                            
+                            alert(`⚡ Bentornato!\n\nHai recuperato ${gained} energia mentre eri offline (${timeStr})!`);
+                        }
+                    }, 1000);
+                }
+            }
+        }
+        
+        // Aggiorna lastLogin a ora
+        game.lastLogin = now;
+        
         // Workshop - Merge dati Supabase con metadati statici
         if (data.workshop) {
             Object.keys(data.workshop).forEach(key => {
@@ -198,7 +237,8 @@ async function saveGameToSupabase(showIndicator = true) {
             pvp_stats: game.pvpStats,
             upgrades_count: game.upgradesCount,
             championships_won: game.championshipsWon,
-            event_progress: game.eventProgress
+            event_progress: game.eventProgress,
+            last_login: game.lastLogin || Date.now() // Per energia offline
             // last_save_time aggiornato automaticamente da trigger DB
         };
         

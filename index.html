@@ -1527,6 +1527,9 @@ window.addEventListener('error', (e) => {
     }
 });
 
+// ===== MODAL RISULTATO PVP =====
+// (Aggiunto nel DOM tramite JavaScript se non esiste)
+
 // ===== CONFIGURAZIONE SUPABASE =====
 // API_URL mantenuto SOLO per funzionalità non ancora migrate: leaderboard, PvP
 const API_URL = 'https://racing-game-backend-production-a5dd.up.railway.app';
@@ -1675,6 +1678,7 @@ const WORKSHOP_META = {
         const game = {
     currentPage: 'workshop',
     selectedCarIndex: 0,
+    lastLogin: Date.now(), // Timestamp ultimo login per energia offline
         
     resources: {
                 money: { value: 15000, rate: 0, max: Infinity, icon: '💰', name: 'Denaro' },
@@ -2160,9 +2164,9 @@ const WORKSHOP_META = {
             }
         });
 
-        // Energia: recupera 5 punti al minuto (mantiene cap a 100)
+        // Energia: recupera 1 punto al minuto (mantiene cap a 100)
         this.resources.energy.value = Math.min(
-            this.resources.energy.value + (deltaSeconds / 12),  // 5 al minuto
+            this.resources.energy.value + (deltaSeconds / 60),  // 1 al minuto
             this.resources.energy.max
         );
 
