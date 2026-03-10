@@ -5282,8 +5282,14 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                     return;
                 }
                 
-                // Delega TUTTO al modulo beta esterno
-                BetaModule.render(container, game);
+                // Inizializza modulo beta se non ancora fatto
+                if (!BetaModule._initialized) {
+                    BetaModule._initialized = true;
+                    BetaModule.init();
+                } else {
+                    // Se già inizializzato, re-render
+                    BetaModule.render();
+                }
             },
             
             renderEventPage() {

@@ -4,6 +4,7 @@
 // ========================================
 
 const BetaModule = {
+    _initialized: false,
     circuits: [],
     currentCircuit: null,
     hasRaced: false,
@@ -24,26 +25,68 @@ const BetaModule = {
     async init() {
         console.log('🏁 Inizializzazione BETA Simulator...');
         
-        // Carica circuiti
-        await this.loadCircuits();
+        const container = document.getElementById('betaContainer');
+        if (container) {
+            container.innerHTML = '<p style="text-align:center; padding:40px;">⏳ Caricamento circuiti...</p>';
+        }
         
-        // Carica sfida settimanale
-        await this.loadWeeklyChallenge();
-        
-        // Render interfaccia
-        this.render();
+        try {
+            // Carica circuiti
+            await this.loadCircuits();
+            
+            if (this.circuits.length === 0) {
+                throw new Error('Nessun circuito caricato');
+            }
+            
+            // Carica sfida settimanale
+            await this.loadWeeklyChallenge();
+            
+            // Render interfaccia
+            this.render();
+            
+            console.log('✅ BETA Simulator inizializzato');
+            
+        } catch (error) {
+            console.error('❌ Errore inizializzazione BETA:', error);
+            if (container) {
+                container.innerHTML = `
+                    <div style="text-align:center; padding:40px; color: var(--accent-red);">
+                        <div style="font-size: 3rem; margin-bottom: 20px;">❌</div>
+                        <h3>Errore caricamento BETA Simulator</h3>
+                        <p style="color: var(--text-secondary); margin-top: 10px;">${error.message}</p>
+                        <button onclick="location.reload()" class="btn btn-primary" style="margin-top: 20px;">
+                            Ricarica Pagina
+                        </button>
+                    </div>
+                `;
+            }
+        }
     },
     
     // Carica circuiti da JSON
     async loadCircuits() {
         try {
+            console.log('📥 Caricamento beta_circuits.json...');
             const response = await fetch('beta_circuits.json');
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
             const data = await response.json();
-            this.circuits = data.circuits;
-            console.log(`✅ Caricati ${this.circuits.length} circuiti`);
+            this.circuits = data.circuits || [];
+            
+            console.log(`✅ Caricati ${this.circuits.length} circuiti:`, this.circuits.map(c => c.name));
+            
+            if (this.circuits.length === 0) {
+                throw new Error('File beta_circuits.json vuoto o malformato');
+            }
+            
         } catch (error) {
             console.error('❌ Errore caricamento circuiti:', error);
+            console.error('Dettagli:', error.message);
             this.circuits = [];
+            throw error; // Rilancia per gestione in init()
         }
     },
     
