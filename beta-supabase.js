@@ -113,10 +113,11 @@ const BetaModule = {
                 .maybeSingle();
             
             if (error && error.code !== 'PGRST116') {
-                throw error;
-            }
-            
-            if (data) {
+                console.warn('⚠️ Errore caricamento stato utente (tabella potrebbe non esistere):', error);
+                // Non bloccare - procedi come se non avesse mai corso
+                this.hasRaced = false;
+                this.result = null;
+            } else if (data) {
                 this.hasRaced = true;
                 this.result = {
                     totalTime: data.total_time,
@@ -158,9 +159,13 @@ const BetaModule = {
                 .order('total_time', { ascending: true })
                 .limit(50);
             
-            if (error) throw error;
+            if (error) {
+                console.warn('⚠️ Errore caricamento classifica (tabella potrebbe non esistere):', error);
+                this.leaderboard = [];
+                return;
+            }
             
-            this.leaderboard = data.map((entry, index) => ({
+            this.leaderboard = (data || []).map((entry, index) => ({
                 position: index + 1,
                 username: entry.users.username,
                 totalTime: entry.total_time,
@@ -246,7 +251,19 @@ const BetaModule = {
             
         } catch (error) {
             console.error('❌ Errore simulazione:', error);
-            alert('Errore durante la simulazione!');
+            
+            // Messaggio specifico in base al tipo di errore
+            let errorMessage = 'Errore durante la simulazione!';
+            
+            if (error.message?.includes('relation') || error.message?.includes('does not exist')) {
+                errorMessage = '❌ Tabella beta_race_results non trovata!\n\nDevi eseguire lo script SQL su Supabase:\n\nVai su Supabase → SQL Editor → Esegui SCHEMA-BETA-SUPABASE.sql';
+            } else if (error.code === 'PGRST116') {
+                errorMessage = 'Nessun dato trovato (normale per prima volta)';
+            } else if (error.message) {
+                errorMessage = `Errore: ${error.message}`;
+            }
+            
+            alert(errorMessage);
             
             const btn = document.getElementById('runSimBtn');
             if (btn) {
