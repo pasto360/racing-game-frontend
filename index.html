@@ -1182,11 +1182,11 @@
     <!-- =====================================================
          FILE BETA ESTERNI
          - beta.css  → stili pagina beta
-         - beta.js   → logica pagina beta (espone BetaModule)
-         - Il server beta usa: server_beta.js (routes separate)
+         - beta-supabase.js → logica pagina beta con Supabase
+         - beta_circuits.json → dati circuiti
          ===================================================== -->
     <link rel="stylesheet" href="beta.css">
-    <script src="beta.js" defer></script>
+    <script src="beta-supabase.js" defer></script>
 </head>
 <body>
     <script src="bcrypt-working.js"></script>
@@ -1197,9 +1197,10 @@
     
     <div class="container" id="gameContainer" style="display: none;">
         <header>
-            <div style="position: absolute; top: 15px; right: 15px; display: flex; flex-direction: column; align-items: flex-end; gap: 5px;">
-                <button class="logout-btn" onclick="handleLogout()">🚪 LOGOUT</button>
-                <div id="usernameDisplay" style="font-size: 0.75rem; color: var(--text-secondary); font-family: 'Segoe UI', sans-serif; opacity: 0.7;"></div>
+            <div style="position: absolute; top: 15px; right: 15px; display: flex; align-items: center; gap: 8px; font-size: 0.75rem; color: var(--text-secondary); font-family: 'Segoe UI', sans-serif; opacity: 0.8;">
+                <div id="usernameDisplay"></div>
+                <span style="color: rgba(255,255,255,0.3);">•</span>
+                <a href="#" onclick="handleLogout(); return false;" style="color: var(--accent-cyan); text-decoration: none; transition: opacity 0.2s; cursor: pointer;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.8'">logout</a>
             </div>
             <button id="eventBtn" onclick="game.changePage('events')" style="display: none; position: absolute; top: 20px; left: 20px; background: linear-gradient(135deg, rgba(255,140,0,0.3), rgba(255,69,0,0.3)); border: 2px solid var(--accent-yellow); color: var(--accent-yellow); padding: 10px 20px; font-family: Orbitron; font-size: 0.9rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; border-radius: 8px; cursor: pointer; transition: all 0.3s;">
                 🎉 EVENTO
