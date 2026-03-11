@@ -103,36 +103,46 @@ const BetaModule = {
             const circuitIndex = weekNumber % this.circuits.length;
             this.currentCircuit = this.circuits[circuitIndex];
             
-            // Carica stato utente da Supabase
+            // Calcola giorno corrente (per check limite giornaliero)
+            const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+            
+            // Carica ultima corsa dell'utente per questo circuito/settimana
             const { data, error } = await supabase
                 .from('beta_race_results')
                 .select('*')
                 .eq('user_id', userId)
                 .eq('circuit_id', this.currentCircuit.id)
                 .eq('week_number', weekNumber)
+                .order('created_at', { ascending: false })
+                .limit(1)
                 .maybeSingle();
             
             if (error && error.code !== 'PGRST116') {
-                console.warn('⚠️ Errore caricamento stato utente (tabella potrebbe non esistere):', error);
-                // Non bloccare - procedi come se non avesse mai corso
+                console.warn('⚠️ Errore caricamento stato utente:', error);
                 this.hasRaced = false;
+                this.lastRaceDate = null;
                 this.result = null;
             } else if (data) {
-                this.hasRaced = true;
+                // Controlla se ha già corso oggi
+                const raceDate = new Date(data.created_at).toISOString().split('T')[0];
+                this.hasRaced = (raceDate === today);
+                this.lastRaceDate = raceDate;
+                
+                // Mostra sempre il miglior risultato
                 this.result = {
                     totalTime: data.total_time,
                     bestLap: data.best_lap,
                     position: data.position,
                     dnf: data.dnf,
-                    dnfLap: data.dnf_lap,
-                    reward: data.reward
+                    dnfLap: data.dnf_lap
                 };
             } else {
                 this.hasRaced = false;
+                this.lastRaceDate = null;
                 this.result = null;
             }
             
-            // Carica classifica settimanale
+            // Carica classifica settimanale (migliori tempi)
             await this.loadLeaderboard(weekNumber);
             
         } catch (error) {
@@ -140,37 +150,52 @@ const BetaModule = {
         }
     },
     
-    // Carica classifica settimanale
+    // Carica classifica settimanale (miglior tempo per utente)
     async loadLeaderboard(weekNumber) {
         try {
+            // Query per ottenere solo il MIGLIOR tempo di ogni utente
             const { data, error} = await supabase
                 .from('beta_race_results')
                 .select(`
                     user_id,
                     total_time,
                     best_lap,
-                    position,
-                    dnf,
                     users!inner(username)
                 `)
                 .eq('circuit_id', this.currentCircuit.id)
                 .eq('week_number', weekNumber)
                 .eq('dnf', false)
-                .order('total_time', { ascending: true })
-                .limit(50);
+                .order('total_time', { ascending: true });
             
             if (error) {
-                console.warn('⚠️ Errore caricamento classifica (tabella potrebbe non esistere):', error);
+                console.warn('⚠️ Errore caricamento classifica:', error);
                 this.leaderboard = [];
                 return;
             }
             
-            this.leaderboard = (data || []).map((entry, index) => ({
-                position: index + 1,
-                username: entry.users.username,
-                totalTime: entry.total_time,
-                bestLap: entry.best_lap
-            }));
+            // Raggruppa per utente e prendi solo il miglior tempo
+            const bestTimes = new Map();
+            (data || []).forEach(entry => {
+                const existing = bestTimes.get(entry.user_id);
+                if (!existing || entry.total_time < existing.total_time) {
+                    bestTimes.set(entry.user_id, {
+                        username: entry.users.username,
+                        totalTime: entry.total_time,
+                        bestLap: entry.best_lap
+                    });
+                }
+            });
+            
+            // Converti in array e ordina
+            this.leaderboard = Array.from(bestTimes.values())
+                .sort((a, b) => a.totalTime - b.totalTime)
+                .slice(0, 50) // Top 50
+                .map((entry, index) => ({
+                    position: index + 1,
+                    username: entry.username,
+                    totalTime: entry.totalTime,
+                    bestLap: entry.bestLap
+                }));
             
         } catch (error) {
             console.error('❌ Errore caricamento classifica:', error);
@@ -195,6 +220,12 @@ const BetaModule = {
                 return;
             }
             
+            // Check se ha già corso oggi
+            if (this.hasRaced) {
+                alert('⏳ Hai già corso oggi!\n\nPotrai fare una nuova simulazione domani.\n\nOgni giorno hai 1 tentativo per migliorare il tuo tempo.');
+                return;
+            }
+            
             const car = game.ownedCars[game.selectedCarIndex || 0];
             if (!car) {
                 alert('Devi avere un\'auto!');
@@ -215,18 +246,19 @@ const BetaModule = {
             const weekNumber = this.getWeekNumber();
             const userId = session.user.id;
             
+            // Inserisci nuovo record (non upsert - vogliamo storico giornaliero)
             const { error } = await supabase
                 .from('beta_race_results')
-                .upsert({
+                .insert({
                     user_id: userId,
                     circuit_id: this.currentCircuit.id,
                     week_number: weekNumber,
-                    total_time: result.dnf ? 999999 : result.totalTime, // DNF = tempo altissimo
+                    total_time: result.dnf ? 999999 : result.totalTime,
                     best_lap: result.bestLap,
-                    position: 0, // Verrà calcolato dalla classifica
+                    position: 0,
                     dnf: result.dnf,
                     dnf_lap: result.dnfLap || 0,
-                    reward: { money: 0, parts: 0 }, // Nessun premio immediato
+                    reward: { money: 0, parts: 0 },
                     setup: this.setup
                 });
             
@@ -242,6 +274,7 @@ const BetaModule = {
             
             // Aggiorna stato
             this.hasRaced = true;
+            this.lastRaceDate = new Date().toISOString().split('T')[0];
             this.result = {
                 totalTime: result.totalTime,
                 bestLap: result.bestLap,
@@ -257,7 +290,6 @@ const BetaModule = {
             console.error('❌ Errore simulazione:', error);
             console.error('Dettagli errore completi:', JSON.stringify(error, null, 2));
             
-            // Messaggio specifico in base al tipo di errore
             let errorMessage = 'Errore durante la simulazione!';
             
             if (error.message?.includes('relation') || error.message?.includes('does not exist') || error.code === '42P01') {
@@ -482,6 +514,8 @@ const BetaModule = {
     // Render risultato (dopo la gara)
     renderResult() {
         const r = this.result;
+        const canRaceAgainTomorrow = this.hasRaced;
+        
         return `
             <div style="background: ${r.dnf ? 'rgba(255,51,51,0.1)' : 'rgba(0,255,136,0.1)'}; border: 2px solid ${r.dnf ? 'var(--accent-red)' : 'var(--accent-green)'}; border-radius: 12px; padding: 20px; margin-bottom: 30px;">
                 <h3 style="font-family: Orbitron; color: ${r.dnf ? 'var(--accent-red)' : 'var(--accent-green)'}; margin-bottom: 20px;">
@@ -493,7 +527,7 @@ const BetaModule = {
                         Ritirato al giro ${r.dnfLap} per mancanza di carburante!
                     </p>
                     <p style="color: var(--text-secondary);">
-                        Riprova con più carburante o un setup più efficiente.
+                        ${canRaceAgainTomorrow ? 'Potrai riprovare domani con più carburante.' : 'Riprova con un setup più efficiente.'}
                     </p>
                 ` : `
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
@@ -514,20 +548,31 @@ const BetaModule = {
                     </div>
                     
                     <div style="background: rgba(255,140,0,0.1); border: 1px solid var(--accent-yellow); border-radius: 8px; padding: 15px; margin-top: 20px;">
-                        <h4 style="color: var(--accent-yellow); margin-bottom: 10px;">ℹ️ Premi Fine Settimana</h4>
-                        <p style="margin-bottom: 10px;">I premi verranno assegnati <strong>lunedì prossimo</strong> ai primi classificati:</p>
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; font-size: 0.9rem;">
-                            <div>🥇 1°: 50.000€ + 1.000 parti</div>
-                            <div>🥈 2°: 30.000€ + 600 parti</div>
-                            <div>🥉 3°: 15.000€ + 300 parti</div>
-                            <div>4-10°: 5.000€ + 100 parti</div>
-                            <div>11-50°: 1.000€ + 50 parti</div>
+                        <h4 style="color: var(--accent-yellow); margin-bottom: 10px;">📅 Prossimi Passi</h4>
+                        <p style="margin-bottom: 10px;">✅ Tempo salvato! Ora puoi:</p>
+                        <ul style="margin: 10px 0; padding-left: 20px;">
+                            <li>🏆 Vedere la tua posizione nella classifica qui sotto</li>
+                            <li>🔄 <strong>Domani</strong> avrai un altro tentativo per migliorare</li>
+                            <li>💰 <strong>Lunedì prossimo</strong> i premi verranno assegnati ai più veloci</li>
+                        </ul>
+                        
+                        <div style="background: rgba(0,0,0,0.2); border-radius: 6px; padding: 10px; margin-top: 10px;">
+                            <strong>💰 Premi Fine Settimana:</strong>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; font-size: 0.85rem; margin-top: 8px;">
+                                <div>🥇 1°: 50.000€</div>
+                                <div>🥈 2°: 30.000€</div>
+                                <div>🥉 3°: 15.000€</div>
+                                <div>4-10°: 5.000€</div>
+                                <div>11-50°: 1.000€</div>
+                            </div>
                         </div>
                     </div>
                 `}
                 
                 <p style="margin-top: 20px; text-align: center; color: var(--text-secondary); font-size: 0.9rem;">
-                    ${r.dnf ? 'Puoi riprovare modificando il setup!' : 'Controlla la classifica qui sotto per vedere la tua posizione!'}
+                    ${canRaceAgainTomorrow 
+                        ? '⏳ Hai già corso oggi. Prossimo tentativo disponibile domani!' 
+                        : 'Controlla la classifica qui sotto!'}
                 </p>
             </div>
         `;
