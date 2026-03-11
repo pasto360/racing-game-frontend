@@ -208,7 +208,7 @@ const BetaModule = {
                 btn.textContent = '⏳ Simulazione in corso...';
             }
             
-            // Calcola risultato simulazione
+            // Calcola risultato simulazione (solo tempi, no posizione/premi)
             const result = this.calculateSimulation(car);
             
             // Salva su Supabase
@@ -221,30 +221,34 @@ const BetaModule = {
                     user_id: userId,
                     circuit_id: this.currentCircuit.id,
                     week_number: weekNumber,
-                    total_time: result.dnf ? 0 : result.totalTime,
+                    total_time: result.dnf ? 999999 : result.totalTime, // DNF = tempo altissimo
                     best_lap: result.bestLap,
-                    position: result.position,
+                    position: 0, // Verrà calcolato dalla classifica
                     dnf: result.dnf,
                     dnf_lap: result.dnfLap || 0,
-                    reward: result.reward,
+                    reward: { money: 0, parts: 0 }, // Nessun premio immediato
                     setup: this.setup
                 });
             
             if (error) throw error;
             
-            // Assegna premi
-            if (!result.dnf) {
-                game.resources.money.value += result.reward.money;
-                game.resources.parts.value += result.reward.parts;
-                await saveGameToSupabase();
-            }
+            // Ricarica classifica per vedere posizione reale
+            await this.loadLeaderboard(weekNumber);
+            
+            // Trova la propria posizione nella classifica
+            const session2 = getSession();
+            const myEntry = this.leaderboard.find(e => e.username === session2.user.username);
+            const myPosition = myEntry ? myEntry.position : (result.dnf ? 999 : this.leaderboard.length + 1);
             
             // Aggiorna stato
             this.hasRaced = true;
-            this.result = result;
-            
-            // Ricarica classifica
-            await this.loadLeaderboard(weekNumber);
+            this.result = {
+                totalTime: result.totalTime,
+                bestLap: result.bestLap,
+                position: myPosition,
+                dnf: result.dnf,
+                dnfLap: result.dnfLap
+            };
             
             // Re-render
             this.render();
@@ -351,26 +355,11 @@ const BetaModule = {
             tireWear += tireWearPerLap;
         }
         
-        // Calcola posizione (mock - basato su tempo totale)
-        const position = Math.max(1, Math.floor(Math.random() * 30) + 1);
-        
-        // Premi
-        let reward = { money: 0, parts: 0 };
-        if (!dnf) {
-            if (position === 1) reward = { money: 50000, parts: 1000 };
-            else if (position === 2) reward = { money: 30000, parts: 600 };
-            else if (position === 3) reward = { money: 15000, parts: 300 };
-            else if (position <= 10) reward = { money: 5000, parts: 100 };
-            else if (position <= 50) reward = { money: 1000, parts: 50 };
-        }
-        
         return {
             totalTime: dnf ? 0 : totalTime,
             bestLap,
-            position,
             dnf,
-            dnfLap,
-            reward
+            dnfLap
         };
     },
     
@@ -496,12 +485,15 @@ const BetaModule = {
         return `
             <div style="background: ${r.dnf ? 'rgba(255,51,51,0.1)' : 'rgba(0,255,136,0.1)'}; border: 2px solid ${r.dnf ? 'var(--accent-red)' : 'var(--accent-green)'}; border-radius: 12px; padding: 20px; margin-bottom: 30px;">
                 <h3 style="font-family: Orbitron; color: ${r.dnf ? 'var(--accent-red)' : 'var(--accent-green)'}; margin-bottom: 20px;">
-                    ${r.dnf ? '❌ DNF (Ritirato)' : `🏁 Posizione: ${r.position}°`}
+                    ${r.dnf ? '❌ DNF (Ritirato)' : `✅ Tempo Registrato!`}
                 </h3>
                 
                 ${r.dnf ? `
                     <p style="font-size: 1.1rem; margin-bottom: 15px;">
                         Ritirato al giro ${r.dnfLap} per mancanza di carburante!
+                    </p>
+                    <p style="color: var(--text-secondary);">
+                        Riprova con più carburante o un setup più efficiente.
                     </p>
                 ` : `
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
@@ -513,19 +505,29 @@ const BetaModule = {
                             <strong>Giro veloce:</strong><br>
                             <span style="font-size: 1.3rem; color: var(--accent-yellow);">${this.formatTime(r.bestLap)}</span>
                         </div>
+                        <div>
+                            <strong>Posizione attuale:</strong><br>
+                            <span style="font-size: 1.3rem; color: var(--accent-cyan);">
+                                ${r.position <= 3 ? (r.position === 1 ? '🥇' : r.position === 2 ? '🥈' : '🥉') : r.position + '°'}
+                            </span>
+                        </div>
                     </div>
                     
-                    <div style="background: rgba(0,255,136,0.1); border-radius: 8px; padding: 15px;">
-                        <h4 style="color: var(--accent-yellow); margin-bottom: 10px;">🎁 Premi</h4>
-                        <div style="display: flex; gap: 20px; justify-content: center;">
-                            <div style="font-size: 1.2rem;">💰 +${r.reward.money}€</div>
-                            <div style="font-size: 1.2rem;">🔩 +${r.reward.parts} Parti</div>
+                    <div style="background: rgba(255,140,0,0.1); border: 1px solid var(--accent-yellow); border-radius: 8px; padding: 15px; margin-top: 20px;">
+                        <h4 style="color: var(--accent-yellow); margin-bottom: 10px;">ℹ️ Premi Fine Settimana</h4>
+                        <p style="margin-bottom: 10px;">I premi verranno assegnati <strong>lunedì prossimo</strong> ai primi classificati:</p>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; font-size: 0.9rem;">
+                            <div>🥇 1°: 50.000€ + 1.000 parti</div>
+                            <div>🥈 2°: 30.000€ + 600 parti</div>
+                            <div>🥉 3°: 15.000€ + 300 parti</div>
+                            <div>4-10°: 5.000€ + 100 parti</div>
+                            <div>11-50°: 1.000€ + 50 parti</div>
                         </div>
                     </div>
                 `}
                 
-                <p style="margin-top: 20px; text-align: center; color: var(--text-secondary);">
-                    Nuova sfida disponibile lunedì prossimo!
+                <p style="margin-top: 20px; text-align: center; color: var(--text-secondary); font-size: 0.9rem;">
+                    ${r.dnf ? 'Puoi riprovare modificando il setup!' : 'Controlla la classifica qui sotto per vedere la tua posizione!'}
                 </p>
             </div>
         `;
