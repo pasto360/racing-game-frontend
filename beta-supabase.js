@@ -66,8 +66,8 @@ const BetaModule = {
     // Carica circuiti da JSON
     async loadCircuits() {
         try {
-            console.log('📥 Caricamento beta_circuits.json...');
-            const response = await fetch('beta_circuits.json');
+            console.log('📥 Caricamento beta_circuits_fantasy.json...');
+            const response = await fetch('beta_circuits_fantasy.json');
             
             if (!response.ok) {
                 throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -79,7 +79,7 @@ const BetaModule = {
             console.log(`✅ Caricati ${this.circuits.length} circuiti:`, this.circuits.map(c => c.name));
             
             if (this.circuits.length === 0) {
-                throw new Error('File beta_circuits.json vuoto o malformato');
+                throw new Error('File beta_circuits_fantasy.json vuoto o malformato');
             }
             
         } catch (error) {
