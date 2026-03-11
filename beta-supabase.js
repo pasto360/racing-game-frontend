@@ -251,14 +251,22 @@ const BetaModule = {
             
         } catch (error) {
             console.error('❌ Errore simulazione:', error);
+            console.error('Dettagli errore completi:', JSON.stringify(error, null, 2));
             
             // Messaggio specifico in base al tipo di errore
             let errorMessage = 'Errore durante la simulazione!';
             
-            if (error.message?.includes('relation') || error.message?.includes('does not exist')) {
-                errorMessage = '❌ Tabella beta_race_results non trovata!\n\nDevi eseguire lo script SQL su Supabase:\n\nVai su Supabase → SQL Editor → Esegui SCHEMA-BETA-SUPABASE.sql';
+            if (error.message?.includes('relation') || error.message?.includes('does not exist') || error.code === '42P01') {
+                errorMessage = '❌ TABELLA beta_race_results NON TROVATA!\n\n' +
+                               'Devi creare la tabella su Supabase:\n\n' +
+                               '1. Vai su Supabase.com\n' +
+                               '2. SQL Editor\n' +
+                               '3. Esegui SQL-BETA-RAPIDO.sql\n\n' +
+                               'Vedi file ISTRUZIONI-SQL-BETA.md per dettagli';
             } else if (error.code === 'PGRST116') {
                 errorMessage = 'Nessun dato trovato (normale per prima volta)';
+            } else if (error.hint) {
+                errorMessage = `Errore DB: ${error.message}\n\nSuggerimento: ${error.hint}`;
             } else if (error.message) {
                 errorMessage = `Errore: ${error.message}`;
             }
