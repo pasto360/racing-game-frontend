@@ -388,6 +388,143 @@ const BetaModule = {
         };
     },
     
+    // Genera tracciato procedurale del circuito basato sulle sue caratteristiche
+    generateCircuitPath(circuit) {
+        const width = 300;
+        const height = 200;
+        const padding = 20;
+        
+        // Seed casuale basato sull'ID del circuito per consistenza
+        let seed = 0;
+        for (let i = 0; i < circuit.id.length; i++) {
+            seed += circuit.id.charCodeAt(i);
+        }
+        const random = (min, max) => {
+            seed = (seed * 9301 + 49297) % 233280;
+            return min + (seed / 233280) * (max - min);
+        };
+        
+        // Calcola numero totale di punti basato sulle curve
+        const totalPoints = circuit.tightCorners + circuit.mediumCorners + circuit.fastCorners + 
+                           circuit.longStraights + circuit.shortStraights;
+        
+        // Genera punti del tracciato
+        const points = [];
+        const centerX = width / 2;
+        const centerY = height / 2;
+        const radiusX = (width - padding * 2) / 2;
+        const radiusY = (height - padding * 2) / 2;
+        
+        for (let i = 0; i <= totalPoints; i++) {
+            const angle = (i / totalPoints) * Math.PI * 2;
+            
+            // Varia il raggio per creare curve
+            let radiusVariation = 1;
+            if (i % 3 === 0 && circuit.tightCorners > 5) {
+                radiusVariation = 0.7; // Curve strette
+            } else if (i % 4 === 0 && circuit.fastCorners > 4) {
+                radiusVariation = 1.3; // Curve larghe
+            }
+            
+            // Aggiungi variazione casuale ma consistente
+            const noise = random(-0.1, 0.1);
+            radiusVariation += noise;
+            
+            const x = centerX + Math.cos(angle) * radiusX * radiusVariation;
+            const y = centerY + Math.sin(angle) * radiusY * radiusVariation;
+            
+            points.push({ x, y });
+        }
+        
+        // Converti punti in path SVG
+        let path = `M ${points[0].x} ${points[0].y}`;
+        for (let i = 1; i < points.length; i++) {
+            // Usa curve quadratiche per smoothness
+            const curr = points[i];
+            const prev = points[i - 1];
+            const cpX = (prev.x + curr.x) / 2;
+            const cpY = (prev.y + curr.y) / 2;
+            path += ` Q ${prev.x} ${prev.y}, ${cpX} ${cpY}`;
+        }
+        path += ' Z'; // Chiudi il tracciato
+        
+        return { path, width, height };
+    },
+    
+    // Render mappa animata del circuito
+    renderCircuitMap(circuit) {
+        const { path, width, height } = this.generateCircuitPath(circuit);
+        
+        return `
+            <div style="margin: 20px 0; background: rgba(0,0,0,0.3); border-radius: 8px; padding: 15px; display: flex; justify-content: center;">
+                <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" style="max-width: 100%;">
+                    <!-- Sfondo griglia -->
+                    <defs>
+                        <pattern id="grid-${circuit.id}" width="20" height="20" patternUnits="userSpaceOnUse">
+                            <path d="M 20 0 L 0 0 0 20" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="0.5"/>
+                        </pattern>
+                    </defs>
+                    <rect width="${width}" height="${height}" fill="url(#grid-${circuit.id})"/>
+                    
+                    <!-- Tracciato circuito (ombra) -->
+                    <path d="${path}" 
+                          fill="none" 
+                          stroke="rgba(0,0,0,0.5)" 
+                          stroke-width="12" 
+                          stroke-linecap="round" 
+                          stroke-linejoin="round"/>
+                    
+                    <!-- Tracciato circuito -->
+                    <path d="${path}" 
+                          fill="none" 
+                          stroke="rgba(0,217,255,0.3)" 
+                          stroke-width="10" 
+                          stroke-linecap="round" 
+                          stroke-linejoin="round"/>
+                    
+                    <!-- Linea centrale -->
+                    <path d="${path}" 
+                          fill="none" 
+                          stroke="rgba(0,217,255,0.6)" 
+                          stroke-width="2" 
+                          stroke-linecap="round" 
+                          stroke-linejoin="round" 
+                          stroke-dasharray="5,5">
+                        <animate attributeName="stroke-dashoffset" 
+                                 from="0" 
+                                 to="10" 
+                                 dur="0.5s" 
+                                 repeatCount="indefinite"/>
+                    </path>
+                    
+                    <!-- Auto che gira (pallino animato) -->
+                    <circle r="4" fill="#00d9ff" stroke="#ffffff" stroke-width="1.5">
+                        <animateMotion dur="8s" repeatCount="indefinite" rotate="auto">
+                            <mpath href="#circuit-path-${circuit.id}"/>
+                        </animateMotion>
+                        
+                        <!-- Pulsazione -->
+                        <animate attributeName="r" 
+                                 values="4;5;4" 
+                                 dur="1s" 
+                                 repeatCount="indefinite"/>
+                    </circle>
+                    
+                    <!-- Path nascosto per animateMotion -->
+                    <path id="circuit-path-${circuit.id}" d="${path}" fill="none" stroke="none"/>
+                    
+                    <!-- Traguardo -->
+                    <g transform="translate(${width/2 - 10}, ${height - 30})">
+                        <rect x="0" y="0" width="20" height="15" fill="#ffffff" opacity="0.9"/>
+                        <rect x="0" y="0" width="10" height="7.5" fill="#000000"/>
+                        <rect x="10" y="7.5" width="10" height="7.5" fill="#000000"/>
+                        <text x="10" y="25" text-anchor="middle" fill="rgba(255,255,255,0.8)" font-size="10" font-weight="bold">START</text>
+                    </g>
+                </svg>
+            </div>
+        `;
+    },
+    
     // Format tempo in mm:ss.sss
     formatTime(seconds) {
         const mins = Math.floor(seconds / 60);
@@ -426,7 +563,9 @@ const BetaModule = {
                         <div><strong>Rettilinei:</strong> ${circuit.longStraights}</div>
                         <div><strong>Dossi:</strong> ${circuit.bumps}</div>
                     </div>
-                    <p style="font-style: italic; color: var(--text-secondary);">${circuit.description}</p>
+                    <p style="font-style: italic; color: var(--text-secondary); margin-bottom: 15px;">${circuit.description}</p>
+                    
+                    ${this.renderCircuitMap(circuit)}
                 </div>
                 
                 ${this.hasRaced ? this.renderResult() : this.renderSetup()}
