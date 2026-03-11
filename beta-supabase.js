@@ -128,11 +128,10 @@ const BetaModule = {
                 this.hasRaced = (raceDate === today);
                 this.lastRaceDate = raceDate;
                 
-                // Mostra sempre il miglior risultato
+                // Mostra sempre il miglior risultato (senza posizione - si vede in classifica)
                 this.result = {
                     totalTime: data.total_time,
                     bestLap: data.best_lap,
-                    position: data.position,
                     dnf: data.dnf,
                     dnfLap: data.dnf_lap
                 };
@@ -264,21 +263,15 @@ const BetaModule = {
             
             if (error) throw error;
             
-            // Ricarica classifica per vedere posizione reale
+            // Ricarica classifica (la posizione verrà mostrata lì)
             await this.loadLeaderboard(weekNumber);
             
-            // Trova la propria posizione nella classifica
-            const session2 = getSession();
-            const myEntry = this.leaderboard.find(e => e.username === session2.user.username);
-            const myPosition = myEntry ? myEntry.position : (result.dnf ? 999 : this.leaderboard.length + 1);
-            
-            // Aggiorna stato
+            // Aggiorna stato (NO posizione qui - solo nella classifica)
             this.hasRaced = true;
             this.lastRaceDate = new Date().toISOString().split('T')[0];
             this.result = {
                 totalTime: result.totalTime,
                 bestLap: result.bestLap,
-                position: myPosition,
                 dnf: result.dnf,
                 dnfLap: result.dnfLap
             };
@@ -532,28 +525,26 @@ const BetaModule = {
                 ` : `
                     <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
                         <div>
-                            <strong>Tempo totale:</strong><br>
-                            <span style="font-size: 1.3rem; color: var(--accent-cyan);">${this.formatTime(r.totalTime)}</span>
+                            <strong>⏱️ Tempo totale:</strong><br>
+                            <span style="font-size: 1.5rem; font-weight: 700; color: var(--accent-cyan);">${this.formatTime(r.totalTime)}</span>
                         </div>
                         <div>
-                            <strong>Giro veloce:</strong><br>
-                            <span style="font-size: 1.3rem; color: var(--accent-yellow);">${this.formatTime(r.bestLap)}</span>
-                        </div>
-                        <div>
-                            <strong>Posizione attuale:</strong><br>
-                            <span style="font-size: 1.3rem; color: var(--accent-cyan);">
-                                ${r.position <= 3 ? (r.position === 1 ? '🥇' : r.position === 2 ? '🥈' : '🥉') : r.position + '°'}
-                            </span>
+                            <strong>🏁 Giro veloce:</strong><br>
+                            <span style="font-size: 1.5rem; font-weight: 700; color: var(--accent-yellow);">${this.formatTime(r.bestLap)}</span>
                         </div>
                     </div>
                     
-                    <div style="background: rgba(255,140,0,0.1); border: 1px solid var(--accent-yellow); border-radius: 8px; padding: 15px; margin-top: 20px;">
+                    <div style="background: rgba(0,217,255,0.1); border: 1px solid var(--accent-cyan); border-radius: 8px; padding: 15px; margin-top: 20px;">
+                        <h4 style="color: var(--accent-cyan); margin-bottom: 10px;">📊 Controlla la Classifica!</h4>
+                        <p style="margin-bottom: 0;">Scorri qui sotto per vedere la tua <strong>posizione attuale</strong> tra tutti i piloti della settimana.</p>
+                    </div>
+                    
+                    <div style="background: rgba(255,140,0,0.1); border: 1px solid var(--accent-yellow); border-radius: 8px; padding: 15px; margin-top: 15px;">
                         <h4 style="color: var(--accent-yellow); margin-bottom: 10px;">📅 Prossimi Passi</h4>
-                        <p style="margin-bottom: 10px;">✅ Tempo salvato! Ora puoi:</p>
                         <ul style="margin: 10px 0; padding-left: 20px;">
-                            <li>🏆 Vedere la tua posizione nella classifica qui sotto</li>
                             <li>🔄 <strong>Domani</strong> avrai un altro tentativo per migliorare</li>
-                            <li>💰 <strong>Lunedì prossimo</strong> i premi verranno assegnati ai più veloci</li>
+                            <li>🏆 Solo il tuo <strong>miglior tempo</strong> conta per la classifica</li>
+                            <li>💰 <strong>Lunedì prossimo</strong> i premi verranno assegnati ai top 50</li>
                         </ul>
                         
                         <div style="background: rgba(0,0,0,0.2); border-radius: 6px; padding: 10px; margin-top: 10px;">
@@ -572,7 +563,7 @@ const BetaModule = {
                 <p style="margin-top: 20px; text-align: center; color: var(--text-secondary); font-size: 0.9rem;">
                     ${canRaceAgainTomorrow 
                         ? '⏳ Hai già corso oggi. Prossimo tentativo disponibile domani!' 
-                        : 'Controlla la classifica qui sotto!'}
+                        : ''}
                 </p>
             </div>
         `;
