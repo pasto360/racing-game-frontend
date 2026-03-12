@@ -18,7 +18,15 @@ const BetaModule = {
         tirePressure: 2.0,
         downforce: 50,
         gearRatio: 'medium',
-        suspension: 0
+        suspension: 0,
+        // Pit-stop strategy
+        pitStops: 0,
+        pitLap1: 0,
+        pitLap2: 0,
+        pitLap3: 0,
+        tiresPit1: 'medium',
+        tiresPit2: 'medium',
+        tiresPit3: 'medium'
     },
     
     // Inizializza modulo
@@ -603,57 +611,280 @@ const BetaModule = {
     
     // Render setup auto (prima della gara)
     renderSetup() {
+        const maxLaps = this.currentCircuit ? this.currentCircuit.laps : 20;
+        
         return `
+            <style>
+                /* Custom slider uniformi per tutti i browser */
+                .beta-slider {
+                    -webkit-appearance: none;
+                    appearance: none;
+                    width: 100%;
+                    height: 6px;
+                    border-radius: 3px;
+                    background: rgba(255,255,255,0.1);
+                    outline: none;
+                }
+                
+                .beta-slider::-webkit-slider-thumb {
+                    -webkit-appearance: none;
+                    appearance: none;
+                    width: 18px;
+                    height: 18px;
+                    border-radius: 50%;
+                    background: #00d9ff;
+                    cursor: pointer;
+                    border: 2px solid #ffffff;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+                }
+                
+                .beta-slider::-moz-range-thumb {
+                    width: 18px;
+                    height: 18px;
+                    border-radius: 50%;
+                    background: #00d9ff;
+                    cursor: pointer;
+                    border: 2px solid #ffffff;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+                }
+                
+                .beta-slider:hover::-webkit-slider-thumb {
+                    background: #00ffea;
+                    transform: scale(1.1);
+                }
+                
+                .beta-slider:hover::-moz-range-thumb {
+                    background: #00ffea;
+                    transform: scale(1.1);
+                }
+                
+                /* Custom checkbox */
+                .beta-checkbox {
+                    appearance: none;
+                    width: 20px;
+                    height: 20px;
+                    border: 2px solid #00d9ff;
+                    border-radius: 4px;
+                    background: rgba(0,0,0,0.3);
+                    cursor: pointer;
+                    position: relative;
+                    margin-right: 10px;
+                    vertical-align: middle;
+                }
+                
+                .beta-checkbox:checked {
+                    background: #00d9ff;
+                }
+                
+                .beta-checkbox:checked::after {
+                    content: '✓';
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    color: #000;
+                    font-weight: bold;
+                    font-size: 14px;
+                }
+                
+                .pit-section {
+                    background: rgba(255,140,0,0.1);
+                    border: 1px solid rgba(255,140,0,0.3);
+                    border-radius: 8px;
+                    padding: 15px;
+                    margin-top: 10px;
+                    display: none;
+                }
+                
+                .pit-section.active {
+                    display: block;
+                }
+            </style>
+            
             <div style="background: rgba(255,255,255,0.05); border-radius: 12px; padding: 20px; margin-bottom: 30px;">
                 <h3 style="font-family: Orbitron; color: var(--accent-yellow); margin-bottom: 20px;">
                     ⚙️ SETUP AUTO
                 </h3>
                 
-                <div style="display: grid; gap: 20px;">
-                    <!-- Carburante -->
-                    <div>
-                        <label style="display: block; margin-bottom: 8px;"><strong>Carburante:</strong> <span id="fuelValue">${this.setup.fuel}</span> litri</label>
-                        <input type="range" id="fuelSlider" min="50" max="150" value="${this.setup.fuel}" style="width: 100%;">
+                <div style="display: grid; gap: 25px;">
+                    <!-- STRATEGIA PIT-STOP -->
+                    <div style="background: rgba(138,43,226,0.1); border: 2px solid rgba(138,43,226,0.3); border-radius: 10px; padding: 20px;">
+                        <h4 style="color: #8a2be2; margin-bottom: 15px; font-family: Orbitron;">🏁 STRATEGIA PIT-STOP</h4>
+                        
+                        <!-- Carburante iniziale -->
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; margin-bottom: 8px;"><strong>Carburante iniziale:</strong> <span id="fuelValue">${this.setup.fuel}</span>L</label>
+                            <input type="range" id="fuelSlider" class="beta-slider" min="50" max="150" value="${this.setup.fuel}">
+                            <small style="color: var(--text-secondary); display: block; margin-top: 5px;">Meno carburante = Auto più leggera e veloce</small>
+                        </div>
+                        
+                        <!-- Numero soste -->
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 10px;"><strong>Numero soste:</strong></label>
+                            <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                                <label style="cursor: pointer;">
+                                    <input type="checkbox" class="beta-checkbox" name="pitStops" value="0" ${this.setup.pitStops === 0 ? 'checked' : ''} onchange="BetaModule.updatePitStops(0)">
+                                    <span>0 soste</span>
+                                </label>
+                                <label style="cursor: pointer;">
+                                    <input type="checkbox" class="beta-checkbox" name="pitStops" value="1" ${this.setup.pitStops === 1 ? 'checked' : ''} onchange="BetaModule.updatePitStops(1)">
+                                    <span>1 sosta</span>
+                                </label>
+                                <label style="cursor: pointer;">
+                                    <input type="checkbox" class="beta-checkbox" name="pitStops" value="2" ${this.setup.pitStops === 2 ? 'checked' : ''} onchange="BetaModule.updatePitStops(2)">
+                                    <span>2 soste</span>
+                                </label>
+                                <label style="cursor: pointer;">
+                                    <input type="checkbox" class="beta-checkbox" name="pitStops" value="3" ${this.setup.pitStops === 3 ? 'checked' : ''} onchange="BetaModule.updatePitStops(3)">
+                                    <span>3 soste</span>
+                                </label>
+                            </div>
+                            <small style="color: var(--text-secondary); display: block; margin-top: 5px;">Ogni sosta: +20 secondi, rifornimento + cambio gomme</small>
+                        </div>
+                        
+                        <!-- Dettagli soste -->
+                        <div id="pitDetails">
+                            <!-- Sosta 1 -->
+                            <div class="pit-section ${this.setup.pitStops >= 1 ? 'active' : ''}" id="pit1Section">
+                                <h5 style="color: var(--accent-yellow); margin-bottom: 10px;">🔧 Sosta 1</h5>
+                                <div style="margin-bottom: 15px;">
+                                    <label style="display: block; margin-bottom: 8px;"><strong>Giro sosta:</strong> <span id="pitLap1Value">${this.setup.pitLap1}</span></label>
+                                    <input type="range" id="pitLap1Slider" class="beta-slider" min="1" max="${maxLaps}" value="${this.setup.pitLap1}">
+                                </div>
+                                <div>
+                                    <label style="display: block; margin-bottom: 8px;"><strong>Gomme nuove:</strong></label>
+                                    <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                                        <label style="cursor: pointer;">
+                                            <input type="checkbox" class="beta-checkbox" name="tiresPit1" value="soft" ${this.setup.tiresPit1 === 'soft' ? 'checked' : ''} onchange="BetaModule.updateTiresPit(1, 'soft')">
+                                            <span>Soft</span>
+                                        </label>
+                                        <label style="cursor: pointer;">
+                                            <input type="checkbox" class="beta-checkbox" name="tiresPit1" value="medium" ${this.setup.tiresPit1 === 'medium' ? 'checked' : ''} onchange="BetaModule.updateTiresPit(1, 'medium')">
+                                            <span>Medium</span>
+                                        </label>
+                                        <label style="cursor: pointer;">
+                                            <input type="checkbox" class="beta-checkbox" name="tiresPit1" value="hard" ${this.setup.tiresPit1 === 'hard' ? 'checked' : ''} onchange="BetaModule.updateTiresPit(1, 'hard')">
+                                            <span>Hard</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Sosta 2 -->
+                            <div class="pit-section ${this.setup.pitStops >= 2 ? 'active' : ''}" id="pit2Section">
+                                <h5 style="color: var(--accent-yellow); margin-bottom: 10px;">🔧 Sosta 2</h5>
+                                <div style="margin-bottom: 15px;">
+                                    <label style="display: block; margin-bottom: 8px;"><strong>Giro sosta:</strong> <span id="pitLap2Value">${this.setup.pitLap2}</span></label>
+                                    <input type="range" id="pitLap2Slider" class="beta-slider" min="1" max="${maxLaps}" value="${this.setup.pitLap2}">
+                                </div>
+                                <div>
+                                    <label style="display: block; margin-bottom: 8px;"><strong>Gomme nuove:</strong></label>
+                                    <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                                        <label style="cursor: pointer;">
+                                            <input type="checkbox" class="beta-checkbox" name="tiresPit2" value="soft" ${this.setup.tiresPit2 === 'soft' ? 'checked' : ''} onchange="BetaModule.updateTiresPit(2, 'soft')">
+                                            <span>Soft</span>
+                                        </label>
+                                        <label style="cursor: pointer;">
+                                            <input type="checkbox" class="beta-checkbox" name="tiresPit2" value="medium" ${this.setup.tiresPit2 === 'medium' ? 'checked' : ''} onchange="BetaModule.updateTiresPit(2, 'medium')">
+                                            <span>Medium</span>
+                                        </label>
+                                        <label style="cursor: pointer;">
+                                            <input type="checkbox" class="beta-checkbox" name="tiresPit2" value="hard" ${this.setup.tiresPit2 === 'hard' ? 'checked' : ''} onchange="BetaModule.updateTiresPit(2, 'hard')">
+                                            <span>Hard</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Sosta 3 -->
+                            <div class="pit-section ${this.setup.pitStops >= 3 ? 'active' : ''}" id="pit3Section">
+                                <h5 style="color: var(--accent-yellow); margin-bottom: 10px;">🔧 Sosta 3</h5>
+                                <div style="margin-bottom: 15px;">
+                                    <label style="display: block; margin-bottom: 8px;"><strong>Giro sosta:</strong> <span id="pitLap3Value">${this.setup.pitLap3}</span></label>
+                                    <input type="range" id="pitLap3Slider" class="beta-slider" min="1" max="${maxLaps}" value="${this.setup.pitLap3}">
+                                </div>
+                                <div>
+                                    <label style="display: block; margin-bottom: 8px;"><strong>Gomme nuove:</strong></label>
+                                    <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                                        <label style="cursor: pointer;">
+                                            <input type="checkbox" class="beta-checkbox" name="tiresPit3" value="soft" ${this.setup.tiresPit3 === 'soft' ? 'checked' : ''} onchange="BetaModule.updateTiresPit(3, 'soft')">
+                                            <span>Soft</span>
+                                        </label>
+                                        <label style="cursor: pointer;">
+                                            <input type="checkbox" class="beta-checkbox" name="tiresPit3" value="medium" ${this.setup.tiresPit3 === 'medium' ? 'checked' : ''} onchange="BetaModule.updateTiresPit(3, 'medium')">
+                                            <span>Medium</span>
+                                        </label>
+                                        <label style="cursor: pointer;">
+                                            <input type="checkbox" class="beta-checkbox" name="tiresPit3" value="hard" ${this.setup.tiresPit3 === 'hard' ? 'checked' : ''} onchange="BetaModule.updateTiresPit(3, 'hard')">
+                                            <span>Hard</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                     
-                    <!-- Gomme -->
+                    <!-- SETUP MECCANICO -->
                     <div>
-                        <label style="display: block; margin-bottom: 8px;"><strong>Gomme:</strong></label>
-                        <select id="tiresSelect" style="width: 100%; padding: 8px; background: rgba(0,0,0,0.3); color: white; border: 1px solid rgba(255,255,255,0.2); border-radius: 4px;">
-                            <option value="soft" ${this.setup.tires === 'soft' ? 'selected' : ''}>Soft (Grip alto, degrado veloce)</option>
-                            <option value="medium" ${this.setup.tires === 'medium' ? 'selected' : ''}>Medium (Bilanciato)</option>
-                            <option value="hard" ${this.setup.tires === 'hard' ? 'selected' : ''}>Hard (Grip basso, degrado lento)</option>
-                        </select>
-                    </div>
-                    
-                    <!-- Pressione gomme -->
-                    <div>
-                        <label style="display: block; margin-bottom: 8px;"><strong>Pressione gomme:</strong> <span id="pressureValue">${this.setup.tirePressure}</span> bar</label>
-                        <input type="range" id="pressureSlider" min="1.8" max="2.5" step="0.1" value="${this.setup.tirePressure}" style="width: 100%;">
-                    </div>
-                    
-                    <!-- Deportanza -->
-                    <div>
-                        <label style="display: block; margin-bottom: 8px;"><strong>Deportanza:</strong> <span id="downforceValue">${this.setup.downforce}</span></label>
-                        <input type="range" id="downforceSlider" min="0" max="100" value="${this.setup.downforce}" style="width: 100%;">
-                        <small style="color: var(--text-secondary);">0 = Velocità max, 100 = Grip max in curva</small>
-                    </div>
-                    
-                    <!-- Rapporti -->
-                    <div>
-                        <label style="display: block; margin-bottom: 8px;"><strong>Rapporti cambio:</strong></label>
-                        <select id="gearSelect" style="width: 100%; padding: 8px; background: rgba(0,0,0,0.3); color: white; border: 1px solid rgba(255,255,255,0.2); border-radius: 4px;">
-                            <option value="short" ${this.setup.gearRatio === 'short' ? 'selected' : ''}>Corti (Accelerazione)</option>
-                            <option value="medium" ${this.setup.gearRatio === 'medium' ? 'selected' : ''}>Medi (Bilanciato)</option>
-                            <option value="long" ${this.setup.gearRatio === 'long' ? 'selected' : ''}>Lunghi (Velocità max)</option>
-                        </select>
-                    </div>
-                    
-                    <!-- Sospensioni -->
-                    <div>
-                        <label style="display: block; margin-bottom: 8px;"><strong>Sospensioni:</strong> <span id="suspensionValue">${this.setup.suspension > 0 ? '+' : ''}${this.setup.suspension}mm</span></label>
-                        <input type="range" id="suspensionSlider" min="-30" max="30" value="${this.setup.suspension}" style="width: 100%;">
-                        <small style="color: var(--text-secondary);">-30 = Basse (veloce su liscio), +30 = Alte (migliore su dossi)</small>
+                        <h4 style="color: var(--accent-cyan); margin-bottom: 15px; font-family: Orbitron;">🔧 SETUP MECCANICO</h4>
+                        
+                        <!-- Gomme iniziali -->
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; margin-bottom: 10px;"><strong>Gomme partenza:</strong></label>
+                            <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                                <label style="cursor: pointer;">
+                                    <input type="checkbox" class="beta-checkbox" name="tires" value="soft" ${this.setup.tires === 'soft' ? 'checked' : ''} onchange="BetaModule.updateTires('soft')">
+                                    <span>Soft (Grip alto, degrado veloce)</span>
+                                </label>
+                                <label style="cursor: pointer;">
+                                    <input type="checkbox" class="beta-checkbox" name="tires" value="medium" ${this.setup.tires === 'medium' ? 'checked' : ''} onchange="BetaModule.updateTires('medium')">
+                                    <span>Medium (Bilanciato)</span>
+                                </label>
+                                <label style="cursor: pointer;">
+                                    <input type="checkbox" class="beta-checkbox" name="tires" value="hard" ${this.setup.tires === 'hard' ? 'checked' : ''} onchange="BetaModule.updateTires('hard')">
+                                    <span>Hard (Grip basso, degrado lento)</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Pressione gomme -->
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; margin-bottom: 8px;"><strong>Pressione gomme:</strong> <span id="pressureValue">${this.setup.tirePressure}</span> bar</label>
+                            <input type="range" id="pressureSlider" class="beta-slider" min="1.8" max="2.5" step="0.1" value="${this.setup.tirePressure}">
+                        </div>
+                        
+                        <!-- Deportanza -->
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; margin-bottom: 8px;"><strong>Deportanza:</strong> <span id="downforceValue">${this.setup.downforce}</span></label>
+                            <input type="range" id="downforceSlider" class="beta-slider" min="0" max="100" value="${this.setup.downforce}">
+                            <small style="color: var(--text-secondary); display: block; margin-top: 5px;">0 = Velocità max, 100 = Grip max in curva</small>
+                        </div>
+                        
+                        <!-- Rapporti -->
+                        <div style="margin-bottom: 20px;">
+                            <label style="display: block; margin-bottom: 10px;"><strong>Rapporti cambio:</strong></label>
+                            <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                                <label style="cursor: pointer;">
+                                    <input type="checkbox" class="beta-checkbox" name="gearRatio" value="short" ${this.setup.gearRatio === 'short' ? 'checked' : ''} onchange="BetaModule.updateGearRatio('short')">
+                                    <span>Corti (Accelerazione)</span>
+                                </label>
+                                <label style="cursor: pointer;">
+                                    <input type="checkbox" class="beta-checkbox" name="gearRatio" value="medium" ${this.setup.gearRatio === 'medium' ? 'checked' : ''} onchange="BetaModule.updateGearRatio('medium')">
+                                    <span>Medi (Bilanciato)</span>
+                                </label>
+                                <label style="cursor: pointer;">
+                                    <input type="checkbox" class="beta-checkbox" name="gearRatio" value="long" ${this.setup.gearRatio === 'long' ? 'checked' : ''} onchange="BetaModule.updateGearRatio('long')">
+                                    <span>Lunghi (Velocità max)</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- Sospensioni -->
+                        <div>
+                            <label style="display: block; margin-bottom: 8px;"><strong>Sospensioni:</strong> <span id="suspensionValue">${this.setup.suspension > 0 ? '+' : ''}${this.setup.suspension}mm</span></label>
+                            <input type="range" id="suspensionSlider" class="beta-slider" min="-30" max="30" value="${this.setup.suspension}">
+                            <small style="color: var(--text-secondary); display: block; margin-top: 5px;">-30 = Basse (veloce su liscio), +30 = Alte (migliore su dossi)</small>
+                        </div>
                     </div>
                 </div>
                 
@@ -661,7 +892,81 @@ const BetaModule = {
                     🏁 ESEGUI SIMULAZIONE
                 </button>
             </div>
+            
+            <script>
+                // Aggiorna valori slider in tempo reale
+                document.getElementById('fuelSlider')?.addEventListener('input', (e) => {
+                    document.getElementById('fuelValue').textContent = e.target.value;
+                    BetaModule.setup.fuel = parseInt(e.target.value);
+                });
+                
+                document.getElementById('pressureSlider')?.addEventListener('input', (e) => {
+                    document.getElementById('pressureValue').textContent = e.target.value;
+                    BetaModule.setup.tirePressure = parseFloat(e.target.value);
+                });
+                
+                document.getElementById('downforceSlider')?.addEventListener('input', (e) => {
+                    document.getElementById('downforceValue').textContent = e.target.value;
+                    BetaModule.setup.downforce = parseInt(e.target.value);
+                });
+                
+                document.getElementById('suspensionSlider')?.addEventListener('input', (e) => {
+                    const val = parseInt(e.target.value);
+                    document.getElementById('suspensionValue').textContent = (val > 0 ? '+' : '') + val + 'mm';
+                    BetaModule.setup.suspension = val;
+                });
+                
+                document.getElementById('pitLap1Slider')?.addEventListener('input', (e) => {
+                    document.getElementById('pitLap1Value').textContent = e.target.value;
+                    BetaModule.setup.pitLap1 = parseInt(e.target.value);
+                });
+                
+                document.getElementById('pitLap2Slider')?.addEventListener('input', (e) => {
+                    document.getElementById('pitLap2Value').textContent = e.target.value;
+                    BetaModule.setup.pitLap2 = parseInt(e.target.value);
+                });
+                
+                document.getElementById('pitLap3Slider')?.addEventListener('input', (e) => {
+                    document.getElementById('pitLap3Value').textContent = e.target.value;
+                    BetaModule.setup.pitLap3 = parseInt(e.target.value);
+                });
+            </script>
         `;
+    },
+    
+    // Gestione checkbox numero soste
+    updatePitStops(num) {
+        // Deseleziona tutti
+        document.querySelectorAll('input[name="pitStops"]').forEach(cb => cb.checked = false);
+        // Seleziona quello cliccato
+        document.querySelector(`input[name="pitStops"][value="${num}"]`).checked = true;
+        
+        this.setup.pitStops = num;
+        
+        // Mostra/nascondi sezioni
+        document.getElementById('pit1Section').classList.toggle('active', num >= 1);
+        document.getElementById('pit2Section').classList.toggle('active', num >= 2);
+        document.getElementById('pit3Section').classList.toggle('active', num >= 3);
+    },
+    
+    // Gestione checkbox gomme
+    updateTires(type) {
+        document.querySelectorAll('input[name="tires"]').forEach(cb => cb.checked = false);
+        document.querySelector(`input[name="tires"][value="${type}"]`).checked = true;
+        this.setup.tires = type;
+    },
+    
+    updateTiresPit(pitNum, type) {
+        document.querySelectorAll(`input[name="tiresPit${pitNum}"]`).forEach(cb => cb.checked = false);
+        document.querySelector(`input[name="tiresPit${pitNum}"][value="${type}"]`).checked = true;
+        this.setup[`tiresPit${pitNum}`] = type;
+    },
+    
+    // Gestione checkbox rapporti
+    updateGearRatio(type) {
+        document.querySelectorAll('input[name="gearRatio"]').forEach(cb => cb.checked = false);
+        document.querySelector(`input[name="gearRatio"][value="${type}"]`).checked = true;
+        this.setup.gearRatio = type;
     },
     
     // Render risultato (dopo la gara)
