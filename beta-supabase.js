@@ -411,67 +411,65 @@ const BetaModule = {
         };
     },
     
-    // Genera tracciato procedurale del circuito basato sulle sue caratteristiche
+    // Tracciati circuiti SVG - Realistici (ispirati a circuiti famosi)
+    CIRCUIT_PATHS: {
+        'dragon_peak': {
+            path: 'M 40 160 L 80 160 Q 100 140, 120 120 Q 140 100, 180 90 L 240 90 Q 260 95, 270 120 L 270 150 Q 265 170, 240 175 L 160 175 Q 130 180, 110 165 Q 90 150, 70 140 L 50 135 Q 42 145, 40 160 Z',
+            startX: 40, startY: 160
+        },
+        'harbor_street': {
+            path: 'M 50 100 L 80 100 L 90 80 L 110 80 L 120 60 L 140 60 L 150 80 L 170 80 L 180 100 L 200 100 L 210 120 L 230 120 L 240 140 L 240 160 L 220 160 L 210 140 L 190 140 L 180 160 L 160 160 L 150 140 L 130 140 L 120 160 L 100 160 L 90 140 L 70 140 L 60 120 L 50 120 Z',
+            startX: 50, startY: 100
+        },
+        'royal_speedway': {
+            path: 'M 40 100 L 180 100 L 190 90 L 200 90 L 210 100 L 260 100 Q 280 110, 280 140 Q 280 170, 260 180 L 110 180 L 100 170 L 90 170 L 80 180 L 40 180 Q 20 170, 20 140 Q 20 110, 40 100 Z',
+            startX: 40, startY: 100
+        },
+        'crystal_valley': {
+            path: 'M 50 140 Q 70 120, 100 115 Q 130 110, 160 120 Q 180 130, 190 150 Q 200 170, 220 175 L 250 175 Q 270 165, 275 140 Q 270 115, 250 105 L 180 105 Q 160 100, 140 95 Q 110 90, 80 100 Q 60 110, 50 130 Z',
+            startX: 50, startY: 140
+        },
+        'phoenix_circuit': {
+            path: 'M 50 60 Q 80 50, 110 55 Q 140 60, 160 80 Q 180 100, 160 120 Q 140 140, 110 135 L 90 130 Q 70 140, 60 160 Q 50 180, 70 190 Q 100 200, 130 185 Q 160 170, 180 150 Q 200 130, 220 120 Q 240 110, 250 130 Q 260 150, 240 165 Q 210 180, 180 175 L 120 175 Q 90 170, 70 150 Q 50 130, 40 100 Q 35 75, 50 60 Z',
+            startX: 50, startY: 60
+        },
+        'forest_ring': {
+            path: 'M 30 140 Q 40 120, 60 110 Q 80 100, 100 110 L 120 120 Q 140 110, 160 105 Q 180 100, 200 110 Q 220 120, 230 140 Q 240 160, 225 175 Q 210 185, 190 180 L 170 175 Q 150 180, 140 170 Q 130 160, 120 150 L 110 160 Q 100 170, 85 175 Q 70 180, 55 170 Q 40 160, 35 145 L 30 140 Z',
+            startX: 30, startY: 140
+        },
+        'sunset_canyon': {
+            path: 'M 50 170 L 90 170 Q 110 165, 130 150 Q 150 135, 170 115 Q 190 95, 210 80 L 240 80 Q 255 85, 260 100 Q 265 120, 250 135 Q 230 155, 210 165 L 170 165 Q 150 170, 130 180 Q 110 185, 90 185 L 60 185 Q 45 180, 42 165 Q 42 155, 50 150 Z',
+            startX: 50, startY: 170
+        },
+        'thunder_valley': {
+            path: 'M 60 140 Q 80 120, 110 115 L 150 115 Q 180 110, 210 115 Q 240 120, 255 140 Q 265 160, 245 175 L 200 175 Q 180 180, 160 175 L 140 170 Q 120 175, 100 170 L 80 165 Q 65 160, 60 145 Z',
+            startX: 60, startY: 140
+        }
+    },
+    
+    // Genera tracciato del circuito (ora usa path predefiniti)
     generateCircuitPath(circuit) {
         const width = 300;
         const height = 200;
-        const padding = 20;
         
-        // Seed casuale basato sull'ID del circuito per consistenza
-        let seed = 0;
-        for (let i = 0; i < circuit.id.length; i++) {
-            seed += circuit.id.charCodeAt(i);
+        // Usa path predefinito se esiste, altrimenti fallback a cerchio
+        const circuitData = this.CIRCUIT_PATHS[circuit.id];
+        
+        if (!circuitData) {
+            console.warn(`⚠️ Nessun path per circuito ${circuit.id}, uso fallback`);
+            // Fallback: cerchio semplice
+            return {
+                path: 'M 150 50 Q 250 50, 250 150 Q 250 250, 150 250 Q 50 250, 50 150 Q 50 50, 150 50 Z',
+                width,
+                height
+            };
         }
-        const random = (min, max) => {
-            seed = (seed * 9301 + 49297) % 233280;
-            return min + (seed / 233280) * (max - min);
+        
+        return {
+            path: circuitData.path,
+            width,
+            height
         };
-        
-        // Calcola numero totale di punti basato sulle curve
-        const totalPoints = circuit.tightCorners + circuit.mediumCorners + circuit.fastCorners + 
-                           circuit.longStraights + circuit.shortStraights;
-        
-        // Genera punti del tracciato
-        const points = [];
-        const centerX = width / 2;
-        const centerY = height / 2;
-        const radiusX = (width - padding * 2) / 2;
-        const radiusY = (height - padding * 2) / 2;
-        
-        for (let i = 0; i <= totalPoints; i++) {
-            const angle = (i / totalPoints) * Math.PI * 2;
-            
-            // Varia il raggio per creare curve
-            let radiusVariation = 1;
-            if (i % 3 === 0 && circuit.tightCorners > 5) {
-                radiusVariation = 0.7; // Curve strette
-            } else if (i % 4 === 0 && circuit.fastCorners > 4) {
-                radiusVariation = 1.3; // Curve larghe
-            }
-            
-            // Aggiungi variazione casuale ma consistente
-            const noise = random(-0.1, 0.1);
-            radiusVariation += noise;
-            
-            const x = centerX + Math.cos(angle) * radiusX * radiusVariation;
-            const y = centerY + Math.sin(angle) * radiusY * radiusVariation;
-            
-            points.push({ x, y });
-        }
-        
-        // Converti punti in path SVG
-        let path = `M ${points[0].x} ${points[0].y}`;
-        for (let i = 1; i < points.length; i++) {
-            // Usa curve quadratiche per smoothness
-            const curr = points[i];
-            const prev = points[i - 1];
-            const cpX = (prev.x + curr.x) / 2;
-            const cpY = (prev.y + curr.y) / 2;
-            path += ` Q ${prev.x} ${prev.y}, ${cpX} ${cpY}`;
-        }
-        path += ' Z'; // Chiudi il tracciato
-        
-        return { path, width, height };
     },
     
     // Render mappa animata del circuito
