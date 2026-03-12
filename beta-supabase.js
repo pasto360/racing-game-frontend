@@ -203,11 +203,34 @@ const BetaModule = {
     },
     
     // Calcola numero settimana
+    // Calcola numero settimana (reset ogni LUNEDÌ)
     getWeekNumber() {
         const now = new Date();
-        const start = new Date(now.getFullYear(), 0, 1);
-        const diff = now - start;
-        return Math.floor(diff / 604800000); // millisecondi in una settimana
+        
+        // Trova il lunedì di questa settimana
+        const dayOfWeek = now.getDay(); // 0=domenica, 1=lunedì, ..., 6=sabato
+        const daysFromMonday = (dayOfWeek === 0) ? 6 : dayOfWeek - 1; // Domenica conta come 6 giorni dal lunedì
+        
+        // Calcola lunedì corrente
+        const monday = new Date(now);
+        monday.setDate(now.getDate() - daysFromMonday);
+        monday.setHours(0, 0, 0, 0);
+        
+        // Primo lunedì dell'anno
+        const yearStart = new Date(now.getFullYear(), 0, 1);
+        const firstMonday = new Date(yearStart);
+        const firstDayOfWeek = yearStart.getDay();
+        const daysToMonday = (firstDayOfWeek === 0) ? 1 : (8 - firstDayOfWeek);
+        firstMonday.setDate(yearStart.getDate() + daysToMonday);
+        firstMonday.setHours(0, 0, 0, 0);
+        
+        // Calcola differenza in settimane
+        const diffTime = monday - firstMonday;
+        const weekNumber = Math.floor(diffTime / 604800000) + 1; // +1 perché iniziamo da settimana 1
+        
+        console.log(`📅 Settimana corrente: ${weekNumber} (Lunedì: ${monday.toLocaleDateString()})`);
+        
+        return weekNumber;
     },
     
     // Esegui simulazione
