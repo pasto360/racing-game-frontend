@@ -24,6 +24,9 @@ const BetaModule = {
         pitLap1: 10,
         pitLap2: 14,
         pitLap3: 18,
+        fuelPit1: 100,
+        fuelPit2: 100,
+        fuelPit3: 100,
         tiresPit1: 'medium',
         tiresPit2: 'hard',
         tiresPit3: 'hard'
@@ -112,10 +115,11 @@ const BetaModule = {
             this.currentCircuit = this.circuits[circuitIndex];
             
             // Imposta giri sosta default in base a numero giri circuito
+            // Ricalcola sempre per adattarsi al circuito corrente
             const laps = this.currentCircuit.laps;
-            if (this.setup.pitLap1 === 0) this.setup.pitLap1 = Math.floor(laps / 3);
-            if (this.setup.pitLap2 === 0) this.setup.pitLap2 = Math.floor(laps * 2 / 3);
-            if (this.setup.pitLap3 === 0) this.setup.pitLap3 = Math.floor(laps / 2);
+            this.setup.pitLap1 = Math.floor(laps / 2); // Metà gara
+            this.setup.pitLap2 = Math.floor(laps / 3); // 1/3 gara
+            this.setup.pitLap3 = Math.floor(laps * 2 / 3); // 2/3 gara
             
             // Calcola giorno corrente (per check limite giornaliero)
             const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
@@ -382,17 +386,17 @@ const BetaModule = {
             if (pitLaps.includes(lap)) {
                 totalTime += 20; // Tempo sosta: 20 secondi
                 
-                // Rifornimento
-                fuel = this.setup.fuel;
-                
-                // Cambio gomme
+                // Rifornimento e cambio gomme specifici per ogni sosta
                 if (this.setup.pitStops >= 1 && lap === this.setup.pitLap1) {
+                    fuel = this.setup.fuelPit1;
                     currentTires = this.setup.tiresPit1;
                     tireAge = 0;
                 } else if (this.setup.pitStops >= 2 && lap === this.setup.pitLap2) {
+                    fuel = this.setup.fuelPit2;
                     currentTires = this.setup.tiresPit2;
                     tireAge = 0;
                 } else if (this.setup.pitStops >= 3 && lap === this.setup.pitLap3) {
+                    fuel = this.setup.fuelPit3;
                     currentTires = this.setup.tiresPit3;
                     tireAge = 0;
                 }
@@ -809,6 +813,11 @@ const BetaModule = {
                                     <label style="display: block; margin-bottom: 8px;"><strong>Giro sosta:</strong> <span id="pitLap1Value">${this.setup.pitLap1}</span></label>
                                     <input type="range" id="pitLap1Slider" class="beta-slider" min="1" max="${maxLaps}" value="${this.setup.pitLap1}">
                                 </div>
+                                <div style="margin-bottom: 15px;">
+                                    <label style="display: block; margin-bottom: 8px;"><strong>Carburante rifornimento:</strong> <span id="fuelPit1Value">${this.setup.fuelPit1}</span>L</label>
+                                    <input type="range" id="fuelPit1Slider" class="beta-slider" min="50" max="150" value="${this.setup.fuelPit1}">
+                                    <small style="color: var(--text-secondary); display: block; margin-top: 5px;">Quanto carburante mettere durante la sosta</small>
+                                </div>
                                 <div>
                                     <label style="display: block; margin-bottom: 8px;"><strong>Gomme nuove:</strong></label>
                                     <div style="display: flex; gap: 15px; flex-wrap: wrap;">
@@ -835,6 +844,11 @@ const BetaModule = {
                                     <label style="display: block; margin-bottom: 8px;"><strong>Giro sosta:</strong> <span id="pitLap2Value">${this.setup.pitLap2}</span></label>
                                     <input type="range" id="pitLap2Slider" class="beta-slider" min="1" max="${maxLaps}" value="${this.setup.pitLap2}">
                                 </div>
+                                <div style="margin-bottom: 15px;">
+                                    <label style="display: block; margin-bottom: 8px;"><strong>Carburante rifornimento:</strong> <span id="fuelPit2Value">${this.setup.fuelPit2}</span>L</label>
+                                    <input type="range" id="fuelPit2Slider" class="beta-slider" min="50" max="150" value="${this.setup.fuelPit2}">
+                                    <small style="color: var(--text-secondary); display: block; margin-top: 5px;">Quanto carburante mettere durante la sosta</small>
+                                </div>
                                 <div>
                                     <label style="display: block; margin-bottom: 8px;"><strong>Gomme nuove:</strong></label>
                                     <div style="display: flex; gap: 15px; flex-wrap: wrap;">
@@ -860,6 +874,11 @@ const BetaModule = {
                                 <div style="margin-bottom: 15px;">
                                     <label style="display: block; margin-bottom: 8px;"><strong>Giro sosta:</strong> <span id="pitLap3Value">${this.setup.pitLap3}</span></label>
                                     <input type="range" id="pitLap3Slider" class="beta-slider" min="1" max="${maxLaps}" value="${this.setup.pitLap3}">
+                                </div>
+                                <div style="margin-bottom: 15px;">
+                                    <label style="display: block; margin-bottom: 8px;"><strong>Carburante rifornimento:</strong> <span id="fuelPit3Value">${this.setup.fuelPit3}</span>L</label>
+                                    <input type="range" id="fuelPit3Slider" class="beta-slider" min="50" max="150" value="${this.setup.fuelPit3}">
+                                    <small style="color: var(--text-secondary); display: block; margin-top: 5px;">Quanto carburante mettere durante la sosta</small>
                                 </div>
                                 <div>
                                     <label style="display: block; margin-bottom: 8px;"><strong>Gomme nuove:</strong></label>
@@ -987,6 +1006,22 @@ const BetaModule = {
                 document.getElementById('pitLap3Slider')?.addEventListener('input', (e) => {
                     document.getElementById('pitLap3Value').textContent = e.target.value;
                     BetaModule.setup.pitLap3 = parseInt(e.target.value);
+                });
+                
+                // Listener carburante soste
+                document.getElementById('fuelPit1Slider')?.addEventListener('input', (e) => {
+                    document.getElementById('fuelPit1Value').textContent = e.target.value;
+                    BetaModule.setup.fuelPit1 = parseInt(e.target.value);
+                });
+                
+                document.getElementById('fuelPit2Slider')?.addEventListener('input', (e) => {
+                    document.getElementById('fuelPit2Value').textContent = e.target.value;
+                    BetaModule.setup.fuelPit2 = parseInt(e.target.value);
+                });
+                
+                document.getElementById('fuelPit3Slider')?.addEventListener('input', (e) => {
+                    document.getElementById('fuelPit3Value').textContent = e.target.value;
+                    BetaModule.setup.fuelPit3 = parseInt(e.target.value);
                 });
             </script>
         `;
