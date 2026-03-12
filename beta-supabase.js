@@ -20,13 +20,13 @@ const BetaModule = {
         gearRatio: 'medium',
         suspension: 0,
         // Pit-stop strategy
-        pitStops: 0,
-        pitLap1: 0,
-        pitLap2: 0,
-        pitLap3: 0,
+        pitStops: 1,
+        pitLap1: 10,
+        pitLap2: 14,
+        pitLap3: 18,
         tiresPit1: 'medium',
-        tiresPit2: 'medium',
-        tiresPit3: 'medium'
+        tiresPit2: 'hard',
+        tiresPit3: 'hard'
     },
     
     // Inizializza modulo
@@ -110,6 +110,12 @@ const BetaModule = {
             const weekNumber = this.getWeekNumber();
             const circuitIndex = weekNumber % this.circuits.length;
             this.currentCircuit = this.circuits[circuitIndex];
+            
+            // Imposta giri sosta default in base a numero giri circuito
+            const laps = this.currentCircuit.laps;
+            if (this.setup.pitLap1 === 0) this.setup.pitLap1 = Math.floor(laps / 3);
+            if (this.setup.pitLap2 === 0) this.setup.pitLap2 = Math.floor(laps * 2 / 3);
+            if (this.setup.pitLap3 === 0) this.setup.pitLap3 = Math.floor(laps / 2);
             
             // Calcola giorno corrente (per check limite giornaliero)
             const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
@@ -341,74 +347,126 @@ const BetaModule = {
         }
     },
     
-    // Calcola simulazione (logica dal server)
+    // Calcola simulazione con strategia pit-stop
     calculateSimulation(car) {
         const power = (car.stats.engine + (car.upgrades?.engine || 0) * 5) * 3;
         const baseWeight = 1000 + (car.stats.body * 2);
-        const totalWeight = baseWeight + this.setup.fuel;
         
-        // Velocità max
-        let maxSpeed = (power / totalWeight) * 200;
-        maxSpeed -= this.setup.downforce * 0.5;
-        if (this.setup.gearRatio === 'short') maxSpeed -= 10;
-        if (this.setup.gearRatio === 'long') maxSpeed += 10;
-        
-        // Grip
-        let grip = 1.0;
-        if (this.setup.tires === 'soft') grip = 1.05;
-        if (this.setup.tires === 'hard') grip = 0.98;
-        grip += (2.2 - this.setup.tirePressure) * 0.05;
+        // Velocità max base
+        let baseMaxSpeed = (power / 1200) * 200; // Peso di riferimento 1200kg
+        if (this.setup.gearRatio === 'short') baseMaxSpeed -= 10;
+        if (this.setup.gearRatio === 'long') baseMaxSpeed += 10;
         
         // Consumo carburante/giro
         let fuelPerLap = 2.5;
         fuelPerLap += this.currentCircuit.tightCorners * 0.15;
         fuelPerLap += this.setup.downforce * 0.02;
-        if (this.setup.tires === 'soft') fuelPerLap *= 1.1;
         
-        // Degrado gomme/giro
-        let tireWearPerLap = 0.003;
-        if (this.setup.tires === 'soft') tireWearPerLap = 0.005;
-        if (this.setup.tires === 'hard') tireWearPerLap = 0.002;
-        tireWearPerLap += this.currentCircuit.tightCorners * 0.0005;
+        // Array giri di sosta
+        const pitLaps = [];
+        if (this.setup.pitStops >= 1 && this.setup.pitLap1 > 0) pitLaps.push(this.setup.pitLap1);
+        if (this.setup.pitStops >= 2 && this.setup.pitLap2 > 0) pitLaps.push(this.setup.pitLap2);
+        if (this.setup.pitStops >= 3 && this.setup.pitLap3 > 0) pitLaps.push(this.setup.pitLap3);
         
         // Simula gara
         let totalTime = 0;
         let bestLap = 999;
         let fuel = this.setup.fuel;
-        let tireWear = 0;
+        let currentTires = this.setup.tires;
+        let tireAge = 0; // Giri fatti con queste gomme
         let dnf = false;
         let dnfLap = 0;
         
         for (let lap = 1; lap <= this.currentCircuit.laps; lap++) {
+            // Check pit-stop
+            if (pitLaps.includes(lap)) {
+                totalTime += 20; // Tempo sosta: 20 secondi
+                
+                // Rifornimento
+                fuel = this.setup.fuel;
+                
+                // Cambio gomme
+                if (this.setup.pitStops >= 1 && lap === this.setup.pitLap1) {
+                    currentTires = this.setup.tiresPit1;
+                    tireAge = 0;
+                } else if (this.setup.pitStops >= 2 && lap === this.setup.pitLap2) {
+                    currentTires = this.setup.tiresPit2;
+                    tireAge = 0;
+                } else if (this.setup.pitStops >= 3 && lap === this.setup.pitLap3) {
+                    currentTires = this.setup.tiresPit3;
+                    tireAge = 0;
+                }
+                
+                console.log(`🔧 Pit-stop giro ${lap}: Fuel ${fuel}L, Gomme ${currentTires}`);
+            }
+            
             // Check carburante
             if (fuel < fuelPerLap) {
                 dnf = true;
                 dnfLap = lap;
+                console.log(`❌ DNF giro ${lap}: Carburante finito`);
                 break;
             }
             
-            // Calcola tempo giro
-            const currentGrip = grip * (1 - tireWear);
+            // Calcola grip gomme (degrado basato su età + tipo)
+            let tireGrip = 1.0;
+            let tireWearRate = 0.003;
+            
+            if (currentTires === 'soft') {
+                tireGrip = 1.08; // Grip alto
+                tireWearRate = 0.006; // Degrado veloce
+            } else if (currentTires === 'medium') {
+                tireGrip = 1.0; // Grip normale
+                tireWearRate = 0.003; // Degrado normale
+            } else if (currentTires === 'hard') {
+                tireGrip = 0.95; // Grip basso
+                tireWearRate = 0.0015; // Degrado lento
+            }
+            
+            // Consumo gomme aumenta con curve strette
+            tireWearRate += this.currentCircuit.tightCorners * 0.0004;
+            
+            // Grip attuale diminuisce con età gomme
+            const currentGrip = tireGrip * Math.max(0.85, 1 - (tireAge * tireWearRate));
+            
+            // Grip influenzato da pressione
+            const pressureGrip = currentGrip * (1 + (2.2 - this.setup.tirePressure) * 0.03);
+            
+            // Peso attuale (base + carburante residuo)
             const currentWeight = baseWeight + fuel;
             
-            let lapTime = 60 + Math.random() * 5;
-            lapTime *= (this.currentCircuit.length / 5000);
-            lapTime *= (1200 / currentWeight);
-            lapTime *= (1 / currentGrip);
-            lapTime += (100 - this.setup.downforce) * 0.05;
-            lapTime -= maxSpeed * 0.01;
+            // Velocità max influenzata da peso e deportanza
+            let maxSpeed = baseMaxSpeed * (1200 / currentWeight);
+            maxSpeed -= this.setup.downforce * 0.5;
             
-            // Penalità dossi
-            if (this.currentCircuit.bumps >= 3 && this.setup.suspension === -30) {
-                lapTime += 0.5;
+            // Calcola tempo giro
+            let lapTime = 60 + Math.random() * 3; // Base + variazione casuale
+            lapTime *= (this.currentCircuit.length / 5000); // Scala per lunghezza
+            lapTime *= (1200 / currentWeight); // Peso influenza velocità
+            lapTime *= (1 / pressureGrip); // Grip influenza curva
+            lapTime += (100 - this.setup.downforce) * 0.04; // Deportanza bassa = perdi tempo in curva
+            lapTime -= maxSpeed * 0.01; // Velocità alta = recuperi su rettilinei
+            
+            // Penalità dossi se sospensioni troppo basse
+            if (this.currentCircuit.bumps >= 3 && this.setup.suspension < -10) {
+                lapTime += 0.3;
+            }
+            
+            // Bonus sospensioni alte su dossi
+            if (this.currentCircuit.bumps >= 3 && this.setup.suspension > 10) {
+                lapTime -= 0.2;
             }
             
             totalTime += lapTime;
             if (lapTime < bestLap) bestLap = lapTime;
             
-            // Consuma
-            fuel -= fuelPerLap;
-            tireWear += tireWearPerLap;
+            // Consuma carburante
+            let lapFuel = fuelPerLap;
+            if (currentTires === 'soft') lapFuel *= 1.05; // Soft consumano più benzina
+            fuel -= lapFuel;
+            
+            // Invecchia gomme
+            tireAge++;
         }
         
         return {
