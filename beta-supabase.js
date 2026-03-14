@@ -969,61 +969,6 @@ const BetaModule = {
                     🏁 ESEGUI SIMULAZIONE
                 </button>
             </div>
-            
-            <script>
-                // Aggiorna valori slider in tempo reale
-                document.getElementById('fuelSlider')?.addEventListener('input', (e) => {
-                    document.getElementById('fuelValue').textContent = e.target.value;
-                    BetaModule.setup.fuel = parseInt(e.target.value);
-                });
-                
-                document.getElementById('pressureSlider')?.addEventListener('input', (e) => {
-                    document.getElementById('pressureValue').textContent = e.target.value;
-                    BetaModule.setup.tirePressure = parseFloat(e.target.value);
-                });
-                
-                document.getElementById('downforceSlider')?.addEventListener('input', (e) => {
-                    document.getElementById('downforceValue').textContent = e.target.value;
-                    BetaModule.setup.downforce = parseInt(e.target.value);
-                });
-                
-                document.getElementById('suspensionSlider')?.addEventListener('input', (e) => {
-                    const val = parseInt(e.target.value);
-                    document.getElementById('suspensionValue').textContent = (val > 0 ? '+' : '') + val + 'mm';
-                    BetaModule.setup.suspension = val;
-                });
-                
-                document.getElementById('pitLap1Slider')?.addEventListener('input', (e) => {
-                    document.getElementById('pitLap1Value').textContent = e.target.value;
-                    BetaModule.setup.pitLap1 = parseInt(e.target.value);
-                });
-                
-                document.getElementById('pitLap2Slider')?.addEventListener('input', (e) => {
-                    document.getElementById('pitLap2Value').textContent = e.target.value;
-                    BetaModule.setup.pitLap2 = parseInt(e.target.value);
-                });
-                
-                document.getElementById('pitLap3Slider')?.addEventListener('input', (e) => {
-                    document.getElementById('pitLap3Value').textContent = e.target.value;
-                    BetaModule.setup.pitLap3 = parseInt(e.target.value);
-                });
-                
-                // Listener carburante soste
-                document.getElementById('fuelPit1Slider')?.addEventListener('input', (e) => {
-                    document.getElementById('fuelPit1Value').textContent = e.target.value;
-                    BetaModule.setup.fuelPit1 = parseInt(e.target.value);
-                });
-                
-                document.getElementById('fuelPit2Slider')?.addEventListener('input', (e) => {
-                    document.getElementById('fuelPit2Value').textContent = e.target.value;
-                    BetaModule.setup.fuelPit2 = parseInt(e.target.value);
-                });
-                
-                document.getElementById('fuelPit3Slider')?.addEventListener('input', (e) => {
-                    document.getElementById('fuelPit3Value').textContent = e.target.value;
-                    BetaModule.setup.fuelPit3 = parseInt(e.target.value);
-                });
-            </script>
         `;
     },
     
@@ -1040,6 +985,9 @@ const BetaModule = {
         document.getElementById('pit1Section').classList.toggle('active', num >= 1);
         document.getElementById('pit2Section').classList.toggle('active', num >= 2);
         document.getElementById('pit3Section').classList.toggle('active', num >= 3);
+        
+        // Riattacha i listener dopo aver mostrato le sezioni
+        this.attachSetupListeners();
     },
     
     // Gestione checkbox gomme
@@ -1234,6 +1182,62 @@ const BetaModule = {
                     const val = this.setup.suspension;
                     suspensionValue.textContent = `${val > 0 ? '+' : ''}${val}mm`;
                 }
+            });
+        }
+        
+        // Listener pit-stop - giri sosta
+        const pitLap1Slider = document.getElementById('pitLap1Slider');
+        const pitLap1Value = document.getElementById('pitLap1Value');
+        if (pitLap1Slider) {
+            pitLap1Slider.addEventListener('input', (e) => {
+                this.setup.pitLap1 = parseInt(e.target.value);
+                if (pitLap1Value) pitLap1Value.textContent = this.setup.pitLap1;
+            });
+        }
+        
+        const pitLap2Slider = document.getElementById('pitLap2Slider');
+        const pitLap2Value = document.getElementById('pitLap2Value');
+        if (pitLap2Slider) {
+            pitLap2Slider.addEventListener('input', (e) => {
+                this.setup.pitLap2 = parseInt(e.target.value);
+                if (pitLap2Value) pitLap2Value.textContent = this.setup.pitLap2;
+            });
+        }
+        
+        const pitLap3Slider = document.getElementById('pitLap3Slider');
+        const pitLap3Value = document.getElementById('pitLap3Value');
+        if (pitLap3Slider) {
+            pitLap3Slider.addEventListener('input', (e) => {
+                this.setup.pitLap3 = parseInt(e.target.value);
+                if (pitLap3Value) pitLap3Value.textContent = this.setup.pitLap3;
+            });
+        }
+        
+        // Listener pit-stop - carburante
+        const fuelPit1Slider = document.getElementById('fuelPit1Slider');
+        const fuelPit1Value = document.getElementById('fuelPit1Value');
+        if (fuelPit1Slider) {
+            fuelPit1Slider.addEventListener('input', (e) => {
+                this.setup.fuelPit1 = parseInt(e.target.value);
+                if (fuelPit1Value) fuelPit1Value.textContent = this.setup.fuelPit1;
+            });
+        }
+        
+        const fuelPit2Slider = document.getElementById('fuelPit2Slider');
+        const fuelPit2Value = document.getElementById('fuelPit2Value');
+        if (fuelPit2Slider) {
+            fuelPit2Slider.addEventListener('input', (e) => {
+                this.setup.fuelPit2 = parseInt(e.target.value);
+                if (fuelPit2Value) fuelPit2Value.textContent = this.setup.fuelPit2;
+            });
+        }
+        
+        const fuelPit3Slider = document.getElementById('fuelPit3Slider');
+        const fuelPit3Value = document.getElementById('fuelPit3Value');
+        if (fuelPit3Slider) {
+            fuelPit3Slider.addEventListener('input', (e) => {
+                this.setup.fuelPit3 = parseInt(e.target.value);
+                if (fuelPit3Value) fuelPit3Value.textContent = this.setup.fuelPit3;
             });
         }
     }
