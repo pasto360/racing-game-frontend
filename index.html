@@ -1564,20 +1564,22 @@ function handleLogout() {
 }
 
 async function showAuthModal() {
-    // Controlla stato server prima di mostrare form
-    let serverStatus = 'aperto';
     let userCount = 0;
     
     try {
-        const statusRes = await fetch(`${API_URL}/api/auth/status`);
-        if (statusRes.ok) {
-            const data = await statusRes.json();
-            serverStatus = data.registrationOpen ? 'aperto' : 'chiuso';
-            userCount = data.userCount || 0;
-        }
-    } catch (err) {
-        console.log('Impossibile verificare stato server, assumo aperto');
+        // Conta utenti da Supabase
+        const { count } = await supabase
+            .from('users')
+            .select('*', { count: 'exact', head: true });
+        
+        userCount = count || 0;
+    } catch (error) {
+        console.error('Errore conteggio utenti:', error);
     }
+    
+    // Mostra modale (rimuovi logica server status)
+    // ...
+}
     
     const statusBadge = serverStatus === 'aperto' 
         ? `<div style="background: linear-gradient(135deg, #00ff88, #00cc66); color: #000; padding: 8px 20px; border-radius: 20px; font-weight: 700; display: inline-block; margin-bottom: 20px;">✓ SERVER 1 APERTO</div>`
@@ -1635,93 +1637,75 @@ function showLoginForm() {
 }
 
 async function handleLogin() {
-    const username = document.getElementById('loginUsername').value;
-    const password = document.getElementById('loginPassword').value;
-    const msgEl = document.getElementById('authMessage');
-    
-    if (!username || !password) {
-        msgEl.textContent = 'Compila tutti i campi!';
-        return;
-    }
-    
     try {
-        msgEl.textContent = 'Login in corso...';
-        msgEl.style.color = '#00ff88';
+        const email = document.getElementById('loginUsername').value;
+        const password = document.getElementById('loginPassword').value;
         
-        const response = await fetch(`${API_URL}/api/auth/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, password })
+        // Login con Supabase Auth
+        const { data, error } = await supabase.auth.signInWithPassword({
+            email: email,
+            password: password
         });
         
-        const data = await response.json();
+        if (error) throw error;
         
-        if (!response.ok) {
-            msgEl.style.color = '#ff3333';
-            msgEl.textContent = data.error;
-            return;
-        }
+        // Salva token e user
+        localStorage.setItem('authToken', data.session.access_token);
+        localStorage.setItem('user', JSON.stringify(data.user));
         
-        authToken = data.token;
-        currentUser = data.user;
-        localStorage.setItem('authToken', authToken);
-        localStorage.setItem('user', JSON.stringify(currentUser));
-        
-        msgEl.style.color = '#00ff88';
-        msgEl.textContent = 'Login riuscito! Caricamento gioco...';
-        
-        document.querySelector('[style*="position: fixed"]').remove();
+        // Chiudi modale e inizializza gioco
+        document.getElementById('authModal').style.display = 'none';
         await game.init();
         
+        showNotification('Login effettuato!', 'success');
     } catch (error) {
-        msgEl.style.color = '#ff3333';
-        msgEl.textContent = 'Errore connessione al server';
         console.error('Errore login:', error);
+        alert('Errore login: ' + error.message);
     }
 }
 
 async function handleRegister() {
-    const username = document.getElementById('regUsername').value;
-    const email = document.getElementById('regEmail').value;
-    const password = document.getElementById('regPassword').value;
-    const msgEl = document.getElementById('authMessage');
-    
-    if (!username || !email || !password) {
-        msgEl.textContent = 'Compila tutti i campi!';
-        return;
-    }
-    
-    if (password.length < 6) {
-        msgEl.textContent = 'Password troppo corta (minimo 6 caratteri)!';
-        return;
-    }
-    
     try {
-        msgEl.textContent = 'Registrazione in corso...';
-        msgEl.style.color = '#00ff88';
+        const username = document.getElementById('regUsername').value;
+        const email = document.getElementById('regEmail').value;
+        const password = document.getElementById('regPassword').value;
         
-        const response = await fetch(`${API_URL}/api/auth/register`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username, email, password })
+        // Registrazione con Supabase Auth
+        const { data, error } = await supabase.auth.signUp({
+            email: email,
+            password: password,
+            options: {
+                data: {
+                    username: username
+                }
+            }
         });
         
-        const data = await response.json();
+        if (error) throw error;
         
-        if (!response.ok) {
-            msgEl.style.color = '#ff3333';
-            msgEl.textContent = data.error;
-            return;
-        }
+        // Crea record nella tabella users
+        const { error: insertError } = await supabase
+            .from('users')
+            .insert({
+                id: data.user.id,
+                username: username,
+                email: email
+            });
         
-        msgEl.style.color = '#00ff88';
-        msgEl.textContent = 'Registrazione completata! Ora fai login.';
-        setTimeout(showLoginForm, 2000);
+        if (insertError) throw insertError;
         
+        // Auto-login
+        localStorage.setItem('authToken', data.session.access_token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        
+        // Chiudi modale e inizializza
+        document.getElementById('authModal').style.display = 'none';
+        await game.init();
+        
+        showNotification('Registrazione completata!', 'success');
     } catch (error) {
-        msgEl.style.color = '#ff3333';
-        msgEl.textContent = 'Errore connessione al server';
         console.error('Errore registrazione:', error);
+        alert('Errore registrazione: ' + error.message);
     }
 }
 
