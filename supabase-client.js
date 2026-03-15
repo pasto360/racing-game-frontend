@@ -2,8 +2,8 @@
 // Configurazione client Supabase per browser
 
 (function() {
-    const SUPABASE_URL = 'https://okzbbfbsmacwjynlrbbn.supabase.co';
-    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9remJiZmJzbWFjd2p5bmxyYmJuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Mzg1OTMyNDUsImV4cCI6MjA1NDE2OTI0NX0.KZvnIjcb0lUYkVN6SHj10rXnzzWPzJTjLx9NxXlSgTs';
+    const SUPABASE_URL = 'https://silbdhelkqeclweswznu.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNpbGJkaGVsa3FlY2x3ZXN3em51Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njk3MDM1NzQsImV4cCI6MjA4NTI3OTU3NH0.pJLp7t5laTJ0qUGv2PmUe0AvIUtrccmDpCUqinG7YVo';
 
     // window.supabase è la libreria caricata da CDN
     // Usiamo .createClient() per creare il nostro client
