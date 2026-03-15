@@ -1182,26 +1182,19 @@
     <!-- =====================================================
          FILE BETA ESTERNI
          - beta.css  → stili pagina beta
-         - beta-supabase.js → logica pagina beta con Supabase
-         - beta_circuits.json → dati circuiti
+         - beta.js   → logica pagina beta (espone BetaModule)
+         - Il server beta usa: server_beta.js (routes separate)
          ===================================================== -->
     <link rel="stylesheet" href="beta.css">
-    <script src="beta-supabase.js" defer></script>
+    <script src="beta.js" defer></script>
 </head>
 <body>
-    <script src="bcrypt-working.js"></script>
     <script src="supabase-client.js"></script>
-    <script src="supabase-direct.js"></script>
-    <script src="supabase-game-direct.js"></script>
     <div class="save-indicator" id="saveIndicator">💾 Salvataggio...</div>
     
     <div class="container" id="gameContainer" style="display: none;">
         <header>
-            <div style="position: absolute; top: 15px; right: 15px; display: flex; align-items: center; gap: 8px; font-size: 0.75rem; color: var(--text-secondary); font-family: 'Segoe UI', sans-serif; opacity: 0.8;">
-                <div id="usernameDisplay"></div>
-                <span style="color: rgba(255,255,255,0.3);">•</span>
-                <a href="#" onclick="handleLogout(); return false;" style="color: var(--accent-cyan); text-decoration: none; transition: opacity 0.2s; cursor: pointer;" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.8'">logout</a>
-            </div>
+            <button class="logout-btn" onclick="handleLogout()">🚪 LOGOUT</button>
             <button id="eventBtn" onclick="game.changePage('events')" style="display: none; position: absolute; top: 20px; left: 20px; background: linear-gradient(135deg, rgba(255,140,0,0.3), rgba(255,69,0,0.3)); border: 2px solid var(--accent-yellow); color: var(--accent-yellow); padding: 10px 20px; font-family: Orbitron; font-size: 0.9rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; border-radius: 8px; cursor: pointer; transition: all 0.3s;">
                 🎉 EVENTO
             </button>
@@ -1245,6 +1238,10 @@
             <button class="nav-btn" onclick="game.changePage('beta')" style="border-color: rgba(138,43,226,0.5); background: linear-gradient(135deg, rgba(138,43,226,0.15), rgba(75,0,130,0.15));">
                <span class="icon">🧪</span>
                Beta
+            </button>
+            <button class="nav-btn" onclick="game.changePage('idle')" style="border-color: rgba(255,215,0,0.5); background: linear-gradient(135deg, rgba(255,215,0,0.15), rgba(255,165,0,0.15));">
+               <span class="icon">💰</span>
+               IDLE
             </button>
         </nav>
 
@@ -1396,6 +1393,18 @@
             <h2 class="section-title">🎉 Eventi Temporanei</h2>
             <div id="eventsContainer"></div>
         </div>
+        
+        <!-- PAGINA IDLE -->
+        <div id="page-idle" class="page">
+            <div id="idleContainer">
+                <div style="text-align: center; padding: 60px;">
+                    <div class="spinner"></div>
+                    <p style="margin-top: 20px; color: rgba(255,255,255,0.6);">
+                        Caricamento IDLE...
+                    </p>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- SPAZIO PUBBLICITÀ GOOGLE ADSENSE -->
@@ -1531,38 +1540,448 @@ window.addEventListener('error', (e) => {
     }
 });
 
-// ===== MODAL RISULTATO PVP =====
-// (Aggiunto nel DOM tramite JavaScript se non esiste)
-
-// ===== CONFIGURAZIONE SUPABASE =====
-// API_URL mantenuto SOLO per funzionalità non ancora migrate: leaderboard, PvP
+// ===== CONFIGURAZIONE CLOUD =====
 const API_URL = 'https://racing-game-backend-production-a5dd.up.railway.app';
+window.API_URL = API_URL; // ✅ Esponi per beta.js
+let authToken = localStorage.getItem('authToken');
+let currentUser = JSON.parse(localStorage.getItem('user') || 'null');
 
-// Funzione helper per ottenere token Supabase
-function getAuthToken() {
-    const session = getSession();
-    return session?.access_token || null;
-}
-
-console.log('🎮 Supabase Edition - Avvio applicazione');
+console.log('🎮 Cloud Edition - Avvio applicazione');
+console.log('🔑 Token presente:', !!authToken);
 
 // ===== AUTENTICAZIONE =====
 function handleLogout() {
     if (confirm('Sei sicuro di voler uscire?')) {
-        logoutDirect()
-        window.location.href = 'login.html'
+        // Cleanup IDLE
+        if (window.IdleManager) {
+            IdleManager.destroy();
+        }
+        window.idleInitialized = false;
+        
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('user');
+        location.reload();
+    }
+}
+
+async function showAuthModal() {
+    // Controlla stato server prima di mostrare form
+    let serverStatus = 'aperto';
+    let userCount = 0;
+    
+    try {
+        const statusRes = await fetch(`${API_URL}/api/auth/status`);
+        if (statusRes.ok) {
+            const data = await statusRes.json();
+            serverStatus = data.registrationOpen ? 'aperto' : 'chiuso';
+            userCount = data.userCount || 0;
+        }
+    } catch (err) {
+        console.log('Impossibile verificare stato server, assumo aperto');
+    }
+    
+    const statusBadge = serverStatus === 'aperto' 
+        ? `<div style="background: linear-gradient(135deg, #00ff88, #00cc66); color: #000; padding: 8px 20px; border-radius: 20px; font-weight: 700; display: inline-block; margin-bottom: 20px;">✓ SERVER 1 APERTO</div>`
+        : `<div style="background: linear-gradient(135deg, #ff3333, #cc0000); color: #fff; padding: 8px 20px; border-radius: 20px; font-weight: 700; display: inline-block; margin-bottom: 20px;">✗ SERVER 1 CHIUSO</div>`;
+    
+    const html = `
+        <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 9999; display: flex; justify-content: center; align-items: center;">
+            <div style="background: #1a1a1a; padding: 40px; border-radius: 20px; border: 3px solid #ff3333; max-width: 400px; width: 90%;">
+                <h2 style="font-family: Orbitron; text-align: center; margin-bottom: 10px; color: #ff3333;">🏁 RACING GAME CLOUD</h2>
+                <div style="text-align: center; margin-bottom: 20px;">
+                    ${statusBadge}
+                </div>
+                
+                <div id="loginForm">
+                    <input type="text" id="loginUsername" placeholder="Username" style="width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 2px solid #333; background: #0a0a0a; color: white; font-size: 1rem;">
+                    <input type="password" id="loginPassword" placeholder="Password" style="width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 2px solid #333; background: #0a0a0a; color: white; font-size: 1rem;">
+                    <button onclick="handleLogin()" style="width: 100%; padding: 15px; margin: 10px 0; background: linear-gradient(135deg, #ff3333, #cc0000); border: none; border-radius: 8px; color: white; font-weight: 700; cursor: pointer; font-size: 1rem;">LOGIN</button>
+                    <button onclick="showRegisterForm()" style="width: 100%; padding: 15px; margin: 10px 0; background: #333; border: none; border-radius: 8px; color: white; cursor: pointer;" ${serverStatus === 'chiuso' ? 'disabled' : ''}>
+                        ${serverStatus === 'chiuso' ? 'Registrazioni chiuse' : 'Registrati'}
+                    </button>
+                </div>
+                
+                <div id="registerForm" style="display: none;">
+                    ${serverStatus === 'chiuso' ? `
+                        <div style="text-align: center; padding: 30px; color: #ff3333;">
+                            <div style="font-size: 3rem; margin-bottom: 15px;">🔒</div>
+                            <div style="font-size: 1.2rem; font-weight: 700; margin-bottom: 10px;">Server al completo</div>
+                            <div style="font-size: 0.9rem; color: #a0a0a0;">Il Server 1 ha raggiunto il limite massimo di utenti. Nuovi server saranno disponibili presto!</div>
+                            <button onclick="showLoginForm()" style="width: 100%; padding: 15px; margin: 20px 0 0 0; background: #333; border: none; border-radius: 8px; color: white; cursor: pointer;">Torna al Login</button>
+                        </div>
+                    ` : `
+                        <input type="text" id="regUsername" placeholder="Username" style="width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 2px solid #333; background: #0a0a0a; color: white; font-size: 1rem;">
+                        <input type="email" id="regEmail" placeholder="Email" style="width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 2px solid #333; background: #0a0a0a; color: white; font-size: 1rem;">
+                        <input type="password" id="regPassword" placeholder="Password (min 6 caratteri)" style="width: 100%; padding: 12px; margin: 10px 0; border-radius: 8px; border: 2px solid #333; background: #0a0a0a; color: white; font-size: 1rem;">
+                        <button onclick="handleRegister()" style="width: 100%; padding: 15px; margin: 10px 0; background: linear-gradient(135deg, #00ff88, #00cc66); border: none; border-radius: 8px; color: white; font-weight: 700; cursor: pointer; font-size: 1rem;">REGISTRATI</button>
+                        <button onclick="showLoginForm()" style="width: 100%; padding: 15px; margin: 10px 0; background: #333; border: none; border-radius: 8px; color: white; cursor: pointer;">Torna al Login</button>
+                    `}
+                </div>
+                
+                <div id="authMessage" style="margin-top: 20px; text-align: center; color: #ff3333;"></div>
+            </div>
+        </div>
+    `;
+    document.body.insertAdjacentHTML('beforeend', html);
+}
+
+function showRegisterForm() {
+    document.getElementById('loginForm').style.display = 'none';
+    document.getElementById('registerForm').style.display = 'block';
+}
+
+function showLoginForm() {
+    document.getElementById('loginForm').style.display = 'block';
+    document.getElementById('registerForm').style.display = 'none';
+}
+
+async function handleLogin() {
+    const username = document.getElementById('loginUsername').value;
+    const password = document.getElementById('loginPassword').value;
+    const msgEl = document.getElementById('authMessage');
+    
+    if (!username || !password) {
+        msgEl.textContent = 'Compila tutti i campi!';
+        return;
+    }
+    
+    try {
+        msgEl.textContent = 'Login in corso...';
+        msgEl.style.color = '#00ff88';
+        
+        const response = await fetch(`${API_URL}/api/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+            msgEl.style.color = '#ff3333';
+            msgEl.textContent = data.error;
+            return;
+        }
+        
+        authToken = data.token;
+        currentUser = data.user;
+        localStorage.setItem('authToken', authToken);
+        localStorage.setItem('user', JSON.stringify(currentUser));
+        
+        msgEl.style.color = '#00ff88';
+        msgEl.textContent = 'Login riuscito! Caricamento gioco...';
+        
+        document.querySelector('[style*="position: fixed"]').remove();
+        await game.init();
+        
+    } catch (error) {
+        msgEl.style.color = '#ff3333';
+        msgEl.textContent = 'Errore connessione al server';
+        console.error('Errore login:', error);
+    }
+}
+
+async function handleRegister() {
+    const username = document.getElementById('regUsername').value;
+    const email = document.getElementById('regEmail').value;
+    const password = document.getElementById('regPassword').value;
+    const msgEl = document.getElementById('authMessage');
+    
+    if (!username || !email || !password) {
+        msgEl.textContent = 'Compila tutti i campi!';
+        return;
+    }
+    
+    if (password.length < 6) {
+        msgEl.textContent = 'Password troppo corta (minimo 6 caratteri)!';
+        return;
+    }
+    
+    try {
+        msgEl.textContent = 'Registrazione in corso...';
+        msgEl.style.color = '#00ff88';
+        
+        const response = await fetch(`${API_URL}/api/auth/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, email, password })
+        });
+        
+        const data = await response.json();
+        
+        if (!response.ok) {
+            msgEl.style.color = '#ff3333';
+            msgEl.textContent = data.error;
+            return;
+        }
+        
+        msgEl.style.color = '#00ff88';
+        msgEl.textContent = 'Registrazione completata! Ora fai login.';
+        setTimeout(showLoginForm, 2000);
+        
+    } catch (error) {
+        msgEl.style.color = '#ff3333';
+        msgEl.textContent = 'Errore connessione al server';
+        console.error('Errore registrazione:', error);
     }
 }
 
 // ===== API CLOUD =====
-async function loadGameFromServer() {
-    return await loadGameFromSupabase()
+async function loadGameFromServer(retryCount = 0) {
+    try {
+        console.log('📥 Caricamento dati dal server...');
+        
+        const response = await fetch(`${API_URL}/api/game/state`, {
+            headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        
+        // Gestione errore 429 (Too Many Requests)
+        if (response.status === 429) {
+            if (retryCount < 3) {
+                const delay = Math.pow(2, retryCount) * 1000; // 1s, 2s, 4s
+                console.log(`⏳ Rate limit raggiunto. Riprovo tra ${delay/1000}s...`);
+                await new Promise(resolve => setTimeout(resolve, delay));
+                return loadGameFromServer(retryCount + 1);
+            } else {
+                throw new Error('Troppe richieste al server. Riprova tra un minuto.');
+            }
+        }
+        
+        if (!response.ok) {
+            throw new Error('Errore caricamento');
+        }
+        
+        const data = await response.json();
+        console.log('✅ Dati caricati dal server:', data);
+        
+        if (data.resources) {
+            Object.keys(data.resources).forEach(key => {
+                if (game.resources[key]) {
+                    game.resources[key].value = data.resources[key].value || 0;
+                }
+            });
+        }
+        
+        if (data.workshop) {
+            Object.keys(data.workshop).forEach(key => {
+                if (game.workshop[key]) {
+                    game.workshop[key].level = data.workshop[key].level || 0;
+                    game.workshop[key].unlocked = data.workshop[key].unlocked || false;
+                }
+            });
+        }
+        
+        if (data.ownedCars && Array.isArray(data.ownedCars)) {
+            game.ownedCars = data.ownedCars.map(serverCar => {
+                const templateCar = game.availableCars.find(c => c.name === serverCar.name);
+                return {
+                    ...serverCar,
+                    image: templateCar ? templateCar.image : serverCar.image
+                };
+            });
+        }
+        
+        // ✅ Driver - merge intelligente (preserva bonuses e upgradeCosts locali)
+        if (data.driver && typeof data.driver === 'object' && !Array.isArray(data.driver)) {
+            // Solo level, upgrading, upgradeEndTime dal server
+            game.driver.level = data.driver.level || 0;
+            game.driver.upgrading = data.driver.upgrading || false;
+            game.driver.upgradeEndTime = data.driver.upgradeEndTime || 0;
+            console.log('✅ Driver caricato:', game.driver.level, '/', game.driver.maxLevel);
+        } else {
+            console.log('⚠️ Driver dal server non valido:', typeof data.driver, Array.isArray(data.driver));
+        }
+        game.currentDriver = null; // Legacy
+        
+        if (data.sponsors && Array.isArray(data.sponsors)) {
+            data.sponsors.forEach((serverSponsor, index) => {
+                if (game.sponsors[index]) {
+                    game.sponsors[index].unlocked = serverSponsor.unlocked;
+                }
+            });
+        }
+        
+        game.currentSponsor = data.currentSponsor;
+        game.sponsorRacesLeft = data.sponsorRacesLeft || 0;
+        
+        if (data.technologies && Array.isArray(data.technologies)) {
+            data.technologies.forEach((serverTech) => {
+                const localTech = game.technologies.find(t => t.id === serverTech.id);
+                if (localTech) {
+                    localTech.researched = serverTech.researched || false;
+                }
+            });
+        }
+        
+        game.races = data.races || game.races;
+        // ✅ Championship: merge dati server ma mantieni valori aggiornati
+        if (data.championship) {
+            game.championship = {
+                ...game.championship, // Valori di default aggiornati
+                ...data.championship, // Dati salvati dal server
+                entryFee: 3500,      // ✅ FORZA valore aggiornato
+                prizePool: 7000      // ✅ FORZA valore aggiornato
+            };
+        }
+        game.raceHistory = data.raceHistory || [];
+        
+        // ✅ NUOVI CAMPI v5.2
+        // ✅ Merge trackTraining (preserva name, icon, bonus, maxLevel dalle definitions)
+        if (data.trackTraining) {
+            Object.keys(game.trackTraining).forEach(key => {
+                if (data.trackTraining[key]) {
+                    game.trackTraining[key].level = data.trackTraining[key].level || 0;
+                }
+            });
+        }
+        game.trackQueue = data.trackQueue || game.trackQueue;
+        
+        // ✅ MERGE MISSIONI (preserva nuove definizioni, carica solo completed/progress dal DB)
+        if (data.missions) {
+            Object.keys(game.missions).forEach(key => {
+                if (data.missions[key]) {
+                    game.missions[key].completed = data.missions[key].completed || false;
+                    game.missions[key].progress = data.missions[key].progress || 0;
+                }
+            });
+        }
+        
+        game.pvpStats = data.pvpStats || game.pvpStats;
+        game.upgradesCount = data.upgradesCount || 0;
+        game.championshipsWon = data.championshipsWon || 0;
+        
+        // ✅ EVENTI
+        game.eventProgress = data.eventProgress || {};
+        
+        // PRODUZIONE OFFLINE
+        const lastSaveTime = data.lastSaveTime || Date.now();
+        const now = Date.now();
+        const offlineTime = (now - lastSaveTime) / 1000;
+        
+        if (offlineTime > 60) {
+            console.log(`⏰ Tempo offline: ${(offlineTime / 60).toFixed(1)} minuti`);
+            
+            const offlineHours = offlineTime / 3600;
+            
+            Object.keys(game.workshop).forEach(key => {
+                const section = game.workshop[key];
+                if (section.level > 0 && section.production) {
+                    Object.keys(section.production).forEach(resource => {
+                        if (game.resources[resource]) {
+                            const productionPerHour = section.production[resource] * section.level;
+                            const offlineProduction = productionPerHour * offlineHours;
+                            
+                            game.resources[resource].value += offlineProduction;
+                        }
+                    });
+                }
+            });
+            
+            const energyRecovered = offlineTime / 60;
+            game.resources.energy.value = Math.min(
+                game.resources.energy.value + energyRecovered,
+                game.resources.energy.max
+            );
+            
+            const hours = Math.floor(offlineHours);
+            const minutes = Math.floor((offlineHours - hours) * 60);
+            let timeMsg = hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
+            
+            setTimeout(() => {
+                game.showUnlockNotification(`⏰ Produzione offline: ${timeMsg}`);
+            }, 1000);
+        }
+        
+        return true;
+        
+    } catch (error) {
+        console.error('❌ Errore caricamento dal server:', error);
+        return false;
+    }
 }
 
-// Rate limiting gestito da supabase-game-direct.js
+let saveTimeout = null;
+let lastSaveTime = 0;
+const MIN_SAVE_INTERVAL = 3000; // 3 secondi
 
 async function saveGameToServer(showIndicator = true) {
-    return await saveGameToSupabase(showIndicator)
+    if (!authToken) return;
+
+    // Rate limiter: max 1 save ogni 3 sec
+    const now = Date.now();
+    if (now - lastSaveTime < MIN_SAVE_INTERVAL) {
+        console.log('⏳ Save troppo frequente, schedulo...');
+        if (saveTimeout) clearTimeout(saveTimeout);
+        saveTimeout = setTimeout(() => saveGameToServer(showIndicator), MIN_SAVE_INTERVAL);
+        return;
+    }
+
+    if (saveTimeout) clearTimeout(saveTimeout);
+
+    saveTimeout = setTimeout(async () => {
+        try {
+            const saveIndicator = document.getElementById('saveIndicator');
+            if (showIndicator && saveIndicator) {
+                saveIndicator.classList.add('show');
+            }
+
+            const response = await fetch(`${API_URL}/api/game/state`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${authToken}`
+                },
+                body: JSON.stringify({
+                    gameState: {
+                        resources: game.resources,
+                        workshop: game.workshop,
+                        ownedCars: game.ownedCars,
+                        driver: game.driver, // ✅ Nuovo sistema pilota
+                        sponsors: game.sponsors,
+                        currentSponsor: game.currentSponsor,
+                        technologies: game.technologies,
+                        races: game.races,
+                        championship: game.championship,
+                        raceHistory: game.raceHistory,
+                        // ✅ NUOVI CAMPI v5.2
+                        trackTraining: game.trackTraining,
+                        trackQueue: game.trackQueue,
+                        missions: game.missions,
+                        pvpStats: game.pvpStats,
+                        upgradesCount: game.upgradesCount,
+                        championshipsWon: game.championshipsWon,
+                        // ✅ EVENTI
+                        eventProgress: game.eventProgress
+                    }
+                })
+            });
+
+            // Se rate limit, fallisce silenziosamente (riproverà al prossimo salvataggio automatico)
+            if (response.status === 429) {
+                console.log('⏳ Rate limit durante salvataggio. Riproverà automaticamente.');
+                if (showIndicator && saveIndicator) {
+                    saveIndicator.classList.remove('show');
+                }
+                return;
+            }
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('❌ Errore salvataggio:', response.status, errorText);
+                throw new Error('Errore salvataggio');
+            }
+
+            lastSaveTime = Date.now(); // ✅ Aggiorna timestamp
+            console.log('💾 Salvataggio completato');
+
+            if (showIndicator && saveIndicator) {
+                setTimeout(() => saveIndicator.classList.remove('show'), 1500);
+            }
+
+        } catch (error) {
+            console.error('❌ Errore salvataggio:', error);
+        }
+    }, 500);
 }
 
 // Cache leaderboard - 3 aggiornamenti al giorno (ogni 8 ore)
@@ -1621,47 +2040,32 @@ async function loadLeaderboard() {
         
         // Se cache valida per questo slot, usa quella
         if (leaderboardCache && leaderboardCacheSlot === currentSlot) {
+            // ✅ Cache valida - nessun log per evitare spam
             return leaderboardCache;
         }
         
-        console.log('📊 Caricando classifica da Supabase...');
+        console.log('📊 Caricando classifica dal server...');
+        const response = await fetch(`${API_URL}/api/game/leaderboard`, {
+            headers: { 'Authorization': `Bearer ${authToken}` }
+        });
         
-        // Query top 100 utenti ordinati per reputazione
-        const { data, error } = await supabase
-            .from('game_state')
-            .select(`
-                user_id,
-                resources,
-                championships_won,
-                races,
-                users!inner(username)
-            `)
-            .order('resources->reputation->value', { ascending: false })
-            .limit(100);
+        if (!response.ok) throw new Error('Errore caricamento classifica');
         
-        if (error) throw error;
+        const data = await response.json();
         
-        // Formatta dati
-        const leaderboard = data.map((entry, index) => ({
-            rank: index + 1,
-            user_id: entry.user_id,  // ← IMPORTANTE per PvP
-            username: entry.users.username,
-            reputation: entry.resources?.reputation?.value || 0,
-            championships: entry.championships_won || 0,
-            wins: entry.races?.wins || 0
-        }));
-        
-        // Salva in cache
-        leaderboardCache = leaderboard;
+        // Salva in cache con slot corrente
+        leaderboardCache = data;
         leaderboardCacheSlot = currentSlot;
         
-        console.log(`✅ Classifica caricata: ${leaderboard.length} giocatori`);
-        return leaderboard;
+        console.log(`✅ Classifica aggiornata (slot ${currentSlot})! Prossimo aggiornamento tra ${getNextLeaderboardUpdate()}`);
+        
+        return data;
         
     } catch (error) {
         console.error('Errore caricamento classifica:', error);
+        // Se c'è cache vecchia, usala comunque
         if (leaderboardCache) {
-            console.log('⚠️ Usando cache classifica (vecchia)');
+            console.log('⚠️ Usando cache classifica (vecchia) - Server non disponibile');
             return leaderboardCache;
         }
         return null;
@@ -1669,20 +2073,9 @@ async function loadLeaderboard() {
 }
 
 // ===== FINE CONFIGURAZIONE API =====
-
-// Metadati workshop - NON USATO (i dati sono già in game.workshop)
-// Mantenuto per compatibilità con renderWorkshop che usa WORKSHOP_META[key]
-const WORKSHOP_META = {
-    engine: { name: 'Motore', icon: '⚙️', image: 'engine.jpg' },
-    electronics: { name: 'Elettronica', icon: '💻', image: 'electronics.jpg' },
-    body: { name: 'Carrozzeria', icon: '🎨', image: 'body.jpg' },
-    aerodynamics: { name: 'Aerodinamica', icon: '🌪️', image: 'aero.jpg' }
-};
-
         const game = {
     currentPage: 'workshop',
     selectedCarIndex: 0,
-    lastLogin: Date.now(), // Timestamp ultimo login per energia offline
         
     resources: {
                 money: { value: 15000, rate: 0, max: Infinity, icon: '💰', name: 'Denaro' },
@@ -1779,6 +2172,16 @@ const WORKSHOP_META = {
         unlocked: false,
         unlockCondition: { reputation: 1000, money: 80000 },
         image: 'https://i.imgur.com/zEWYVCD.png'
+    },
+    {
+        name: 'ULTIMATE EDITION',
+        stats: { engine: 100, body: 100, electronics: 100, aero: 100 },
+        price: { money: 0, parts: 0 },
+        unlocked: false,
+        unlockCondition: { idle_completion: true },
+        special: true,
+        image: 'ultimate.png',
+        description: '🏆 Auto esclusiva sbloccabile completando l\'IDLE Manager - Stats massime!'
     }
 ],
 
@@ -2084,9 +2487,9 @@ const WORKSHOP_META = {
             },
             objective: {
                 type: 'pvp_wins',
-                target: 2,
-                description: 'Vinci 2 sfide PvP',
-                reward: { money: 2000, reputation: 150 }
+                target: 3,
+                description: 'Vinci 3 sfide PvP',
+                reward: { money: 5000, reputation: 150 }
             }
         }
     ];
@@ -2105,13 +2508,6 @@ const WORKSHOP_META = {
     console.log('✅ Gioco inizializzato');
     
     document.getElementById('gameContainer').style.display = 'block';
-    
-    // Mostra username sotto logout
-    const session = getSession();
-    const usernameDisplay = document.getElementById('usernameDisplay');
-    if (usernameDisplay && session?.user?.username) {
-        usernameDisplay.textContent = session.user.username;
-    }
     
     this.render();
     this.startGameLoop();
@@ -2177,7 +2573,7 @@ const WORKSHOP_META = {
 
         // Energia: recupera 1 punto al minuto (mantiene cap a 100)
         this.resources.energy.value = Math.min(
-            this.resources.energy.value + (deltaSeconds / 60),  // 1 al minuto
+            this.resources.energy.value + (deltaSeconds / 60),
             this.resources.energy.max
         );
 
@@ -2188,6 +2584,17 @@ const WORKSHOP_META = {
                 this.resources.money.value += (perSecond * deltaSeconds);
             }
         }
+    },
+
+    // Check se IDLE è stato completato
+    checkIdleCompletion() {
+        // Check se l'utente ha completato IDLE
+        if (window.IdleManager && window.IdleManager.carUnlocked) {
+            return true;
+        }
+        
+        // Oppure check da proprietà game
+        return this.idleCompleted || false;
     },
 
             // ===== FIX BUG 2 & 4: nomi funzioni corretti in changePage =====
@@ -2246,6 +2653,14 @@ const WORKSHOP_META = {
         if (page === 'leaderboard') {
             this.renderLeaderboard();
             this.renderWeeklyLeaderboard();
+        }
+        
+        if (page === 'idle') {
+            // Inizializza IDLE se non già fatto
+            if (!window.idleInitialized && window.IdleManager) {
+                IdleManager.init();
+                window.idleInitialized = true;
+            }
         }
         
         if (page === 'events') {
@@ -3910,7 +4325,6 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                             <div class="side-menu">
                                 ${workshopSections.map((key, idx) => {
                                     const section = this.workshop[key];
-                                    const meta = WORKSHOP_META[key]; // Metadati UI
                                     // Mappa immagini per reparto
                                     const imageMap = {
                                         'engine': 'engine.jpg',
@@ -3931,9 +4345,9 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                                                     // Cambia immagine
                                                     const img = document.getElementById('workshop-image');
                                                     img.src = 'images/sections/${imageName}';
-                                                    img.alt = '${meta.name}';
+                                                    img.alt = '${section.name}';
                                                 ">
-                                            ${meta.icon}<br>${meta.name.split(' ').pop()}
+                                            ${section.icon}<br>${section.name.split(' ').pop()}
                                         </button>
                                     `;
                                 }).join('')}
@@ -4063,16 +4477,28 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
             renderAvailableCars() {
                 const container = document.getElementById('dealerCars');
                 container.innerHTML = this.availableCars.map((car, index) => {
-                    const locked = !car.unlocked;
+                    // Check se auto è sbloccata
+                    let locked = !car.unlocked;
+                    
+                    // Check speciale per auto IDLE
+                    if (car.unlockCondition && car.unlockCondition.idle_completion) {
+                        locked = !this.checkIdleCompletion();
+                    }
+                    
                     const owned = this.ownedCars.some(c => c.name === car.name);
                     const canBuy = this.canAfford(car.price) && !owned;
                     const power = Object.values(car.stats).reduce((a, b) => a + b, 0);
 
                     return `
-                        <div class="car-card ${locked ? 'locked' : ''}">
+                        <div class="car-card ${locked ? 'locked' : ''}" style="${locked && car.special ? 'position: relative;' : ''}">
+                            ${locked && car.special ? `
+                                <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 5rem; z-index: 10; opacity: 0.8;">
+                                    🔒
+                                </div>
+                            ` : ''}
                             ${car.image ? `
                                 <div style="width: 100%; height: 150px; overflow: hidden; border-radius: 10px; margin-bottom: 15px;">
-                                    <img src="${car.image}" alt="${car.name}" style="width: 100%; height: 100%; object-fit: cover;">
+                                    <img src="${car.image}" alt="${car.name}" style="width: 100%; height: 100%; object-fit: cover; ${locked && car.special ? 'filter: grayscale(100%) brightness(0.5);' : ''}">
                                 </div>
                             ` : ''}
                             <div class="car-header">
@@ -4083,11 +4509,17 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                                     <div style="font-size: 2rem; color: var(--accent-yellow); margin-bottom: 10px;">
                                         ${power} HP
                                     </div>
-                                    <div style="font-size: 1.2rem; color: var(--accent-yellow);">
-                                        ${Object.keys(car.price).map(res =>
-                                            `${this.resources[res].icon} ${car.price[res]}`
-                                        ).join(' • ')}
-                                    </div>
+                                    ${car.price.money > 0 || car.price.parts > 0 ? `
+                                        <div style="font-size: 1.2rem; color: var(--accent-yellow);">
+                                            ${Object.keys(car.price).map(res =>
+                                                `${this.resources[res].icon} ${car.price[res]}`
+                                            ).join(' • ')}
+                                        </div>
+                                    ` : `
+                                        <div style="font-size: 1rem; color: gold;">
+                                            ✨ AUTO SPECIALE - GRATIS ✨
+                                        </div>
+                                    `}
                                 </div>
                                 <div style="padding: 0 5px;">
                                     <div class="car-stats">
@@ -4114,6 +4546,26 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                                     ${!canBuy || owned ? 'disabled' : ''}>
                                     ${owned ? '✓ GIÀ POSSEDUTA' : 'ACQUISTA'}
                                 </button>
+                            ` : car.unlockCondition && car.unlockCondition.idle_completion ? `
+                                <div style="padding: 40px 20px; text-align: center;">
+                                    <div style="font-size: 1.2rem; margin-bottom: 15px; color: gold; font-weight: bold;">
+                                        🏆 AUTO LEGGENDARIA
+                                    </div>
+                                    <div style="color: var(--text-secondary); margin-bottom: 10px;">
+                                        ${car.description || 'Auto speciale'}
+                                    </div>
+                                    <div style="background: rgba(255,215,0,0.1); padding: 15px; border-radius: 10px; border: 2px solid rgba(255,215,0,0.3); margin-top: 15px;">
+                                        <div style="color: rgba(255,255,255,0.9); font-weight: bold; margin-bottom: 8px;">
+                                            Requisiti sblocco:
+                                        </div>
+                                        <div style="color: var(--accent-cyan);">
+                                            💰 Completa IDLE Manager
+                                        </div>
+                                        <div style="color: rgba(255,255,255,0.6); font-size: 0.9rem; margin-top: 8px;">
+                                            (Tutti i livelli a 100 + 1M€)
+                                        </div>
+                                    </div>
+                                </div>
                             ` : `
                                 <div style="padding: 60px 20px; text-align: center; color: var(--text-secondary);">
                                     <div style="font-size: 3rem; margin-bottom: 20px;">🔒</div>
@@ -4731,22 +5183,15 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
 
                     this._leaderboardCache = data;
 
-                    // Controlla quante sfide può fare oggi (cache 60 sec)
+                    // Controlla se può sfidare oggi (con cache)
                     if (!this._canChallengeCache || (Date.now() - this._canChallengeCacheTime > 60000)) {
-                        this._canChallengeCache = await checkDailyChallenges();
+                        this._canChallengeCache = await this.checkCanChallenge();
                         this._canChallengeCacheTime = Date.now();
                     }
                     const canChallengeData = this._canChallengeCache;
                     const canChallenge = canChallengeData ? canChallengeData.canChallenge : false;
 
-                // data è già l'array leaderboard
-                const leaderboard = data;
-                
-                // Trova posizione utente corrente
-                const session = getSession();
-                const currentUsername = session?.user?.username;
-                const userIndex = leaderboard.findIndex(p => p.username === currentUsername);
-                const userRank = userIndex >= 0 ? userIndex + 1 : null;
+                const { leaderboard, userRank } = data;
                 
                 let html = `
                     <div class="page-container">
@@ -4759,7 +5204,7 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                                 </div>
                                 <div class="stat-box" style="cursor: default;">
                                     <div class="stat-label">TUA POS.</div>
-                                    <div class="stat-value">${userRank || '-'}</div>
+                                    <div class="stat-value">${userRank ? userRank.rank : leaderboard.findIndex(p => p.username === currentUser?.username) + 1}</div>
                                 </div>
                                 <div class="stat-box" style="cursor: default;">
                                     <div class="stat-label">TOP 3</div>
@@ -4793,7 +5238,16 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                         <!-- Info banner -->
                         <div style="margin-bottom: 15px;">`;
 
-                // PvP disabilitato (Railway non disponibile)
+                // Messaggio status sfide
+                if (!canChallenge && canChallengeData) {
+                    const nextTime = new Date(canChallengeData.nextChallengeTime);
+                    const hours = Math.floor((nextTime - new Date()) / (1000 * 60 * 60));
+                    const minutes = Math.floor(((nextTime - new Date()) % (1000 * 60 * 60)) / (1000 * 60));
+                    
+                    html += `<div style="background: rgba(255,51,51,0.2); border: 2px solid var(--accent-red); padding: 12px; border-radius: 10px; text-align: center;">
+                        ⏰ Hai esaurito le sfide giornaliere (3/3) - Reset tra <strong>${hours}h ${minutes}m</strong>
+                    </div>`;
+                }
 
                 html += `</div>
 
@@ -4807,7 +5261,7 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                             </div>`;
 
                 leaderboard.forEach((player, i) => {
-                    const isMe = currentUsername && player.username === currentUsername;
+                    const isMe = currentUser && player.username === currentUser.username;
                     const rankColor = i === 0 ? '#ffd700' : i === 1 ? '#c0c0c0' : i === 2 ? '#cd7f32' : '#a0a0a0';
                     const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}`;
                     
@@ -4831,6 +5285,15 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                         </div>
                     </div>`;
                 });
+
+                if (userRank) {
+                    html += `<div style="margin-top: 15px; padding: 12px; background: rgba(0,255,136,0.1); border: 2px solid #00ff88; border-radius: 8px; display: grid; grid-template-columns: 60px 1fr 150px 120px; gap: 10px; align-items: center;">
+                        <div style="text-align: center; font-weight: 700; color: #00ff88;">${userRank.rank}</div>
+                        <div style="color: #00ff88; font-weight: 700;">${userRank.username} (Tu)</div>
+                        <div style="text-align: center; color: #00d9ff; font-weight: 700;">${Number(userRank.reputation).toLocaleString()}</div>
+                        <div style="text-align: center;"><span style="color: #00ff88; font-size: 0.85rem;">—</span></div>
+                    </div>`;
+                }
 
                     html += '</div></div>';
                     container.innerHTML = html;
@@ -4858,62 +5321,63 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                     
                     container.innerHTML = '<p style="color: #a0a0a0; text-align: center; padding: 40px;">⏳ Caricamento...</p>';
                     
-                    // Calcola inizio settimana (lunedì 00:00)
-                    const now = new Date();
-                    const dayOfWeek = now.getDay(); // 0 = domenica, 1 = lunedì, ecc.
-                    const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-                    const monday = new Date(now);
-                    monday.setDate(now.getDate() - daysToMonday);
-                    monday.setHours(0, 0, 0, 0);
+                    const token = localStorage.getItem('authToken');
+                    const response = await fetch(`${API_URL}/api/game/leaderboard-weekly`, {
+                        headers: { 'Authorization': `Bearer ${token}` }
+                    });
                     
-                    // Calcola numero settimana
-                    const weekNumber = Math.ceil((now - new Date(now.getFullYear(), 0, 1)) / (7 * 24 * 60 * 60 * 1000));
-                    document.getElementById('weekNumber').textContent = weekNumber;
-                    
-                    // Query Supabase - giocatori attivi questa settimana
-                    const { data, error } = await supabase
-                        .from('game_state')
-                        .select(`
-                            user_id,
-                            resources,
-                            championships_won,
-                            races,
-                            updated_at,
-                            users!inner(username)
-                        `)
-                        .gte('updated_at', monday.toISOString())
-                        .order('resources->reputation->value', { ascending: false })
-                        .limit(50);
-                    
-                    if (error) throw error;
-                    
-                    // Formatta dati
-                    const leaderboard = data.map((entry, index) => ({
-                        rank: index + 1,
-                        username: entry.users.username,
-                        reputation: entry.resources?.reputation?.value || 0,
-                        championships: entry.championships_won || 0,
-                        wins: entry.races?.wins || 0
-                    }));
-                    
-                    // Nascondi vincitori settimana passata (per ora)
-                    winnersContainer.innerHTML = '';
-                    
-                    // Render classifica corrente
-                    if (leaderboard.length === 0) {
-                        container.innerHTML = '<p style="color: #a0a0a0; text-align: center; padding: 40px;">Nessun giocatore attivo questa settimana</p>';
-                        return;
+                    if (!response.ok) {
+                        throw new Error('Errore caricamento classifica settimanale');
                     }
                     
-                    // Trova username corrente
-                    const session = getSession();
-                    const currentUsername = session?.user?.username;
+                    const data = await response.json();
+                    
+                    // Aggiorna numero settimana
+                    document.getElementById('weekNumber').textContent = data.weekNumber;
+                    
+                    // Mostra vincitori settimana passata
+                    if (data.lastWinners) {
+                        winnersContainer.innerHTML = `
+                            <div style="background: linear-gradient(135deg, rgba(255,215,0,0.15), rgba(255,140,0,0.15)); border: 2px solid var(--accent-yellow); border-radius: 12px; padding: 20px; margin-bottom: 25px;">
+                                <h3 style="text-align: center; color: var(--accent-yellow); font-family: Orbitron; margin-bottom: 15px; font-size: 1.1rem;">
+                                    🏆 VINCITORI SETTIMANA #${data.lastWinners.week_number}
+                                </h3>
+                                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+                                    <div style="text-align: center;">
+                                        <div style="font-size: 2rem; margin-bottom: 5px;">🥇</div>
+                                        <div style="font-size: 0.9rem; font-weight: 700; color: var(--accent-yellow);">${data.lastWinners.first_place || 'N/A'}</div>
+                                        <div style="font-size: 0.75rem; color: var(--text-secondary);">+500⭐ +5000€</div>
+                                    </div>
+                                    <div style="text-align: center;">
+                                        <div style="font-size: 2rem; margin-bottom: 5px;">🥈</div>
+                                        <div style="font-size: 0.9rem; font-weight: 700; color: #c0c0c0;">${data.lastWinners.second_place || 'N/A'}</div>
+                                        <div style="font-size: 0.75rem; color: var(--text-secondary);">+300⭐ +3000€</div>
+                                    </div>
+                                    <div style="text-align: center;">
+                                        <div style="font-size: 2rem; margin-bottom: 5px;">🥉</div>
+                                        <div style="font-size: 0.9rem; font-weight: 700; color: #cd7f32;">${data.lastWinners.third_place || 'N/A'}</div>
+                                        <div style="font-size: 0.75rem; color: var(--text-secondary);">+100⭐ +1000€</div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        winnersContainer.innerHTML = '';
+                    }
+                    
+                    // Render classifica corrente
+                    const leaderboard = data.leaderboard || [];
+                    
+                    if (leaderboard.length === 0) {
+                        container.innerHTML = '<p style="color: #a0a0a0; text-align: center; padding: 40px;">Nessun dato disponibile</p>';
+                        return;
+                    }
                     
                     let html = '<div style="background: var(--bg-card); border: 2px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 20px;">';
                     
                     leaderboard.forEach((player, index) => {
                         const rank = index + 1;
-                        const isCurrentUser = player.username === currentUsername;
+                        const isCurrentUser = player.username === currentUser?.username;
                         const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : '';
                         
                         html += `
@@ -4932,7 +5396,7 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                                         ${player.reputation} ⭐
                                     </div>
                                     <div style="font-size: 0.75rem; color: var(--text-secondary);">
-                                        ${player.wins} vittorie
+                                        questa settimana
                                     </div>
                                 </div>
                             </div>
@@ -4942,12 +5406,10 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                     html += '</div>';
                     container.innerHTML = html;
                     
-                    console.log('✅ Classifica settimanale caricata:', leaderboard.length, 'giocatori');
-                    
                 } catch (error) {
                     console.error('Errore classifica settimanale:', error);
                     document.getElementById('weeklyLeaderboardContainer').innerHTML = 
-                        '<p style="color: #ff3333; text-align: center; padding: 40px;">❌ Errore caricamento classifica settimanale</p>';
+                        '<p style="color: #ff3333; text-align: center; padding: 40px;">❌ Errore caricamento</p>';
                 }
             },
             
@@ -5062,7 +5524,7 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                                 </div>
                                 <div style="display: flex; justify-content: space-between; padding-top: 10px; border-top: 1px solid rgba(255,255,255,0.1);">
                                     <span style="color: var(--text-secondary);">Rank mondiale:</span>
-                                    <span style="font-weight: 700; font-size: 1.2rem; color: var(--accent-yellow);">#${(() => { const session = getSession(); const username = session?.user?.username; return this._leaderboardCache ? (this._leaderboardCache.findIndex(p => p.username === username) + 1 || '?') : '?'; })()}</span>
+                                    <span style="font-weight: 700; font-size: 1.2rem; color: var(--accent-yellow);">#${this._leaderboardCache?.leaderboard?.findIndex(p => p.username === currentUser?.username) + 1 || '?'}</span>
                                 </div>
                             </div>
                         </div>
@@ -5282,14 +5744,8 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                     return;
                 }
                 
-                // Inizializza modulo beta se non ancora fatto
-                if (!BetaModule._initialized) {
-                    BetaModule._initialized = true;
-                    BetaModule.init();
-                } else {
-                    // Se già inizializzato, re-render
-                    BetaModule.render();
-                }
+                // Delega TUTTO al modulo beta esterno
+                BetaModule.render(container, game);
             },
             
             renderEventPage() {
@@ -5438,9 +5894,10 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
 
             async checkCanChallenge() {
                 try {
+                    const token = localStorage.getItem('authToken');
                     const response = await fetch(`${API_URL}/api/pvp/can-challenge`, {
                         headers: {
-                            'Authorization': `Bearer ${getAuthToken()}`
+                            'Authorization': `Bearer ${token}`
                         }
                     });
                     
@@ -5461,8 +5918,17 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
             },
 
             async challengePlayer(defenderId, defenderUsername) {
-                // Usa il nuovo sistema PvP Supabase
-                await challengePlayer(defenderId, defenderUsername);
+                if (this.resources.energy.value < 20) {
+                    alert('⚡ Energia insufficiente!\n\nServono 20 energia per sfidare un giocatore.');
+                    return;
+                }
+
+                // Salva dati sfida per confirmChallenge
+                this._pendingChallenge = { defenderId, defenderUsername };
+                
+                // Mostra modal conferma
+                document.getElementById('challengeOpponentName').textContent = defenderUsername;
+                document.getElementById('challengeModal').classList.add('active');
             },
 
             closeChallengeModal() {
@@ -5528,11 +5994,13 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                 }, 1000);
 
                 try {
+                    const token = localStorage.getItem('authToken');
+                    
                     const response = await fetch(`${API_URL}/api/pvp/challenge`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${getAuthToken()}`
+                            'Authorization': `Bearer ${token}`
                         },
                         body: JSON.stringify({ defenderId: defenderId })
                     });
@@ -5836,17 +6304,20 @@ function closeMobileMenu() {
     }
 }
 
-(async () => {
-    const session = getSession()
-    if (!session) {
-        window.location.href = 'login.html'
-        return
+window.addEventListener('load', async () => {
+    console.log('🚀 Applicazione caricata');
+    
+    if (!authToken) {
+        console.log('⚠️ Nessun token - Mostra login');
+        showAuthModal();
+    } else {
+        console.log('✅ Token trovato - Inizializza gioco');
+        await game.init();
     }
-    await game.init()
-})()
+});
     </script>
     
-    <!-- Sistema PvP Supabase -->
-    <script src="pvp-supabase.js"></script>
+    <!-- IDLE Manager -->
+    <script src="idle-manager.js"></script>
 </body>
 </html>

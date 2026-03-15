@@ -347,8 +347,21 @@ const IdleManager = {
         try {
             const userId = await getUserId();
             
-            // Aggiungi auto speciale al garage (da implementare)
-            // Per ora mostra solo popup
+            // Sblocca auto nel game
+            if (window.game && window.game.availableCars) {
+                const ultimateCar = window.game.availableCars.find(c => c.special && c.name === 'ULTIMATE EDITION');
+                if (ultimateCar) {
+                    ultimateCar.unlocked = true;
+                    
+                    // Aggiorna anche idleCompleted nel game
+                    window.game.idleCompleted = true;
+                    
+                    // Salva stato
+                    if (window.saveGameToServer) {
+                        await saveGameToServer(true);
+                    }
+                }
+            }
             
             const popup = document.createElement('div');
             popup.style.cssText = `
@@ -405,18 +418,18 @@ const IdleManager = {
                         margin: 30px 0;
                     ">
                         <h3 style="color: gold; font-family: Orbitron; font-size: 1.5rem; margin-bottom: 15px;">
-                            🏎️ AUTO SPECIALE SBLOCCATA!
+                            🏎️ ULTIMATE EDITION SBLOCCATA!
                         </h3>
                         <p style="color: white; font-size: 1.1rem;">
-                            Una nuova auto esclusiva è stata aggiunta<br>
-                            al tuo garage!
+                            Una nuova auto leggendaria è stata aggiunta<br>
+                            al Concessionario!
                         </p>
-                        <p style="color: var(--accent-cyan); margin-top: 15px; font-size: 0.9rem;">
-                            (Caratteristiche e design coming soon)
+                        <p style="color: var(--accent-cyan); margin-top: 15px; font-size: 1rem;">
+                            ⚡ Stats massime: 100/100 su tutto!
                         </p>
                     </div>
                     
-                    <button onclick="this.parentElement.parentElement.remove(); location.reload();" style="
+                    <button onclick="this.parentElement.parentElement.remove(); if(window.game) game.changePage('dealer');" style="
                         padding: 20px 50px;
                         background: gold;
                         color: #1a0033;
@@ -429,7 +442,7 @@ const IdleManager = {
                         transition: all 0.3s;
                         box-shadow: 0 10px 30px rgba(255,215,0,0.4);
                     " onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
-                        FANTASTICO!
+                        VAI AL CONCESSIONARIO!
                     </button>
                 </div>
                 
@@ -442,8 +455,6 @@ const IdleManager = {
             `;
             
             document.body.appendChild(popup);
-            
-            // TODO: Aggiungere auto al database garage
             
         } catch (error) {
             console.error('❌ Errore unlock auto:', error);
