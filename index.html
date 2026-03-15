@@ -1709,177 +1709,77 @@ async function handleRegister() {
     }
 }
 
+
+// Funzione helper per ottenere user ID
+async function getUserId() {
+    const user = JSON.parse(localStorage.getItem('user'));
+    if (!user || !user.id) {
+        throw new Error('Utente non autenticato');
+    }
+    return user.id;
+}
+
 // ===== API CLOUD =====
-async function loadGameFromServer(retryCount = 0) {
+async function loadGameFromServer() {
     try {
-        console.log('📥 Caricamento dati dal server...');
+        console.log('📥 Caricamento dati dal server Supabase...');
         
-        const response = await fetch(`${API_URL}/api/game/state`, {
-            headers: { 'Authorization': `Bearer ${authToken}` }
-        });
+        const userId = await getUserId();
         
-        // Gestione errore 429 (Too Many Requests)
-        if (response.status === 429) {
-            if (retryCount < 3) {
-                const delay = Math.pow(2, retryCount) * 1000; // 1s, 2s, 4s
-                console.log(`⏳ Rate limit raggiunto. Riprovo tra ${delay/1000}s...`);
-                await new Promise(resolve => setTimeout(resolve, delay));
-                return loadGameFromServer(retryCount + 1);
-            } else {
-                throw new Error('Troppe richieste al server. Riprova tra un minuto.');
+        const { data, error } = await supabase
+            .from('game_saves')
+            .select('game_state')
+            .eq('user_id', userId)
+            .single();
+        
+        if (error) {
+            if (error.code === 'PGRST116') {
+                console.log('Nessun salvataggio trovato');
+                return null;
             }
+            throw error;
         }
         
-        if (!response.ok) {
-            throw new Error('Errore caricamento');
+        if (!data || !data.game_state) {
+            return null;
         }
         
-        const data = await response.json();
-        console.log('✅ Dati caricati dal server:', data);
+        console.log('✅ Dati caricati da Supabase');
+        const gameState = data.game_state;
         
-        if (data.resources) {
-            Object.keys(data.resources).forEach(key => {
+        // Applica i dati caricati (copia il codice originale qui)
+        if (gameState.resources) {
+            Object.keys(gameState.resources).forEach(key => {
                 if (game.resources[key]) {
-                    game.resources[key].value = data.resources[key].value || 0;
+                    game.resources[key].value = gameState.resources[key].value || 0;
                 }
             });
         }
         
-        if (data.workshop) {
-            Object.keys(data.workshop).forEach(key => {
+        if (gameState.workshop) {
+            Object.keys(gameState.workshop).forEach(key => {
                 if (game.workshop[key]) {
-                    game.workshop[key].level = data.workshop[key].level || 0;
-                    game.workshop[key].unlocked = data.workshop[key].unlocked || false;
+                    game.workshop[key].level = gameState.workshop[key].level || 0;
+                    game.workshop[key].unlocked = gameState.workshop[key].unlocked || false;
                 }
             });
         }
         
-        if (data.ownedCars && Array.isArray(data.ownedCars)) {
-            game.ownedCars = data.ownedCars.map(serverCar => {
-                const templateCar = game.availableCars.find(c => c.name === serverCar.name);
-                return {
-                    ...serverCar,
-                    image: templateCar ? templateCar.image : serverCar.image
-                };
-            });
-        }
+        if (gameState.ownedCars) game.ownedCars = gameState.ownedCars;
+        if (gameState.driver) game.driver = gameState.driver;
+        if (gameState.currentSponsor !== undefined) game.currentSponsor = gameState.currentSponsor;
+        if (gameState.technologies) game.technologies = gameState.technologies;
+        if (gameState.missions) game.missions = gameState.missions;
+        if (gameState.raceHistory) game.raceHistory = gameState.raceHistory;
+        if (gameState.weeklyScore !== undefined) game.weeklyScore = gameState.weeklyScore;
+        if (gameState.workshopQueue) game.workshopQueue = gameState.workshopQueue;
+        if (gameState.trackQueue) game.trackQueue = gameState.trackQueue;
         
-        // ✅ Driver - merge intelligente (preserva bonuses e upgradeCosts locali)
-        if (data.driver && typeof data.driver === 'object' && !Array.isArray(data.driver)) {
-            // Solo level, upgrading, upgradeEndTime dal server
-            game.driver.level = data.driver.level || 0;
-            game.driver.upgrading = data.driver.upgrading || false;
-            game.driver.upgradeEndTime = data.driver.upgradeEndTime || 0;
-            console.log('✅ Driver caricato:', game.driver.level, '/', game.driver.maxLevel);
-        } else {
-            console.log('⚠️ Driver dal server non valido:', typeof data.driver, Array.isArray(data.driver));
-        }
-        game.currentDriver = null; // Legacy
-        
-        if (data.sponsors && Array.isArray(data.sponsors)) {
-            data.sponsors.forEach((serverSponsor, index) => {
-                if (game.sponsors[index]) {
-                    game.sponsors[index].unlocked = serverSponsor.unlocked;
-                }
-            });
-        }
-        
-        game.currentSponsor = data.currentSponsor;
-        game.sponsorRacesLeft = data.sponsorRacesLeft || 0;
-        
-        if (data.technologies && Array.isArray(data.technologies)) {
-            data.technologies.forEach((serverTech) => {
-                const localTech = game.technologies.find(t => t.id === serverTech.id);
-                if (localTech) {
-                    localTech.researched = serverTech.researched || false;
-                }
-            });
-        }
-        
-        game.races = data.races || game.races;
-        // ✅ Championship: merge dati server ma mantieni valori aggiornati
-        if (data.championship) {
-            game.championship = {
-                ...game.championship, // Valori di default aggiornati
-                ...data.championship, // Dati salvati dal server
-                entryFee: 3500,      // ✅ FORZA valore aggiornato
-                prizePool: 7000      // ✅ FORZA valore aggiornato
-            };
-        }
-        game.raceHistory = data.raceHistory || [];
-        
-        // ✅ NUOVI CAMPI v5.2
-        // ✅ Merge trackTraining (preserva name, icon, bonus, maxLevel dalle definitions)
-        if (data.trackTraining) {
-            Object.keys(game.trackTraining).forEach(key => {
-                if (data.trackTraining[key]) {
-                    game.trackTraining[key].level = data.trackTraining[key].level || 0;
-                }
-            });
-        }
-        game.trackQueue = data.trackQueue || game.trackQueue;
-        
-        // ✅ MERGE MISSIONI (preserva nuove definizioni, carica solo completed/progress dal DB)
-        if (data.missions) {
-            Object.keys(game.missions).forEach(key => {
-                if (data.missions[key]) {
-                    game.missions[key].completed = data.missions[key].completed || false;
-                    game.missions[key].progress = data.missions[key].progress || 0;
-                }
-            });
-        }
-        
-        game.pvpStats = data.pvpStats || game.pvpStats;
-        game.upgradesCount = data.upgradesCount || 0;
-        game.championshipsWon = data.championshipsWon || 0;
-        
-        // ✅ EVENTI
-        game.eventProgress = data.eventProgress || {};
-        
-        // PRODUZIONE OFFLINE
-        const lastSaveTime = data.lastSaveTime || Date.now();
-        const now = Date.now();
-        const offlineTime = (now - lastSaveTime) / 1000;
-        
-        if (offlineTime > 60) {
-            console.log(`⏰ Tempo offline: ${(offlineTime / 60).toFixed(1)} minuti`);
-            
-            const offlineHours = offlineTime / 3600;
-            
-            Object.keys(game.workshop).forEach(key => {
-                const section = game.workshop[key];
-                if (section.level > 0 && section.production) {
-                    Object.keys(section.production).forEach(resource => {
-                        if (game.resources[resource]) {
-                            const productionPerHour = section.production[resource] * section.level;
-                            const offlineProduction = productionPerHour * offlineHours;
-                            
-                            game.resources[resource].value += offlineProduction;
-                        }
-                    });
-                }
-            });
-            
-            const energyRecovered = offlineTime / 60;
-            game.resources.energy.value = Math.min(
-                game.resources.energy.value + energyRecovered,
-                game.resources.energy.max
-            );
-            
-            const hours = Math.floor(offlineHours);
-            const minutes = Math.floor((offlineHours - hours) * 60);
-            let timeMsg = hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
-            
-            setTimeout(() => {
-                game.showUnlockNotification(`⏰ Produzione offline: ${timeMsg}`);
-            }, 1000);
-        }
-        
-        return true;
+        return gameState;
         
     } catch (error) {
-        console.error('❌ Errore caricamento dal server:', error);
-        return false;
+        console.error('❌ Errore caricamento:', error);
+        return null;
     }
 }
 
@@ -1908,36 +1808,8 @@ async function saveGameToServer(showIndicator = true) {
                 saveIndicator.classList.add('show');
             }
 
-            const response = await fetch(`${API_URL}/api/game/state`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${authToken}`
-                },
-                body: JSON.stringify({
-                    gameState: {
-                        resources: game.resources,
-                        workshop: game.workshop,
-                        ownedCars: game.ownedCars,
-                        driver: game.driver, // ✅ Nuovo sistema pilota
-                        sponsors: game.sponsors,
-                        currentSponsor: game.currentSponsor,
-                        technologies: game.technologies,
-                        races: game.races,
-                        championship: game.championship,
-                        raceHistory: game.raceHistory,
-                        // ✅ NUOVI CAMPI v5.2
-                        trackTraining: game.trackTraining,
-                        trackQueue: game.trackQueue,
-                        missions: game.missions,
-                        pvpStats: game.pvpStats,
-                        upgradesCount: game.upgradesCount,
-                        championshipsWon: game.championshipsWon,
-                        // ✅ EVENTI
-                        eventProgress: game.eventProgress
-                    }
-                })
-            });
+            // DISABILITATO: chiamata Railway rimossa
+        // const response = await fetch(...);
 
             // Se rate limit, fallisce silenziosamente (riproverà al prossimo salvataggio automatico)
             if (response.status === 429) {
@@ -2028,9 +1900,8 @@ async function loadLeaderboard() {
         }
         
         console.log('📊 Caricando classifica dal server...');
-        const response = await fetch(`${API_URL}/api/game/leaderboard`, {
-            headers: { 'Authorization': `Bearer ${authToken}` }
-        });
+        // DISABILITATO: chiamata Railway rimossa
+        // const response = await fetch(...);
         
         if (!response.ok) throw new Error('Errore caricamento classifica');
         
@@ -5305,9 +5176,8 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                     container.innerHTML = '<p style="color: #a0a0a0; text-align: center; padding: 40px;">⏳ Caricamento...</p>';
                     
                     const token = localStorage.getItem('authToken');
-                    const response = await fetch(`${API_URL}/api/game/leaderboard-weekly`, {
-                        headers: { 'Authorization': `Bearer ${token}` }
-                    });
+                    // DISABILITATO: chiamata Railway rimossa
+        // const response = await fetch(...);
                     
                     if (!response.ok) {
                         throw new Error('Errore caricamento classifica settimanale');
@@ -5878,11 +5748,8 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
             async checkCanChallenge() {
                 try {
                     const token = localStorage.getItem('authToken');
-                    const response = await fetch(`${API_URL}/api/pvp/can-challenge`, {
-                        headers: {
-                            'Authorization': `Bearer ${token}`
-                        }
-                    });
+                    // DISABILITATO: chiamata Railway rimossa
+        // const response = await fetch(...);
                     
                     if (!response.ok) {
                         console.log(`⚠️ Endpoint can-challenge: ${response.status} - Sfide abilitate di default`);
@@ -5979,14 +5846,8 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                 try {
                     const token = localStorage.getItem('authToken');
                     
-                    const response = await fetch(`${API_URL}/api/pvp/challenge`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': `Bearer ${token}`
-                        },
-                        body: JSON.stringify({ defenderId: defenderId })
-                    });
+                    // DISABILITATO: chiamata Railway rimossa
+        // const response = await fetch(...);
                     
                     const result = await response.json();
 
