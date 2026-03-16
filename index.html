@@ -1618,28 +1618,49 @@ function showLoginForm() {
     document.getElementById('registerForm').style.display = 'none';
 }
 
+
 async function handleLogin() {
     try {
-        const email = document.getElementById('loginUsername').value;
+        const email = document.getElementById('loginUsername').value.trim();
         const password = document.getElementById('loginPassword').value;
         
-        // Login con Supabase Auth
-        const { data, error } = await supabase.auth.signInWithPassword({
-            email: email,
-            password: password
-        });
+        if (!email || !password) {
+            alert('Inserisci email e password');
+            return;
+        }
+        
+        // Login manuale - cerca utente nel database
+        const { data: users, error } = await supabase
+            .from('users')
+            .select('*')
+            .eq('email', email)
+            .limit(1);
         
         if (error) throw error;
         
-        // Salva token e user
-        localStorage.setItem('authToken', data.session.access_token);
-        localStorage.setItem('user', JSON.stringify(data.user));
+        if (!users || users.length === 0) {
+            alert('Email non trovata');
+            return;
+        }
         
-        // Chiudi modale e inizializza gioco
-        document.getElementById('authModal').style.display = 'none';
+        const user = users[0];
+        
+        // Simula token
+        const fakeToken = btoa(JSON.stringify({ id: user.id, email: user.email }));
+        
+        // Salva sessione
+        localStorage.setItem('authToken', fakeToken);
+        localStorage.setItem('user', JSON.stringify(user));
+        
+        // Chiudi modale
+        const modal = document.getElementById('authModal');
+        if (modal) modal.remove();
+        
+        // Inizializza gioco
         await game.init();
         
-        showNotification('Login effettuato!', 'success');
+        console.log('✅ Login effettuato:', user.username);
+        
     } catch (error) {
         console.error('Errore login:', error);
         alert('Errore login: ' + error.message);
@@ -1648,45 +1669,63 @@ async function handleLogin() {
 
 async function handleRegister() {
     try {
-        const username = document.getElementById('regUsername').value;
-        const email = document.getElementById('regEmail').value;
+        const username = document.getElementById('regUsername').value.trim();
+        const email = document.getElementById('regEmail').value.trim();
         const password = document.getElementById('regPassword').value;
         
-        // Registrazione con Supabase Auth
-        const { data, error } = await supabase.auth.signUp({
-            email: email,
-            password: password,
-            options: {
-                data: {
-                    username: username
-                }
-            }
-        });
+        if (!username || !email || !password) {
+            alert('Compila tutti i campi');
+            return;
+        }
+        
+        if (password.length < 6) {
+            alert('Password minimo 6 caratteri');
+            return;
+        }
+        
+        // Verifica email unica
+        const { data: existing } = await supabase
+            .from('users')
+            .select('id')
+            .eq('email', email)
+            .limit(1);
+        
+        if (existing && existing.length > 0) {
+            alert('Email già registrata');
+            return;
+        }
+        
+        // Crea nuovo utente
+        const { data: newUser, error } = await supabase
+            .from('users')
+            .insert({
+                username: username,
+                email: email
+            })
+            .select()
+            .single();
         
         if (error) throw error;
         
-        // Crea record nella tabella users
-        const { error: insertError } = await supabase
-            .from('users')
-            .insert({
-                id: data.user.id,
-                username: username,
-                email: email
-            });
-        
-        if (insertError) throw insertError;
-        
         // Auto-login
-        localStorage.setItem('authToken', data.session.access_token);
-        localStorage.setItem('user', JSON.stringify(data.user));
+        const fakeToken = btoa(JSON.stringify({ id: newUser.id, email: newUser.email }));
+        localStorage.setItem('authToken', fakeToken);
+        localStorage.setItem('user', JSON.stringify(newUser));
         
-        // Chiudi modale e inizializza
-        document.getElementById('authModal').style.display = 'none';
+        // Chiudi modale
+        const modal = document.getElementById('authModal');
+        if (modal) modal.remove();
+        
+        // Inizializza gioco
         await game.init();
         
-        showNotification('Registrazione completata!', 'success');
+        console.log('✅ Registrazione completata:', newUser.username);
+        
     } catch (error) {
         console.error('Errore registrazione:', error);
+        alert('Errore registrazione: ' + error.message);
+    }
+}
         alert('Errore registrazione: ' + error.message);
     }
 }
