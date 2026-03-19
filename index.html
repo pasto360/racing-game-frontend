@@ -1914,30 +1914,15 @@ async function loadLeaderboard() {
             return leaderboardCache;
         }
         
-        console.log('📊 Caricando classifica dal server...');
-        // DISABILITATO: chiamata Railway rimossa
-        // const response = await fetch(...);
+        console.log('📊 Classifica non disponibile (migrazione Supabase in corso)');
         
-        if (!response.ok) throw new Error('Errore caricamento classifica');
-        
-        const data = await response.json();
-        
-        // Salva in cache con slot corrente
-        leaderboardCache = data;
-        leaderboardCacheSlot = currentSlot;
-        
-        console.log(`✅ Classifica aggiornata (slot ${currentSlot})! Prossimo aggiornamento tra ${getNextLeaderboardUpdate()}`);
-        
-        return data;
+        // TODO: Migrare classifica a Supabase
+        // Per ora ritorna array vuoto
+        return [];
         
     } catch (error) {
         console.error('Errore caricamento classifica:', error);
-        // Se c'è cache vecchia, usala comunque
-        if (leaderboardCache) {
-            console.log('⚠️ Usando cache classifica (vecchia) - Server non disponibile');
-            return leaderboardCache;
-        }
-        return null;
+        return [];
     }
 }
 
@@ -5206,101 +5191,20 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
             },
 
             async renderWeeklyLeaderboard() {
-                try {
-                    const container = document.getElementById('weeklyLeaderboardContainer');
-                    const winnersContainer = document.getElementById('weeklyWinners');
-                    
-                    container.innerHTML = '<p style="color: #a0a0a0; text-align: center; padding: 40px;">⏳ Caricamento...</p>';
-                    
-                    const token = localStorage.getItem('authToken');
-                    // DISABILITATO: chiamata Railway rimossa
-        // const response = await fetch(...);
-                    
-                    if (!response.ok) {
-                        throw new Error('Errore caricamento classifica settimanale');
-                    }
-                    
-                    const data = await response.json();
-                    
-                    // Aggiorna numero settimana
-                    document.getElementById('weekNumber').textContent = data.weekNumber;
-                    
-                    // Mostra vincitori settimana passata
-                    if (data.lastWinners) {
-                        winnersContainer.innerHTML = `
-                            <div style="background: linear-gradient(135deg, rgba(255,215,0,0.15), rgba(255,140,0,0.15)); border: 2px solid var(--accent-yellow); border-radius: 12px; padding: 20px; margin-bottom: 25px;">
-                                <h3 style="text-align: center; color: var(--accent-yellow); font-family: Orbitron; margin-bottom: 15px; font-size: 1.1rem;">
-                                    🏆 VINCITORI SETTIMANA #${data.lastWinners.week_number}
-                                </h3>
-                                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
-                                    <div style="text-align: center;">
-                                        <div style="font-size: 2rem; margin-bottom: 5px;">🥇</div>
-                                        <div style="font-size: 0.9rem; font-weight: 700; color: var(--accent-yellow);">${data.lastWinners.first_place || 'N/A'}</div>
-                                        <div style="font-size: 0.75rem; color: var(--text-secondary);">+500⭐ +5000€</div>
-                                    </div>
-                                    <div style="text-align: center;">
-                                        <div style="font-size: 2rem; margin-bottom: 5px;">🥈</div>
-                                        <div style="font-size: 0.9rem; font-weight: 700; color: #c0c0c0;">${data.lastWinners.second_place || 'N/A'}</div>
-                                        <div style="font-size: 0.75rem; color: var(--text-secondary);">+300⭐ +3000€</div>
-                                    </div>
-                                    <div style="text-align: center;">
-                                        <div style="font-size: 2rem; margin-bottom: 5px;">🥉</div>
-                                        <div style="font-size: 0.9rem; font-weight: 700; color: #cd7f32;">${data.lastWinners.third_place || 'N/A'}</div>
-                                        <div style="font-size: 0.75rem; color: var(--text-secondary);">+100⭐ +1000€</div>
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                    } else {
-                        winnersContainer.innerHTML = '';
-                    }
-                    
-                    // Render classifica corrente
-                    const leaderboard = data.leaderboard || [];
-                    
-                    if (leaderboard.length === 0) {
-                        container.innerHTML = '<p style="color: #a0a0a0; text-align: center; padding: 40px;">Nessun dato disponibile</p>';
-                        return;
-                    }
-                    
-                    let html = '<div style="background: var(--bg-card); border: 2px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 20px;">';
-                    
-                    leaderboard.forEach((player, index) => {
-                        const rank = index + 1;
-                        const isCurrentUser = player.username === currentUser?.username;
-                        const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : '';
-                        
-                        html += `
-                            <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); ${isCurrentUser ? 'background: rgba(0,217,255,0.1); border-radius: 8px; border: 2px solid var(--accent-cyan);' : ''}">
-                                <div style="display: flex; align-items: center; gap: 15px;">
-                                    <div style="font-family: Orbitron; font-weight: 900; font-size: 1.3rem; color: ${rank <= 3 ? 'var(--accent-yellow)' : 'var(--text-secondary)'}; min-width: 40px; text-align: center;">
-                                        ${medal || rank}
-                                    </div>
-                                    <div>
-                                        <div style="font-weight: 700; font-size: 1rem; ${isCurrentUser ? 'color: var(--accent-cyan);' : ''}">${player.username}</div>
-                                        ${isCurrentUser ? '<div style="font-size: 0.75rem; color: var(--accent-green);">Tu</div>' : ''}
-                                    </div>
-                                </div>
-                                <div style="text-align: right;">
-                                    <div style="font-family: Orbitron; font-weight: 900; font-size: 1.2rem; color: var(--accent-yellow);">
-                                        ${player.reputation} ⭐
-                                    </div>
-                                    <div style="font-size: 0.75rem; color: var(--text-secondary);">
-                                        questa settimana
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                    });
-                    
-                    html += '</div>';
-                    container.innerHTML = html;
-                    
-                } catch (error) {
-                    console.error('Errore classifica settimanale:', error);
-                    document.getElementById('weeklyLeaderboardContainer').innerHTML = 
-                        '<p style="color: #ff3333; text-align: center; padding: 40px;">❌ Errore caricamento</p>';
-                }
+                const container = document.getElementById('weeklyLeaderboardContainer');
+                const winnersContainer = document.getElementById('weeklyWinners');
+                
+                // TODO: Migrare a Supabase
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 60px 20px;">
+                        <div style="font-size: 4rem; margin-bottom: 20px;">🚧</div>
+                        <h3 style="color: var(--text-secondary); margin-bottom: 15px;">Classifica Settimanale</h3>
+                        <p style="color: var(--text-secondary); max-width: 500px; margin: 0 auto;">
+                            La classifica settimanale è temporaneamente disabilitata durante la migrazione a Supabase.
+                        </p>
+                    </div>
+                `;
+                winnersContainer.innerHTML = '';
             },
             
             renderStats() {
