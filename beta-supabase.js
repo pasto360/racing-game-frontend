@@ -74,22 +74,29 @@ const BetaModule = {
         }
     },
     
-    // Carica circuiti (hardcoded)
+    // Carica circuiti da JSON
     async loadCircuits() {
-        console.log('📥 Caricamento circuiti...');
-        
-        this.circuits = [
-            { id: 1, name: 'Dragon Peak', laps: 18, difficulty: 'Hard' },
-            { id: 2, name: 'Harbor Street', laps: 25, difficulty: 'Expert' },
-            { id: 3, name: 'Royal Speedway', laps: 22, difficulty: 'Medium' },
-            { id: 4, name: 'Desert Storm', laps: 20, difficulty: 'Hard' },
-            { id: 5, name: 'Arctic Circuit', laps: 16, difficulty: 'Expert' },
-            { id: 6, name: 'Sunset Boulevard', laps: 24, difficulty: 'Medium' },
-            { id: 7, name: 'Mountain Pass', laps: 15, difficulty: 'Hard' },
-            { id: 8, name: 'Coastal Highway', laps: 21, difficulty: 'Medium' }
-        ];
-        
-        console.log(`✅ Caricati ${this.circuits.length} circuiti`);
+        try {
+            console.log('📥 Caricamento beta_circuits.json...');
+            const response = await fetch('beta_circuits.json');
+            
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            
+            const data = await response.json();
+            this.circuits = data.circuits || [];
+            
+            console.log(`✅ Caricati ${this.circuits.length} circuiti`);
+            
+            if (this.circuits.length === 0) {
+                throw new Error('File beta_circuits.json vuoto');
+            }
+            
+        } catch (error) {
+            console.error('❌ Errore caricamento circuiti:', error);
+            throw error;
+        }
     },
     
     // Carica circuito settimanale + stato utente
