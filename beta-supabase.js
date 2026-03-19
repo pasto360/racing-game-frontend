@@ -74,30 +74,23 @@ const BetaModule = {
         }
     },
     
-    // Carica circuiti da JSON
+    // Carica circuiti dal gioco principale
     async loadCircuits() {
         try {
-            console.log('📥 Caricamento beta_circuits_fantasy.json...');
-            const response = await fetch('beta_circuits_fantasy.json');
+            console.log('📥 Caricamento circuiti dal gioco...');
             
-            if (!response.ok) {
-                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-            }
-            
-            const data = await response.json();
-            this.circuits = data.circuits || [];
-            
-            console.log(`✅ Caricati ${this.circuits.length} circuiti:`, this.circuits.map(c => c.name));
-            
-            if (this.circuits.length === 0) {
-                throw new Error('File beta_circuits_fantasy.json vuoto o malformato');
+            // Usa i circuiti dal game principale
+            if (typeof game !== 'undefined' && game.circuits && game.circuits.length > 0) {
+                this.circuits = game.circuits;
+                console.log(`✅ Caricati ${this.circuits.length} circuiti dal gioco`);
+            } else {
+                throw new Error('Circuiti non disponibili nel gioco principale');
             }
             
         } catch (error) {
             console.error('❌ Errore caricamento circuiti:', error);
-            console.error('Dettagli:', error.message);
             this.circuits = [];
-            throw error; // Rilancia per gestione in init()
+            throw error;
         }
     },
     

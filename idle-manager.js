@@ -37,8 +37,6 @@ const IdleManager = {
     // Stats
     stats: {
         totalWins: 0,
-        totalEarned: 0,
-        maxBalance: 5000,
         playTimeSeconds: 0
     },
     
@@ -222,11 +220,6 @@ const IdleManager = {
             const offlineGain = balancePerSec * actualSeconds;
             this.balance += offlineGain;
             
-            // Aggiorna max balance
-            if (this.balance > this.stats.maxBalance) {
-                this.stats.maxBalance = this.balance;
-            }
-            
             // Mostra popup
             this.showOfflinePopup(offlineSeconds, offlineGain);
         }
@@ -307,16 +300,6 @@ const IdleManager = {
     tick() {
         const balancePerSec = this.calculateBalancePerSecond();
         this.balance += balancePerSec;
-        
-        // Aggiorna stats
-        if (this.balance > this.stats.maxBalance) {
-            this.stats.maxBalance = this.balance;
-        }
-        
-        // Aggiorna total earned solo se positivo
-        if (balancePerSec > 0) {
-            this.stats.totalEarned += balancePerSec;
-        }
         
         // Aggiorna play time
         this.stats.playTimeSeconds++;
@@ -941,16 +924,9 @@ const IdleManager = {
                 
                 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 25px; margin-bottom: 40px;">
                     <div>
-                        <div style="color: rgba(255,255,255,0.6); font-size: 0.9rem; margin-bottom: 8px;">💰 Denaro totale guadagnato</div>
+                        <div style="color: rgba(255,255,255,0.6); font-size: 0.9rem; margin-bottom: 8px;">💰 Saldo attuale</div>
                         <div style="font-size: 1.8rem; color: var(--accent-yellow); font-weight: bold;">
-                            ${this.formatMoney(this.stats.totalEarned)}
-                        </div>
-                    </div>
-                    
-                    <div>
-                        <div style="color: rgba(255,255,255,0.6); font-size: 0.9rem; margin-bottom: 8px;">🎯 Saldo massimo raggiunto</div>
-                        <div style="font-size: 1.8rem; color: var(--accent-green); font-weight: bold;">
-                            ${this.formatMoney(this.stats.maxBalance)}
+                            ${this.formatMoney(this.balance)}
                         </div>
                     </div>
                     
