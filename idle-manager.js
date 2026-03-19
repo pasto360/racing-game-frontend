@@ -20,6 +20,7 @@ const IdleManager = {
     balance: 5000,
     lastUpdate: null,
     tickTimer: null,
+    currentTab: 'income',  // Tab corrente
     
     // Livelli
     levels: {
@@ -307,9 +308,14 @@ const IdleManager = {
         const balancePerSec = this.calculateBalancePerSecond();
         this.balance += balancePerSec;
         
-        // Aggiorna max balance
+        // Aggiorna stats
         if (this.balance > this.stats.maxBalance) {
             this.stats.maxBalance = this.balance;
+        }
+        
+        // Aggiorna total earned solo se positivo
+        if (balancePerSec > 0) {
+            this.stats.totalEarned += balancePerSec;
         }
         
         // Aggiorna play time
@@ -711,15 +717,20 @@ const IdleManager = {
             </style>
         `;
         
-        // Mostra tab di default
-        this.showTab('income');
+        // Ripristina tab attivo (se esiste)
+        const currentTab = this.currentTab || 'income';
+        this.showTab(currentTab);
     },
     
     // Mostra tab
     showTab(tab) {
+        // Salva tab corrente
+        this.currentTab = tab;
+        
         // Aggiorna pulsanti
         document.querySelectorAll('.idle-tab').forEach(btn => btn.classList.remove('active'));
-        document.getElementById(`tab${tab.charAt(0).toUpperCase() + tab.slice(1)}`).classList.add('active');
+        const tabBtn = document.getElementById(`tab${tab.charAt(0).toUpperCase() + tab.slice(1)}`);
+        if (tabBtn) tabBtn.classList.add('active');
         
         const content = document.getElementById('idleTabContent');
         
