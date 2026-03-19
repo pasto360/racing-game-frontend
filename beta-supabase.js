@@ -397,29 +397,39 @@ const BetaModule = {
             // Calcola risultato simulazione (solo tempi, no posizione/premi)
             const result = this.calculateSimulation(car);
             
-            // Salva su Supabase
+            // Salva su Supabase (TODO: creare tabella)
             const weekNumber = this.getWeekNumber();
             
-            // Inserisci nuovo record (non upsert - vogliamo storico giornaliero)
-            const { error } = await supabase
-                .from('beta_race_results')
-                .insert({
-                    user_id: userId,
-                    circuit_id: this.currentCircuit.id,
-                    week_number: weekNumber,
-                    total_time: result.dnf ? 999999 : result.totalTime,
-                    best_lap: result.bestLap,
-                    position: 0,
-                    dnf: result.dnf,
-                    dnf_lap: result.dnfLap || 0,
-                    reward: { money: 0, parts: 0 },
-                    setup: this.setup
-                });
+            // Temporaneamente disabilitato - tabella da creare
+            try {
+                const { error } = await supabase
+                    .from('beta_race_results')
+                    .insert({
+                        user_id: userId,
+                        circuit_id: this.currentCircuit.id,
+                        week_number: weekNumber,
+                        total_time: result.dnf ? 999999 : result.totalTime,
+                        best_lap: result.bestLap,
+                        position: 0,
+                        dnf: result.dnf,
+                        dnf_lap: result.dnfLap || 0,
+                        reward: { money: 0, parts: 0 },
+                        setup: this.setup
+                    });
+                
+                if (error && error.code !== '42P01') {
+                    console.warn('⚠️ Errore salvataggio risultato:', error);
+                }
+            } catch (dbError) {
+                console.log('ℹ️ Tabella beta_race_results non ancora creata - risultato salvato solo localmente');
+            }
             
-            if (error) throw error;
-            
-            // Ricarica classifica (la posizione verrà mostrata lì)
-            await this.loadLeaderboard(weekNumber);
+            // Ricarica classifica
+            try {
+                await this.loadLeaderboard(weekNumber);
+            } catch (e) {
+                console.log('ℹ️ Classifica non disponibile');
+            }
             
             // Aggiorna stato (NO posizione qui - solo nella classifica)
             this.hasRaced = true;
