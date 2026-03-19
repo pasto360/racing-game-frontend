@@ -1236,8 +1236,8 @@ const BetaModule = {
                     <tbody>
         `;
         
-        const session = getSession();
-        const currentUsername = session?.user?.username;
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        const currentUsername = user?.username;
         
         this.leaderboard.forEach(entry => {
             const isCurrentUser = entry.username === currentUsername;
