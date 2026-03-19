@@ -1748,17 +1748,15 @@ async function loadGameFromServer() {
             .from('game_saves')
             .select('game_state')
             .eq('user_id', userId)
-            .single();
+            .maybeSingle();  // Cambiato da .single() a .maybeSingle()
         
         if (error) {
-            if (error.code === 'PGRST116') {
-                console.log('Nessun salvataggio trovato');
-                return null;
-            }
-            throw error;
+            console.error('❌ Errore query Supabase:', error);
+            return null;  // Ignora errori e restituisci null (nuovo utente)
         }
         
         if (!data || !data.game_state) {
+            console.log('ℹ️ Nessun salvataggio trovato - Nuovo utente');
             return null;
         }
         
@@ -2371,10 +2369,16 @@ async function loadLeaderboard() {
     
     const loaded = await loadGameFromServer();
     
-    if (!loaded) {
+    // Se loaded è null, è un nuovo utente (nessun save) - OK!
+    if (loaded === false) {
+        // Solo se c'è stato un ERRORE (non null)
         console.error('❌ Errore caricamento dati');
         alert('⚠️ Impossibile caricare i dati dal server.\n\nSe vedi questo messaggio ripetutamente, aspetta 1 minuto e ricarica la pagina (F5).\n\nProblema: troppe richieste al server.');
         return;
+    }
+    
+    if (loaded === null) {
+        console.log('ℹ️ Nuovo utente - Partenza con dati di default');
     }
     
     console.log('✅ Gioco inizializzato');
