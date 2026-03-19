@@ -97,66 +97,75 @@ const BetaModule = {
     // Carica circuito settimanale + stato utente
     async loadWeeklyChallenge() {
         try {
-            const session = getSession();
-            if (!session) throw new Error('No session');
+            // Ottieni user ID dal localStorage
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (!user || !user.id) {
+                throw new Error('Utente non autenticato');
+            }
             
-            const userId = session.user.id;
+            const userId = user.id;
             
             // Calcola circuito settimanale
             const weekNumber = this.getWeekNumber();
             const circuitIndex = weekNumber % this.circuits.length;
             this.currentCircuit = this.circuits[circuitIndex];
             
+            console.log(`🏁 Circuito settimana ${weekNumber}:`, this.currentCircuit.name);
+            
             // Imposta giri sosta default in base a numero giri circuito
-            // Ricalcola sempre per adattarsi al circuito corrente
             const laps = this.currentCircuit.laps;
-            this.setup.pitLap1 = Math.floor(laps / 2); // Metà gara
-            this.setup.pitLap2 = Math.floor(laps / 3); // 1/3 gara
-            this.setup.pitLap3 = Math.floor(laps * 2 / 3); // 2/3 gara
+            this.setup.pitLap1 = Math.floor(laps / 2);
+            this.setup.pitLap2 = Math.floor(laps / 3);
+            this.setup.pitLap3 = Math.floor(laps * 2 / 3);
             
-            // Calcola giorno corrente (per check limite giornaliero)
-            const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+            // Calcola giorno corrente
+            const today = new Date().toISOString().split('T')[0];
             
-            // Carica ultima corsa dell'utente per questo circuito/settimana
-            const { data, error } = await supabase
-                .from('beta_race_results')
-                .select('*')
-                .eq('user_id', userId)
-                .eq('circuit_id', this.currentCircuit.id)
-                .eq('week_number', weekNumber)
-                .order('created_at', { ascending: false })
-                .limit(1)
-                .maybeSingle();
-            
-            if (error && error.code !== 'PGRST116') {
-                console.warn('⚠️ Errore caricamento stato utente:', error);
-                this.hasRaced = false;
-                this.lastRaceDate = null;
-                this.result = null;
-            } else if (data) {
-                // Controlla se ha già corso oggi
-                const raceDate = new Date(data.created_at).toISOString().split('T')[0];
-                this.hasRaced = (raceDate === today);
-                this.lastRaceDate = raceDate;
+            // Carica ultima corsa (se esiste tabella)
+            try {
+                const { data, error } = await supabase
+                    .from('beta_race_results')
+                    .select('*')
+                    .eq('user_id', userId)
+                    .eq('circuit_id', this.currentCircuit.id)
+                    .eq('week_number', weekNumber)
+                    .order('created_at', { ascending: false })
+                    .limit(1)
+                    .maybeSingle();
                 
-                // Mostra sempre il miglior risultato (senza posizione - si vede in classifica)
-                this.result = {
-                    totalTime: data.total_time,
-                    bestLap: data.best_lap,
-                    dnf: data.dnf,
-                    dnfLap: data.dnf_lap
-                };
-            } else {
+                if (error && error.code !== 'PGRST116' && error.code !== '42P01') {
+                    console.warn('⚠️ Errore caricamento risultati:', error);
+                }
+                
+                if (data) {
+                    const raceDate = new Date(data.created_at).toISOString().split('T')[0];
+                    this.hasRaced = (raceDate === today);
+                    this.lastRaceDate = raceDate;
+                    this.result = {
+                        totalTime: data.total_time,
+                        bestLap: data.best_lap,
+                        dnf: data.dnf,
+                        dnfLap: data.dnf_lap
+                    };
+                } else {
+                    this.hasRaced = false;
+                    this.lastRaceDate = null;
+                    this.result = null;
+                }
+            } catch (dbError) {
+                // Tabella non esiste ancora - prima corsa
+                console.log('ℹ️ Nessun risultato precedente (tabella non trovata)');
                 this.hasRaced = false;
                 this.lastRaceDate = null;
                 this.result = null;
             }
             
-            // Carica classifica settimanale (migliori tempi)
+            // Carica classifica settimanale
             await this.loadLeaderboard(weekNumber);
             
         } catch (error) {
             console.error('❌ Errore caricamento sfida:', error);
+            throw error;
         }
     },
     
