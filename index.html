@@ -5623,7 +5623,7 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                 const container = document.getElementById('betaContainer');
                 if (!container) return;
                 
-                // ✅ Carica il modulo beta esterno se non ancora caricato
+                // Verifica se modulo beta caricato
                 if (typeof BetaModule === 'undefined') {
                     container.innerHTML = `
                         <div style="text-align:center; padding: 60px 20px; color: var(--text-secondary);">
@@ -5634,8 +5634,14 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                     return;
                 }
                 
-                // Delega TUTTO al modulo beta esterno
-                BetaModule.render(container, game);
+                // Inizializza il modulo beta (se non già fatto)
+                if (!BetaModule._initialized) {
+                    BetaModule.init();
+                    BetaModule._initialized = true;
+                } else {
+                    // Se già inizializzato, solo render
+                    BetaModule.render();
+                }
             },
             
             renderEventPage() {
