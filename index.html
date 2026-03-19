@@ -1824,26 +1824,24 @@ async function saveGameToServer(showIndicator = true) {
                 saveIndicator.classList.add('show');
             }
 
-            // DISABILITATO: chiamata Railway rimossa
-        // const response = await fetch(...);
-
-            // Se rate limit, fallisce silenziosamente (riproverà al prossimo salvataggio automatico)
-            if (response.status === 429) {
-                console.log('⏳ Rate limit durante salvataggio. Riproverà automaticamente.');
-                if (showIndicator && saveIndicator) {
-                    saveIndicator.classList.remove('show');
-                }
-                return;
+            // Salva su Supabase
+            const userId = await getUserId();
+            
+            const { error } = await supabase
+                .from('game_saves')
+                .upsert({
+                    user_id: userId,
+                    game_state: game,
+                    last_save: new Date().toISOString()
+                });
+            
+            if (error) {
+                console.error('❌ Errore salvataggio Supabase:', error);
+                throw error;
             }
 
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error('❌ Errore salvataggio:', response.status, errorText);
-                throw new Error('Errore salvataggio');
-            }
-
-            lastSaveTime = Date.now(); // ✅ Aggiorna timestamp
-            console.log('💾 Salvataggio completato');
+            lastSaveTime = Date.now();
+            console.log('💾 Salvataggio completato su Supabase');
 
             if (showIndicator && saveIndicator) {
                 setTimeout(() => saveIndicator.classList.remove('show'), 1500);
@@ -4073,6 +4071,12 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
 
                 this.availableCars.forEach(car => {
                     if (!car.unlocked && car.unlockCondition) {
+                        // Caso speciale: idle_completion
+                        if (car.unlockCondition.idle_completion) {
+                            // Verrà sbloccata dall'IDLE Manager
+                            return;
+                        }
+                        
                         const canUnlock = Object.keys(car.unlockCondition).every(res => {
                             // Controllo sicurezza: se la risorsa non esiste, skip
                             if (!this.resources[res]) {
