@@ -4051,9 +4051,14 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                 Object.keys(this.workshop).forEach(key => {
                     const section = this.workshop[key];
                     if (!section.unlocked && section.unlockCondition) {
-                        const canUnlock = Object.keys(section.unlockCondition).every(res =>
-                            this.resources[res].value >= section.unlockCondition[res]
-                        );
+                        const canUnlock = Object.keys(section.unlockCondition).every(res => {
+                            // Controllo sicurezza: se la risorsa non esiste, skip
+                            if (!this.resources[res]) {
+                                console.warn(`⚠️ Risorsa mancante: ${res}`);
+                                return false;
+                            }
+                            return this.resources[res].value >= section.unlockCondition[res];
+                        });
                         
                         if (canUnlock) {
                             section.unlocked = true;
@@ -4064,9 +4069,14 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
 
                 this.availableCars.forEach(car => {
                     if (!car.unlocked && car.unlockCondition) {
-                        const canUnlock = Object.keys(car.unlockCondition).every(res =>
-                            this.resources[res].value >= car.unlockCondition[res]
-                        );
+                        const canUnlock = Object.keys(car.unlockCondition).every(res => {
+                            // Controllo sicurezza: se la risorsa non esiste, skip
+                            if (!this.resources[res]) {
+                                console.warn(`⚠️ Risorsa mancante: ${res}`);
+                                return false;
+                            }
+                            return this.resources[res].value >= car.unlockCondition[res];
+                        });
                         
                         if (canUnlock) {
                             car.unlocked = true;
