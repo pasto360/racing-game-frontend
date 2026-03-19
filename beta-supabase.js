@@ -74,24 +74,22 @@ const BetaModule = {
         }
     },
     
-    // Carica circuiti dal gioco principale
+    // Carica circuiti (hardcoded)
     async loadCircuits() {
-        try {
-            console.log('📥 Caricamento circuiti dal gioco...');
-            
-            // Usa i circuiti dal game principale
-            if (typeof game !== 'undefined' && game.circuits && game.circuits.length > 0) {
-                this.circuits = game.circuits;
-                console.log(`✅ Caricati ${this.circuits.length} circuiti dal gioco`);
-            } else {
-                throw new Error('Circuiti non disponibili nel gioco principale');
-            }
-            
-        } catch (error) {
-            console.error('❌ Errore caricamento circuiti:', error);
-            this.circuits = [];
-            throw error;
-        }
+        console.log('📥 Caricamento circuiti...');
+        
+        this.circuits = [
+            { id: 1, name: 'Dragon Peak', laps: 18, difficulty: 'Hard' },
+            { id: 2, name: 'Harbor Street', laps: 25, difficulty: 'Expert' },
+            { id: 3, name: 'Royal Speedway', laps: 22, difficulty: 'Medium' },
+            { id: 4, name: 'Desert Storm', laps: 20, difficulty: 'Hard' },
+            { id: 5, name: 'Arctic Circuit', laps: 16, difficulty: 'Expert' },
+            { id: 6, name: 'Sunset Boulevard', laps: 24, difficulty: 'Medium' },
+            { id: 7, name: 'Mountain Pass', laps: 15, difficulty: 'Hard' },
+            { id: 8, name: 'Coastal Highway', laps: 21, difficulty: 'Medium' }
+        ];
+        
+        console.log(`✅ Caricati ${this.circuits.length} circuiti`);
     },
     
     // Carica circuito settimanale + stato utente
