@@ -485,7 +485,7 @@ const IdleManager = {
         await this.save();
         this.render();
         
-        showNotification(`✅ Upgrade ${category} → Liv ${this.levels[category]}`, 'success');
+        console.log(`✅ Upgrade ${category} → Liv ${this.levels[category]}`);
     },
     
     // Salva su database
