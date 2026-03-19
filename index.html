@@ -1833,6 +1833,8 @@ async function saveGameToServer(showIndicator = true) {
                     user_id: userId,
                     game_state: game,
                     last_save: new Date().toISOString()
+                }, {
+                    onConflict: 'user_id'  // Specifica quale colonna usare per l'update
                 });
             
             if (error) {
