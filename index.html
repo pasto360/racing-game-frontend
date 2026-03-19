@@ -5052,8 +5052,18 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                     }
 
                     const data = await loadLeaderboard();
-                    if (!data) {
-                        container.innerHTML = '<p style="color: #ff3333; text-align: center; padding: 40px;">❌ Errore caricamento classifica</p>';
+                    
+                    // Se array vuoto o null, mostra messaggio migrazione
+                    if (!data || (Array.isArray(data) && data.length === 0)) {
+                        container.innerHTML = `
+                            <div style="text-align: center; padding: 60px 20px;">
+                                <div style="font-size: 4rem; margin-bottom: 20px;">🚧</div>
+                                <h3 style="color: var(--text-secondary); margin-bottom: 15px;">Classifica Globale</h3>
+                                <p style="color: var(--text-secondary); max-width: 500px; margin: 0 auto;">
+                                    La classifica globale è temporaneamente disabilitata durante la migrazione a Supabase.
+                                </p>
+                            </div>
+                        `;
                         return;
                     }
 
@@ -5693,25 +5703,8 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
             },
 
             async checkCanChallenge() {
-                try {
-                    const token = localStorage.getItem('authToken');
-                    // DISABILITATO: chiamata Railway rimossa
-        // const response = await fetch(...);
-                    
-                    if (!response.ok) {
-                        console.log(`⚠️ Endpoint can-challenge: ${response.status} - Sfide abilitate di default`);
-                        // Se endpoint non esiste, abilita sfide comunque
-                        return { canChallenge: true, nextChallengeTime: null, lastChallengeTime: null };
-                    }
-                    
-                    const data = await response.json();
-                    console.log('✅ Check sfida:', data);
-                    return data;
-                } catch (error) {
-                    console.error('Errore controllo sfida:', error);
-                    // In caso di errore, abilita sfide
-                    return { canChallenge: true, nextChallengeTime: null, lastChallengeTime: null };
-                }
+                // TODO: Migrare a Supabase
+                return { canChallenge: true, nextChallengeTime: null, lastChallengeTime: null };
             },
 
             async challengePlayer(defenderId, defenderUsername) {
