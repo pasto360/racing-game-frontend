@@ -366,11 +366,14 @@ const BetaModule = {
     // Esegui simulazione
     async runSimulation() {
         try {
-            const session = getSession();
-            if (!session) {
+            // Ottieni user dal localStorage
+            const user = JSON.parse(localStorage.getItem('user'));
+            if (!user || !user.id) {
                 alert('Devi essere loggato!');
                 return;
             }
+            
+            const userId = user.id;
             
             // Check se ha già corso oggi
             if (this.hasRaced) {
@@ -396,7 +399,6 @@ const BetaModule = {
             
             // Salva su Supabase
             const weekNumber = this.getWeekNumber();
-            const userId = session.user.id;
             
             // Inserisci nuovo record (non upsert - vogliamo storico giornaliero)
             const { error } = await supabase
