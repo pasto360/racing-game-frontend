@@ -1577,7 +1577,7 @@ async function showAuthModal() {
     }
     
     const html = `
-        <div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 9999; display: flex; justify-content: center; align-items: center;">
+        <div id="authModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 9999; display: flex; justify-content: center; align-items: center;">
             <div style="background: #1a1a1a; padding: 40px; border-radius: 20px; border: 3px solid #ff3333; max-width: 400px; width: 90%;">
                 <h2 style="font-family: Orbitron; text-align: center; margin-bottom: 10px; color: #ff3333;">🏁 RACING GAME CLOUD</h2>
                 <div style="text-align: center; margin-bottom: 20px;">
@@ -1651,14 +1651,18 @@ async function handleLogin() {
         localStorage.setItem('authToken', fakeToken);
         localStorage.setItem('user', JSON.stringify(user));
         
-        // Chiudi modale
+        console.log('✅ Login effettuato:', user.username);
+        
+        // Nascondi modale
         const modal = document.getElementById('authModal');
-        if (modal) modal.remove();
+        if (modal) {
+            modal.style.display = 'none';
+            // Rimuovi dopo inizializzazione
+            setTimeout(() => modal.remove(), 500);
+        }
         
         // Inizializza gioco
         await game.init();
-        
-        console.log('✅ Login effettuato:', user.username);
         
     } catch (error) {
         console.error('Errore login:', error);
@@ -1711,14 +1715,18 @@ async function handleRegister() {
         localStorage.setItem('authToken', fakeToken);
         localStorage.setItem('user', JSON.stringify(newUser));
         
-        // Chiudi modale
+        console.log('✅ Registrazione completata:', newUser.username);
+        
+        // Nascondi modale
         const modal = document.getElementById('authModal');
-        if (modal) modal.remove();
+        if (modal) {
+            modal.style.display = 'none';
+            // Rimuovi dopo inizializzazione
+            setTimeout(() => modal.remove(), 500);
+        }
         
         // Inizializza gioco
         await game.init();
-        
-        console.log('✅ Registrazione completata:', newUser.username);
         
     } catch (error) {
         console.error('Errore registrazione:', error);
@@ -1789,6 +1797,16 @@ async function loadGameFromServer() {
         if (gameState.weeklyScore !== undefined) game.weeklyScore = gameState.weeklyScore;
         if (gameState.workshopQueue) game.workshopQueue = gameState.workshopQueue;
         if (gameState.trackQueue) game.trackQueue = gameState.trackQueue;
+        if (gameState.races) game.races = gameState.races; // GARE COMPLETATE
+        if (gameState.track) game.track = gameState.track; // LIVELLI PISTA
+        
+        console.log('📊 Dati caricati:', {
+            gare: game.races?.completed || 0,
+            auto: game.ownedCars?.length || 0,
+            officina_engine: game.workshop?.engine?.level || 0,
+            pista_straights: game.track?.straights || 0,
+            pista_corners: game.track?.corners || 0
+        });
         
         return gameState;
         
@@ -1823,17 +1841,33 @@ async function saveGameToServer(showIndicator = true) {
                 saveIndicator.classList.add('show');
             }
 
-            // Salva su Supabase
+            // Salva su Supabase - SOLO dati essenziali
             const userId = await getUserId();
+            
+            const gameState = {
+                resources: game.resources,
+                workshop: game.workshop,
+                ownedCars: game.ownedCars,
+                driver: game.driver,
+                currentSponsor: game.currentSponsor,
+                technologies: game.technologies,
+                missions: game.missions,
+                raceHistory: game.raceHistory,
+                weeklyScore: game.weeklyScore,
+                workshopQueue: game.workshopQueue,
+                trackQueue: game.trackQueue,
+                races: game.races,  // CRITICO: gare completate
+                track: game.track   // CRITICO: livelli pista
+            };
             
             const { error } = await supabase
                 .from('game_saves')
                 .upsert({
                     user_id: userId,
-                    game_state: game,
+                    game_state: gameState,
                     last_save: new Date().toISOString()
                 }, {
-                    onConflict: 'user_id'  // Specifica quale colonna usare per l'update
+                    onConflict: 'user_id'
                 });
             
             if (error) {
@@ -1843,6 +1877,11 @@ async function saveGameToServer(showIndicator = true) {
 
             lastSaveTime = Date.now();
             console.log('💾 Salvataggio completato su Supabase');
+            console.log('📊 Salvati:', {
+                gare: game.races?.completed || 0,
+                pista_straights: game.track?.straights || 0,
+                pista_corners: game.track?.corners || 0
+            });
 
             if (showIndicator && saveIndicator) {
                 setTimeout(() => saveIndicator.classList.remove('show'), 1500);
