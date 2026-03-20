@@ -4474,7 +4474,7 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                                 </div>
                                 <div style="padding: 0 5px;">
                                     <div class="car-stats">
-                                        ${Object.keys(car.stats).map(stat => {
+                                        ${['engine', 'body', 'electronics', 'aero'].map(stat => {
                                             const value = car.stats[stat];
                                             const percentage = (value / 100) * 100;
                                             return `
@@ -4570,7 +4570,7 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                                         </div>
                                     </div>
 
-                                    ${Object.keys(car.stats).map(stat => {
+                                    ${['engine', 'body', 'electronics', 'aero'].map(stat => {
                                         const baseValue = car.stats[stat];
                                         const upgradeValue = car.upgrades[stat] * 10;
                                         

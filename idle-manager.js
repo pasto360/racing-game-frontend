@@ -621,112 +621,177 @@ const IdleManager = {
                     </div>
                 </div>
                 
-                <!-- Tabs -->
-                <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-                    <button onclick="IdleManager.showTab('income')" id="tabIncome" class="idle-tab active">
-                        📈 ENTRATE
-                    </button>
-                    <button onclick="IdleManager.showTab('expenses')" id="tabExpenses" class="idle-tab">
-                        📉 USCITE
-                    </button>
-                    <button onclick="IdleManager.showTab('stats')" id="tabStats" class="idle-tab">
-                        📊 STATS
-                    </button>
-                </div>
-                
-                <!-- Content -->
+                <!-- Content unico senza tab -->
                 <div id="idleTabContent"></div>
             </div>
             
             <style>
-                .idle-tab {
-                    flex: 1;
-                    padding: 15px;
-                    background: rgba(255,255,255,0.05);
-                    border: 2px solid rgba(255,255,255,0.1);
-                    border-radius: 10px;
-                    color: white;
-                    font-family: Orbitron;
-                    cursor: pointer;
-                    transition: all 0.3s;
-                }
-                
-                .idle-tab:hover {
-                    background: rgba(255,255,255,0.1);
-                    border-color: var(--accent-cyan);
-                }
-                
-                .idle-tab.active {
-                    background: var(--accent-cyan);
-                    border-color: var(--accent-cyan);
-                    color: #1a0033;
-                }
-                
-                .upgrade-card {
+                .upgrade-card-mini {
                     background: rgba(0,217,255,0.05);
                     border: 2px solid rgba(0,217,255,0.2);
-                    border-radius: 12px;
-                    padding: 20px;
-                    margin-bottom: 15px;
+                    border-radius: 10px;
+                    padding: 15px;
                     transition: all 0.3s;
+                    text-align: center;
                 }
                 
-                .upgrade-card:hover {
+                .upgrade-card-mini:hover {
                     border-color: var(--accent-cyan);
-                    transform: translateX(5px);
+                    transform: translateY(-3px);
                 }
                 
-                .upgrade-btn {
-                    padding: 12px 30px;
+                .upgrade-btn-mini {
+                    width: 100%;
+                    padding: 10px;
                     background: var(--accent-cyan);
                     color: #1a0033;
                     border: none;
-                    border-radius: 8px;
+                    border-radius: 6px;
                     font-family: Orbitron;
                     font-weight: bold;
+                    font-size: 0.9rem;
                     cursor: pointer;
                     transition: all 0.3s;
+                    margin-top: 10px;
                 }
                 
-                .upgrade-btn:hover:not(:disabled) {
+                .upgrade-btn-mini:hover:not(:disabled) {
                     transform: scale(1.05);
                     box-shadow: 0 5px 15px rgba(0,217,255,0.4);
                 }
                 
-                .upgrade-btn:disabled {
+                .upgrade-btn-mini:disabled {
                     opacity: 0.3;
                     cursor: not-allowed;
                 }
             </style>
         `;
         
-        // Ripristina tab attivo (se esiste)
-        const currentTab = this.currentTab || 'income';
-        this.showTab(currentTab);
+        // Render diretto senza tab
+        this.showUnifiedView();
     },
     
-    // Mostra tab
-    showTab(tab) {
-        // Salva tab corrente
-        this.currentTab = tab;
-        
-        // Aggiorna pulsanti
-        document.querySelectorAll('.idle-tab').forEach(btn => btn.classList.remove('active'));
-        const tabBtn = document.getElementById(`tab${tab.charAt(0).toUpperCase() + tab.slice(1)}`);
-        if (tabBtn) tabBtn.classList.add('active');
-        
+    // Vista unificata
+    showUnifiedView() {
         const content = document.getElementById('idleTabContent');
         
-        if (tab === 'income') {
-            content.innerHTML = this.renderIncomeTab();
-        } else if (tab === 'expenses') {
-            content.innerHTML = this.renderExpensesTab();
-        } else if (tab === 'stats') {
-            content.innerHTML = this.renderStatsTab();
-        }
+        const incomeCategories = [
+            { key: 'pilot', name: 'Pilota', icon: '👨‍✈️', desc: 'Premi gara' },
+            { key: 'sponsor', name: 'Sponsor', icon: '🏢', desc: 'Contratti' },
+            { key: 'merch', name: 'Merchandising', icon: '👕', desc: 'Vendite' },
+            { key: 'techSponsor', name: 'Tech Sponsor', icon: '💻', desc: 'Partnership' },
+            { key: 'tv', name: 'Diritti TV', icon: '📺', desc: 'Broadcasting' }
+        ];
+        
+        const expenseCategories = [
+            { key: 'team', name: 'Team', icon: '👥', desc: 'Salari' },
+            { key: 'car', name: 'Auto', icon: '🏎️', desc: 'Manutenzione' },
+            { key: 'structures', name: 'Strutture', icon: '🏭', desc: 'Impianti' }
+        ];
+        
+        content.innerHTML = `
+            <!-- SVILUPPI (Entrate) -->
+            <div style="margin-bottom: 40px;">
+                <h3 style="font-family: Orbitron; color: var(--accent-green); margin-bottom: 20px; text-align: center;">
+                    📈 SVILUPPI
+                </h3>
+                <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px;">
+                    ${incomeCategories.map(cat => this.renderMiniCard(cat)).join('')}
+                </div>
+            </div>
+            
+            <!-- INVESTIMENTI (Uscite) -->
+            <div>
+                <h3 style="font-family: Orbitron; color: var(--accent-red); margin-bottom: 20px; text-align: center;">
+                    📉 INVESTIMENTI
+                </h3>
+                <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px;">
+                    ${expenseCategories.map(cat => this.renderMiniCard(cat)).join('')}
+                </div>
+            </div>
+            
+            <!-- STATS in basso -->
+            <div style="margin-top: 40px; padding: 20px; background: rgba(255,255,255,0.03); border-radius: 12px; border: 2px solid rgba(255,255,255,0.1);">
+                <h3 style="font-family: Orbitron; color: var(--accent-cyan); margin-bottom: 15px; text-align: center;">
+                    📊 STATISTICHE
+                </h3>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; text-align: center;">
+                    <div>
+                        <div style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 5px;">Saldo Attuale</div>
+                        <div style="font-family: Orbitron; font-size: 1.5rem; color: var(--accent-yellow);">
+                            €${this.balance.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        </div>
+                    </div>
+                    <div>
+                        <div style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 5px;">Tempo di Gioco</div>
+                        <div style="font-family: Orbitron; font-size: 1.5rem; color: var(--accent-cyan);">
+                            ${Math.floor(this.stats.playTimeSeconds / 3600)}h ${Math.floor((this.stats.playTimeSeconds % 3600) / 60)}m
+                        </div>
+                    </div>
+                    <div>
+                        <div style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 5px;">Livello Medio</div>
+                        <div style="font-family: Orbitron; font-size: 1.5rem; color: var(--accent-green);">
+                            ${this.getAverageLevel()}/100
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
     },
     
-    // Render tab entrate
+    // Render card mini (stile tecnologie)
+    renderMiniCard(cat) {
+        const level = this.levels[cat.key];
+        const cost = this.upgradeCost(cat.key, level);
+        const canAfford = this.balance >= cost;
+        const maxed = level >= this.MAX_LEVEL;
+        
+        // Calcola rate
+        let rate = 0;
+        if (['pilot', 'sponsor', 'merch', 'techSponsor', 'tv'].includes(cat.key)) {
+            rate = this.calculateIncome(cat.key);
+        } else {
+            rate = this.calculateExpense(cat.key);
+        }
+        
+        return `
+            <div class="upgrade-card-mini">
+                <div style="font-size: 2rem; margin-bottom: 8px;">${cat.icon}</div>
+                <div style="font-family: Orbitron; font-weight: bold; font-size: 0.95rem; margin-bottom: 4px;">
+                    ${cat.name}
+                </div>
+                <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 8px;">
+                    ${cat.desc}
+                </div>
+                <div style="font-size: 0.85rem; margin-bottom: 8px;">
+                    <span style="color: var(--accent-cyan);">Lv ${level}</span>
+                    <span style="color: var(--text-secondary);">/100</span>
+                </div>
+                <div style="font-size: 0.8rem; margin-bottom: 8px; color: ${rate >= 0 ? 'var(--accent-green)' : 'var(--accent-red)'};">
+                    ${rate >= 0 ? '+' : ''}${rate.toFixed(2)}€/s
+                </div>
+                <button 
+                    onclick="IdleManager.upgrade('${cat.key}')"
+                    class="upgrade-btn-mini"
+                    ${!canAfford || maxed ? 'disabled' : ''}>
+                    ${maxed ? 'MAX' : `€${cost.toLocaleString('it-IT')}`}
+                </button>
+            </div>
+        `;
+    },
+    
+    // Rimuovo showTab (non serve più)
+    showTab(tab) {
+        // Funzione vuota per compatibilità
+    },
+    
+    // Calcola livello medio
+    getAverageLevel() {
+        const total = Object.values(this.levels).reduce((sum, lvl) => sum + lvl, 0);
+        return Math.floor(total / Object.keys(this.levels).length);
+    },
+    
+    // Render tab entrate (non usato più ma lo lascio per compatibilità)
     renderIncomeTab() {
         const categories = [
             { 
