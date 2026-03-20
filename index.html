@@ -1910,19 +1910,41 @@ async function loadLeaderboard() {
         
         // Se cache valida per questo slot, usa quella
         if (leaderboardCache && leaderboardCacheSlot === currentSlot) {
-            // ✅ Cache valida - nessun log per evitare spam
             return leaderboardCache;
         }
         
-        console.log('📊 Classifica non disponibile (migrazione Supabase in corso)');
+        console.log('📊 Caricando classifica da Supabase...');
         
-        // TODO: Migrare classifica a Supabase
-        // Per ora ritorna array vuoto
-        return [];
+        // Carica classifica da Supabase
+        const { data, error } = await supabase
+            .from('users')
+            .select('id, username, email')
+            .order('id', { ascending: true })
+            .limit(100);
+        
+        if (error) {
+            console.error('Errore caricamento classifica:', error);
+            return [];
+        }
+        
+        // Formato compatibile con UI esistente
+        const leaderboard = (data || []).map((user, index) => ({
+            username: user.username,
+            reputation: 0, // TODO: aggiungere campo reputation
+            position: index + 1
+        }));
+        
+        // Salva in cache
+        leaderboardCache = { leaderboard, userRank: null };
+        leaderboardCacheSlot = currentSlot;
+        
+        console.log(`✅ Classifica caricata: ${leaderboard.length} utenti`);
+        
+        return leaderboardCache;
         
     } catch (error) {
         console.error('Errore caricamento classifica:', error);
-        return [];
+        return { leaderboard: [], userRank: null };
     }
 }
 
