@@ -1822,6 +1822,12 @@ const MIN_SAVE_INTERVAL = 3000; // 3 secondi
 
 async function saveGameToServer(showIndicator = true) {
     if (!authToken) return;
+    
+    // CRITICO: Non salvare se il gioco non è ancora caricato
+    if (!game._fullyLoaded) {
+        console.log('⏳ Gioco in caricamento, salvataggio posticipato');
+        return;
+    }
 
     // Rate limiter: max 1 save ogni 3 sec
     const now = Date.now();
@@ -1876,11 +1882,16 @@ async function saveGameToServer(showIndicator = true) {
             }
 
             lastSaveTime = Date.now();
+            
             console.log('💾 Salvataggio completato su Supabase');
-            console.log('📊 Salvati:', {
-                gare: game.races?.completed || 0,
+            console.log('📊 Stato salvato:', {
+                gare_completate: game.races?.completed || 0,
+                gare_vinte: game.races?.wins || 0,
+                reputazione: game.resources?.reputation?.value || 0,
+                money: game.resources?.money?.value || 0,
                 pista_straights: game.track?.straights || 0,
-                pista_corners: game.track?.corners || 0
+                pista_corners: game.track?.corners || 0,
+                auto_possedute: game.ownedCars?.length || 0
             });
 
             if (showIndicator && saveIndicator) {
@@ -2426,7 +2437,10 @@ async function loadLeaderboard() {
         console.log('ℹ️ Nuovo utente - Partenza con dati di default');
     }
     
-    console.log('✅ Gioco inizializzato');
+    // CRITICO: Segna il gioco come completamente caricato
+    this._fullyLoaded = true;
+    
+    console.log('✅ Gioco inizializzato e caricato');
     
     document.getElementById('gameContainer').style.display = 'block';
     
