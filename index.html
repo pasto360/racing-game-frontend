@@ -5140,6 +5140,9 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
 
                 const { leaderboard, userRank } = data;
                 
+                // Ottieni utente corrente
+                const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
+                
                 let html = `
                     <div class="page-container">
                         <div class="section-layout">
@@ -5209,6 +5212,16 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
 
                 leaderboard.forEach((player, i) => {
                     const isMe = currentUser && player.username === currentUser.username;
+                    
+                    // Debug per il primo giocatore
+                    if (i === 0) {
+                        console.log('🔍 Check isMe:', { 
+                            playerUsername: player.username, 
+                            currentUsername: currentUser?.username,
+                            isMe 
+                        });
+                    }
+                    
                     const rankColor = i === 0 ? '#ffd700' : i === 1 ? '#c0c0c0' : i === 2 ? '#cd7f32' : '#a0a0a0';
                     const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}`;
                     
