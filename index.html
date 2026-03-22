@@ -1801,6 +1801,7 @@ async function loadGameFromServer() {
         if (gameState.trackTraining) game.trackTraining = gameState.trackTraining; // ALLENAMENTI PISTA
         if (gameState.pvpStats) game.pvpStats = gameState.pvpStats; // STATS PVP
         if (gameState.idleCompleted !== undefined) game.idleCompleted = gameState.idleCompleted; // IDLE COMPLETATO
+        if (gameState.eventProgress) game.eventProgress = gameState.eventProgress; // PROGRESSO EVENTI
         if (gameState.lastLoginTime) game.lastLoginTime = gameState.lastLoginTime; // TIMESTAMP
         
         console.log('📊 Dati caricati:', {
@@ -1808,6 +1809,7 @@ async function loadGameFromServer() {
             auto: game.ownedCars?.length || 0,
             pvp_vinte: game.pvpStats?.wins || 0,
             idle_completato: game.idleCompleted || false,
+            eventi_attivi: Object.keys(game.eventProgress || {}).length,
             officina_engine: game.workshop?.engine?.level || 0,
             allenamento_engine: game.trackTraining?.engine?.level || 0,
             allenamento_aero: game.trackTraining?.aero?.level || 0
@@ -1871,6 +1873,7 @@ async function saveGameToServer(showIndicator = true) {
                 trackTraining: game.trackTraining,   // CRITICO: livelli allenamento pista
                 pvpStats: game.pvpStats,  // CRITICO: statistiche PvP
                 idleCompleted: game.idleCompleted || false,  // CRITICO: unlock auto ULTIMATE
+                eventProgress: game.eventProgress || {},  // CRITICO: progresso eventi
                 lastLoginTime: Date.now()  // Timestamp ultima sessione
             };
             
