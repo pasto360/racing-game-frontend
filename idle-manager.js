@@ -175,7 +175,7 @@ const IdleManager = {
             console.log('✅ IDLE Manager inizializzato');
         } catch (error) {
             console.error('❌ Errore init IDLE:', error);
-            showNotification('Errore caricamento IDLE', 'error');
+            alert('Errore caricamento IDLE Manager');
         }
     },
     
@@ -746,13 +746,16 @@ const IdleManager = {
         const canAfford = this.balance >= cost;
         const maxed = level >= this.MAX_LEVEL;
         
-        // Calcola rate
+        // Calcola rate usando le funzioni esistenti
         let rate = 0;
-        if (['pilot', 'sponsor', 'merch', 'techSponsor', 'tv'].includes(cat.key)) {
-            rate = this.calculateIncome(cat.key);
-        } else {
-            rate = this.calculateExpense(cat.key);
-        }
+        if (cat.key === 'pilot') rate = this.pilotIncome(level);
+        else if (cat.key === 'sponsor') rate = this.sponsorIncome(level);
+        else if (cat.key === 'merch') rate = this.merchIncome(level);
+        else if (cat.key === 'techSponsor') rate = this.techSponsorIncome(level);
+        else if (cat.key === 'tv') rate = this.tvIncome(level);
+        else if (cat.key === 'team') rate = this.teamCost(level);
+        else if (cat.key === 'car') rate = this.carCost(level);
+        else if (cat.key === 'structures') rate = this.structuresCost(level);
         
         return `
             <div class="upgrade-card-mini">

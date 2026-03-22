@@ -1799,6 +1799,7 @@ async function loadGameFromServer() {
         if (gameState.trackQueue) game.trackQueue = gameState.trackQueue;
         if (gameState.races) game.races = gameState.races; // GARE COMPLETATE
         if (gameState.track) game.track = gameState.track; // LIVELLI PISTA
+        if (gameState.lastLoginTime) game.lastLoginTime = gameState.lastLoginTime; // TIMESTAMP
         
         console.log('📊 Dati caricati:', {
             gare: game.races?.completed || 0,
@@ -1863,7 +1864,8 @@ async function saveGameToServer(showIndicator = true) {
                 workshopQueue: game.workshopQueue,
                 trackQueue: game.trackQueue,
                 races: game.races,  // CRITICO: gare completate
-                track: game.track   // CRITICO: livelli pista
+                track: game.track,   // CRITICO: livelli pista
+                lastLoginTime: Date.now()  // Timestamp ultima sessione
             };
             
             const { error } = await supabase
@@ -2437,6 +2439,9 @@ async function loadLeaderboard() {
         console.log('ℹ️ Nuovo utente - Partenza con dati di default');
     }
     
+    // Recupero energia offline
+    this.recoverOfflineEnergy();
+    
     // CRITICO: Segna il gioco come completamente caricato
     this._fullyLoaded = true;
     
@@ -2519,6 +2524,37 @@ async function loadLeaderboard() {
                 this.resources.money.value += (perSecond * deltaSeconds);
             }
         }
+    },
+
+    // Recupera energia offline
+    recoverOfflineEnergy() {
+        const now = Date.now();
+        const lastLogin = this.lastLoginTime || now;
+        const offlineSeconds = Math.floor((now - lastLogin) / 1000);
+        
+        if (offlineSeconds > 60) { // Solo se più di 1 minuto offline
+            // Energia: 1 punto al minuto
+            const energyRecovered = offlineSeconds / 60;
+            const newEnergy = Math.min(
+                this.resources.energy.value + energyRecovered,
+                this.resources.energy.max
+            );
+            
+            const actualRecovered = newEnergy - this.resources.energy.value;
+            this.resources.energy.value = newEnergy;
+            
+            // Log
+            const offlineMinutes = Math.floor(offlineSeconds / 60);
+            const offlineHours = Math.floor(offlineMinutes / 60);
+            const remainingMinutes = offlineMinutes % 60;
+            
+            if (actualRecovered > 0) {
+                console.log(`⚡ Energia recuperata offline: +${actualRecovered.toFixed(1)} (${offlineHours}h ${remainingMinutes}m offline)`);
+            }
+        }
+        
+        // Aggiorna timestamp
+        this.lastLoginTime = now;
     },
 
     // Check se IDLE è stato completato
