@@ -2004,6 +2004,7 @@ async function loadLeaderboard() {
         const game = {
     currentPage: 'workshop',
     selectedCarIndex: 0,
+    lastLoginTime: null,  // Timestamp ultima sessione
         
     resources: {
                 money: { value: 15000, rate: 0, max: Infinity, icon: '💰', name: 'Denaro' },
@@ -2532,6 +2533,13 @@ async function loadLeaderboard() {
         const lastLogin = this.lastLoginTime || now;
         const offlineSeconds = Math.floor((now - lastLogin) / 1000);
         
+        console.log('🔍 DEBUG Energia Offline:', {
+            now: new Date(now).toLocaleString(),
+            lastLogin: this.lastLoginTime ? new Date(this.lastLoginTime).toLocaleString() : 'Prima volta',
+            offlineSeconds,
+            energiaAttuale: this.resources.energy.value
+        });
+        
         if (offlineSeconds > 60) { // Solo se più di 1 minuto offline
             // Energia: 1 punto al minuto
             const energyRecovered = offlineSeconds / 60;
@@ -2548,9 +2556,10 @@ async function loadLeaderboard() {
             const offlineHours = Math.floor(offlineMinutes / 60);
             const remainingMinutes = offlineMinutes % 60;
             
-            if (actualRecovered > 0) {
-                console.log(`⚡ Energia recuperata offline: +${actualRecovered.toFixed(1)} (${offlineHours}h ${remainingMinutes}m offline)`);
-            }
+            console.log(`⚡ Energia recuperata offline: +${actualRecovered.toFixed(1)} (${offlineHours}h ${remainingMinutes}m offline)`);
+            console.log(`   Energia: ${(this.resources.energy.value - actualRecovered).toFixed(1)} → ${this.resources.energy.value.toFixed(1)}`);
+        } else {
+            console.log('ℹ️ Offline time troppo breve, nessun recupero energia');
         }
         
         // Aggiorna timestamp
