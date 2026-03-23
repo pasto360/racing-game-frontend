@@ -135,7 +135,14 @@ const IdleManager = {
                 .single();
             
             if (error && error.code !== 'PGRST116') {
-                throw error;
+                // PGRST116 = nessun dato trovato (OK)
+                // 42P01 = tabella non esiste
+                if (error.code === '42P01') {
+                    console.warn('⚠️ Tabella idle_progress non esiste - Esegui SQL-FIX-INTEGER.sql su Supabase');
+                    alert('⚠️ IDLE Manager richiede configurazione database!\n\nEsegui SQL-FIX-INTEGER.sql su Supabase per abilitare il salvataggio IDLE.');
+                } else {
+                    throw error;
+                }
             }
             
             if (data) {
@@ -155,10 +162,7 @@ const IdleManager = {
                 };
                 
                 this.stats = {
-                    totalWins: data.total_race_wins,
-                    totalEarned: parseFloat(data.total_money_earned),
-                    maxBalance: parseFloat(data.max_balance),
-                    playTimeSeconds: data.play_time_seconds
+                    playTimeSeconds: data.play_time_seconds || 0
                 };
                 
                 // Calcola offline progress
@@ -495,14 +499,13 @@ const IdleManager = {
                     team_level: this.levels.team,
                     car_level: this.levels.car,
                     structures_level: this.levels.structures,
-                    total_race_wins: this.stats.totalWins,
-                    total_money_earned: this.stats.totalEarned,
-                    max_balance: this.stats.maxBalance,
-                    play_time_seconds: this.stats.playTimeSeconds
+                    play_time_seconds: this.stats.playTimeSeconds || 0
                 })
                 .eq('user_id', userId);
             
             if (error) throw error;
+            
+            console.log('💾 IDLE salvato su Supabase');
             
         } catch (error) {
             console.error('❌ Errore save IDLE:', error);
