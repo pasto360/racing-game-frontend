@@ -760,6 +760,21 @@ const IdleManager = {
         else if (cat.key === 'car') rate = this.carCost(level);
         else if (cat.key === 'structures') rate = this.structuresCost(level);
         
+        // Informazioni bonus per ogni categoria
+        const bonusInfo = {
+            // SVILUPPI (Entrate)
+            pilot: `Riceve bonus da Team (+${(this.levels.team * 0.5).toFixed(1)}%) e Auto (+${(this.levels.car * 0.8).toFixed(1)}%)`,
+            sponsor: 'Contratti pubblicitari',
+            merch: 'Vendite merchandising team',
+            techSponsor: 'Partnership tecnologiche',
+            tv: 'Diritti televisivi',
+            
+            // INVESTIMENTI (Uscite)
+            team: `Migliora Pilota del +${(level * 0.5).toFixed(1)}%`,
+            car: `Migliora Pilota del +${(level * 0.8).toFixed(1)}%`,
+            structures: `Riduce costi totali del ${(level * 0.3).toFixed(1)}%`
+        };
+        
         return `
             <div class="upgrade-card-mini">
                 <div style="font-size: 2rem; margin-bottom: 8px;">${cat.icon}</div>
@@ -769,6 +784,12 @@ const IdleManager = {
                 <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 8px;">
                     ${cat.desc}
                 </div>
+                
+                <!-- INFO BONUS -->
+                <div style="font-size: 0.7rem; color: var(--accent-yellow); margin-bottom: 8px; min-height: 32px; line-height: 1.3;">
+                    💡 ${bonusInfo[cat.key]}
+                </div>
+                
                 <div style="font-size: 0.85rem; margin-bottom: 8px;">
                     <span style="color: var(--accent-cyan);">Lv ${level}</span>
                     <span style="color: var(--text-secondary);">/100</span>
