@@ -2033,6 +2033,26 @@ async function loadLeaderboard() {
                     oneTimeBonus: { reputation: 10 },
                     unlocked: false,
                     unlockCondition: { reputation: 200, money: 25000 }
+                },
+                tires: {
+                    name: 'Gomme',
+                    icon: '⚫',
+                    level: 0,
+                    maxLevel: 10,
+                    cost: { money: 1800, parts: 80 },
+                    production: { parts: 2 },
+                    unlocked: false,
+                    unlockCondition: { money: 18000 }
+                },
+                suspension: {
+                    name: 'Sospensioni',
+                    icon: '🔩',
+                    level: 0,
+                    maxLevel: 10,
+                    cost: { money: 2500, parts: 120 },
+                    production: { money: 50 },
+                    unlocked: false,
+                    unlockCondition: { reputation: 150, money: 20000 }
                 }
             },
 
@@ -4252,14 +4272,6 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
             renderWorkshop() {
                 const container = document.getElementById('workshop');
                 
-                // 🐛 DEBUG: Vedo i livelli prima di renderizzare
-                console.log('📊 Livelli workshop:', {
-                    engine: this.workshop.engine?.level,
-                    electronics: this.workshop.electronics?.level,
-                    body: this.workshop.body?.level,
-                    aerodynamics: this.workshop.aerodynamics?.level
-                });
-                
                 // ✅ Memorizza quale sezione era aperta
                 let activeSection = 0;
                 const activeDetail = document.querySelector('.workshop-detail[style*="display: block"]');
@@ -4281,171 +4293,203 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                     return acc;
                 }, {});
                 
-                // ✅ ORDINE FISSO: Motori, Elettronica, Carrozzeria, Aerodinamica
-                const workshopSections = ['engine', 'electronics', 'body', 'aerodynamics'];
+                // Totale livelli
+                const totalLevels = Object.keys(this.workshop).reduce((sum, key) => sum + (this.workshop[key].level || 0), 0);
+                const maxTotalLevels = Object.keys(this.workshop).length * 10;
                 
-                // ✅ Calcola quale immagine mostrare in base alla sezione attiva
+                // ✅ ORDINE: Engine, Electronics, Body (SX) | Aero, Tires, Suspension (DX)
+                const workshopSections = ['engine', 'electronics', 'body', 'aerodynamics', 'tires', 'suspension'];
+                
+                // Mappa immagini
                 const imageMap = {
                     'engine': 'engine.jpg',
                     'electronics': 'electronics.jpg',
                     'body': 'body.jpg',
-                    'aerodynamics': 'aero.jpg'
+                    'aerodynamics': 'aero.jpg',
+                    'tires': 'engine.jpg',
+                    'suspension': 'body.jpg'
                 };
                 const currentSectionKey = workshopSections[activeSection] || 'engine';
                 const initialImage = imageMap[currentSectionKey] || 'engine.jpg';
                 
                 container.innerHTML = `
                     <div class="page-container">
-                        <div class="section-layout">
-                            <!-- Menu laterale SX -->
-                            <div class="side-menu">
-                                ${workshopSections.map((key, idx) => {
+                        <div style="display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 20px; margin-bottom: 20px;">
+                            <!-- COLONNA SINISTRA (3 reparti) -->
+                            <div style="display: flex; flex-direction: column; gap: 15px;">
+                                ${workshopSections.slice(0, 3).map((key, idx) => {
                                     const section = this.workshop[key];
-                                    // Mappa immagini per reparto
-                                    const imageMap = {
-                                        'engine': 'engine.jpg',
-                                        'electronics': 'electronics.jpg',
-                                        'body': 'body.jpg',
-                                        'aerodynamics': 'aero.jpg'
-                                    };
                                     const imageName = imageMap[key] || 'workshop.jpg';
                                     
                                     return `
                                         <button class="side-menu-btn ${idx === activeSection ? 'active' : ''}" 
                                                 onclick="
-                                                    document.querySelectorAll('.workshop-detail').forEach(d => d.style.display='none'); 
-                                                    document.getElementById('workshop-${key}').style.display='block';
                                                     document.querySelectorAll('.side-menu-btn').forEach(b => b.classList.remove('active'));
                                                     this.classList.add('active');
-                                                    
-                                                    // Cambia immagine
-                                                    const img = document.getElementById('workshop-image');
-                                                    img.src = 'images/sections/${imageName}';
-                                                    img.alt = '${section.name}';
-                                                ">
-                                            ${section.icon}<br>${section.name.split(' ').pop()}
+                                                    document.querySelectorAll('.workshop-detail').forEach(d => d.style.display = 'none');
+                                                    document.getElementById('workshop-detail-${idx}').style.display = 'block';
+                                                    document.getElementById('workshopImage').src = 'images/sections/${imageName}';
+                                                "
+                                                style="flex: 1; text-align: left; padding: 15px; background: ${idx === activeSection ? 'var(--accent-cyan)' : 'rgba(255,255,255,0.05)'}; border: 2px solid ${idx === activeSection ? 'var(--accent-cyan)' : 'rgba(255,255,255,0.1)'}; border-radius: 10px; color: ${idx === activeSection ? '#1a0033' : 'white'}; cursor: pointer; transition: all 0.3s;">
+                                            <div style="display: flex; align-items: center; gap: 12px;">
+                                                <div style="font-size: 2rem;">${section.icon}</div>
+                                                <div style="flex: 1;">
+                                                    <div style="font-weight: 700; font-size: 1rem;">${section.name}</div>
+                                                    <div style="font-size: 0.8rem; opacity: 0.8;">Lv ${section.level}/${section.maxLevel}</div>
+                                                </div>
+                                            </div>
                                         </button>
                                     `;
                                 }).join('')}
                             </div>
-
-                            <!-- Immagine centrale -->
-                            <div class="section-image-container">
-                                <img id="workshop-image"
+                            
+                            <!-- IMMAGINE CENTRALE -->
+                            <div class="section-image-container" style="height: 300px;">
+                                <img id="workshopImage" 
                                      src="images/sections/${initialImage}" 
                                      class="section-image" 
                                      alt="Officina"
-                                     onerror="console.error('❌ Immagine non trovata:', this.src); this.style.display='none'; this.parentElement.style.background='linear-gradient(135deg, #1a1a1a, #0a0a0a)'; this.parentElement.innerHTML='<div style=text-align:center;padding-top:100px><div style=font-size:4rem>🔧</div></div>'">
+                                     style="width: 100%; height: 100%; object-fit: cover; border-radius: 12px;"
+                                     onerror="this.style.display='none'; this.parentElement.style.background='linear-gradient(135deg, #1a1a1a, #0a0a0a)'; this.parentElement.innerHTML='<div style=text-align:center;padding-top:100px><div style=font-size:4rem>🔧</div></div>'">
                             </div>
-
-                            <!-- Stats laterale DX -->
-                            <div class="side-stats">
-                                <div class="stat-box">
-                                    <div class="stat-label">LIVELLI TOTALI</div>
-                                    <div class="stat-value">${workshopSections.reduce((sum, k) => sum + this.workshop[k].level, 0)}</div>
-                                </div>
-                                ${Object.keys(totalProduction).length > 0 ? `
-                                    <div class="stat-box">
-                                        <div class="stat-label">PRODUZIONE/H</div>
-                                        <div class="stat-value" style="font-size: 0.9rem;">
-                                            ${Object.keys(totalProduction).map(res => 
-                                                `${this.resources[res].icon}${totalProduction[res].toFixed(0)}`
-                                            ).join('<br>')}
-                                        </div>
-                                    </div>
-                                ` : ''}
+                            
+                            <!-- COLONNA DESTRA (3 reparti) -->
+                            <div style="display: flex; flex-direction: column; gap: 15px;">
+                                ${workshopSections.slice(3, 6).map((key, idx) => {
+                                    const realIdx = idx + 3;
+                                    const section = this.workshop[key];
+                                    const imageName = imageMap[key] || 'workshop.jpg';
+                                    
+                                    return `
+                                        <button class="side-menu-btn ${realIdx === activeSection ? 'active' : ''}" 
+                                                onclick="
+                                                    document.querySelectorAll('.side-menu-btn').forEach(b => b.classList.remove('active'));
+                                                    this.classList.add('active');
+                                                    document.querySelectorAll('.workshop-detail').forEach(d => d.style.display = 'none');
+                                                    document.getElementById('workshop-detail-${realIdx}').style.display = 'block';
+                                                    document.getElementById('workshopImage').src = 'images/sections/${imageName}';
+                                                "
+                                                style="flex: 1; text-align: left; padding: 15px; background: ${realIdx === activeSection ? 'var(--accent-cyan)' : 'rgba(255,255,255,0.05)'}; border: 2px solid ${realIdx === activeSection ? 'var(--accent-cyan)' : 'rgba(255,255,255,0.1)'}; border-radius: 10px; color: ${realIdx === activeSection ? '#1a0033' : 'white'}; cursor: pointer; transition: all 0.3s;">
+                                            <div style="display: flex; align-items: center; gap: 12px;">
+                                                <div style="font-size: 2rem;">${section.icon}</div>
+                                                <div style="flex: 1;">
+                                                    <div style="font-weight: 700; font-size: 1rem;">${section.name}</div>
+                                                    <div style="font-size: 0.8rem; opacity: 0.8;">Lv ${section.level}/${section.maxLevel}</div>
+                                                </div>
+                                            </div>
+                                        </button>
+                                    `;
+                                }).join('')}
                             </div>
                         </div>
+                        
+                        <!-- STATS TOTALI (sotto immagine) -->
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 20px; padding: 15px; background: rgba(255,255,255,0.03); border-radius: 10px; border: 2px solid rgba(255,255,255,0.1);">
+                            <div style="text-align: center;">
+                                <div style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 5px;">LIVELLI TOTALI</div>
+                                <div style="font-family: Orbitron; font-size: 1.5rem; color: var(--accent-cyan);">${totalLevels}/${maxTotalLevels}</div>
+                            </div>
+                            <div style="text-align: center;">
+                                <div style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 5px;">PRODUZIONE/H</div>
+                                <div style="font-family: Orbitron; font-size: 1.2rem;">
+                                    ${Object.keys(totalProduction).map(res => 
+                                        `<div style="color: var(--accent-green);">+${totalProduction[res]} ${this.resources[res]?.icon || res}</div>`
+                                    ).join('') || '<div style="color: var(--text-secondary);">-</div>'}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- DETTAGLI REPARTI -->
+                        <div style="margin-top: 20px;">
+                            ${workshopSections.map((key, idx) => {
+                                const section = this.workshop[key];
+                                const cost = this.getUpgradeCost(section);
+                                const canUpgrade = this.canAfford(cost) && section.level < section.maxLevel;
+                                const locked = !section.unlocked;
 
-                        <!-- Dettagli sezioni -->
-                        ${workshopSections.map((key, idx) => {
-                            const section = this.workshop[key];
-                            const cost = this.getUpgradeCost(section);
-                            const canUpgrade = this.canAfford(cost) && section.level < section.maxLevel;
-                            const locked = !section.unlocked;
-
-                            let production = '';
-                            if (section.production && section.level > 0) {
-                                production = Object.keys(section.production).map(res => {
-                                    const icon = this.resources[res]?.icon || '';
-                                    const amount = section.production[res] * section.level;
-                                    return `${icon} +${amount.toFixed(0)}/h`;
-                                }).join(' ');
-                            }
-
-                            let nextLevelBonus = '';
-                            if (section.level < section.maxLevel) {
-                                if (section.production) {
-                                    nextLevelBonus = Object.keys(section.production).map(res => {
+                                let production = '';
+                                if (section.production && section.level > 0) {
+                                    production = Object.keys(section.production).map(res => {
                                         const icon = this.resources[res]?.icon || '';
-                                        const amount = section.production[res];
-                                        return `${icon}+${amount.toFixed(0)}/h`;
+                                        const amount = section.production[res] * section.level;
+                                        return `${icon} +${amount.toFixed(0)}/h`;
                                     }).join(' ');
-                                } else if (section.oneTimeBonus && section.oneTimeBonus.reputation) {
-                                    nextLevelBonus = `⭐+${section.oneTimeBonus.reputation} reputazione`;
-                                } else if (section.reputationBonus) {
-                                    nextLevelBonus = `⭐+${section.reputationBonus} reputazione`;
                                 }
-                            }
 
-                            return `
-                                <div class="workshop-detail" id="workshop-${key}" style="display: ${idx === activeSection ? 'block' : 'none'}; margin-top: 12px;">
-                                    <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; border: 2px solid var(--accent-cyan);">
-                                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                                            <div>
-                                                <h3 style="font-family: Orbitron; font-size: 1.3rem; color: var(--accent-cyan); margin-bottom: 4px;">
-                                                    ${section.icon} ${section.name}
-                                                </h3>
-                                                <div style="font-size: 1.1rem; font-weight: 700; color: var(--accent-yellow);">
-                                                    Livello ${section.level}/${section.maxLevel}
-                                                </div>
-                                            </div>
-                                            ${!locked ? `
-                                                <button 
-                                                    class="upgrade-btn-compact" 
-                                                    onclick="game.upgradeWorkshop('${key}')"
-                                                    style="min-width: 130px; height: 45px;"
-                                                    ${!canUpgrade ? 'disabled' : ''}>
-                                                    ${section.level < section.maxLevel ? '⬆️ UPGRADE' : '✓ MAX'}
-                                                </button>
-                                            ` : ''}
-                                        </div>
+                                let nextLevelBonus = '';
+                                if (section.level < section.maxLevel) {
+                                    if (section.production) {
+                                        nextLevelBonus = Object.keys(section.production).map(res => {
+                                            const icon = this.resources[res]?.icon || '';
+                                            const amount = section.production[res];
+                                            return `${icon}+${amount.toFixed(0)}/h`;
+                                        }).join(' ');
+                                    } else if (section.oneTimeBonus && section.oneTimeBonus.reputation) {
+                                        nextLevelBonus = `⭐+${section.oneTimeBonus.reputation} reputazione`;
+                                    } else if (section.reputationBonus) {
+                                        nextLevelBonus = `⭐+${section.reputationBonus} reputazione`;
+                                    }
+                                }
 
-                                        ${section.level > 0 && production ? `
-                                            <div style="background: rgba(0,255,136,0.1); padding: 12px; border-radius: 6px; margin-bottom: 12px; border: 1px solid var(--accent-green);">
-                                                <strong style="color: var(--accent-green);">📊 Produzione:</strong> ${production}
-                                            </div>
-                                        ` : ''}
-
-                                        ${!locked && section.level < section.maxLevel ? `
-                                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                                                <div style="background: rgba(0,217,255,0.1); padding: 10px; border-radius: 6px; border: 1px solid var(--accent-cyan);">
-                                                    <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 4px;">Prossimo livello</div>
-                                                    <div style="font-weight: 700; color: var(--accent-cyan); font-size: 0.85rem; white-space: nowrap;">${nextLevelBonus || 'Bonus'}</div>
-                                                </div>
-                                                <div style="background: rgba(255,215,0,0.1); padding: 10px; border-radius: 6px; border: 1px solid var(--accent-yellow);">
-                                                    <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 4px;">Costo</div>
-                                                    <div style="font-weight: 700; color: var(--accent-yellow); font-size: 0.85rem; white-space: nowrap;">
-                                                        ${Object.keys(cost).map(res => 
-                                                            `${this.resources[res].icon}${cost[res]}`
-                                                        ).join(' ')}
+                                return `
+                                    <div class="workshop-detail" id="workshop-detail-${idx}" style="display: ${idx === activeSection ? 'block' : 'none'}; margin-top: 12px;">
+                                        <div style="background: rgba(255,255,255,0.05); padding: 15px; border-radius: 8px; border: 2px solid var(--accent-cyan);">
+                                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                                                <div>
+                                                    <h3 style="font-family: Orbitron; font-size: 1.3rem; color: var(--accent-cyan); margin-bottom: 4px;">
+                                                        ${section.icon} ${section.name}
+                                                    </h3>
+                                                    <div style="font-size: 1.1rem; font-weight: 700; color: var(--accent-yellow);">
+                                                        Livello ${section.level}/${section.maxLevel}
                                                     </div>
                                                 </div>
+                                                ${!locked ? `
+                                                    <button 
+                                                        class="upgrade-btn-compact" 
+                                                        onclick="game.upgradeWorkshop('${key}')"
+                                                        style="min-width: 130px; height: 45px;"
+                                                        ${!canUpgrade ? 'disabled' : ''}>
+                                                        ${section.level < section.maxLevel ? '⬆️ UPGRADE' : '✓ MAX'}
+                                                    </button>
+                                                ` : ''}
                                             </div>
-                                        ` : locked ? `
-                                            <div style="text-align: center; padding: 15px; background: rgba(255,51,51,0.1); border-radius: 6px; border: 1px solid var(--accent-red);">
-                                                <div style="font-size: 1.1rem; margin-bottom: 8px;">🔒 BLOCCATO</div>
-                                                <div style="color: var(--text-secondary); font-size: 0.85rem;">
-                                                    Richiede: ${Object.keys(section.unlockCondition).map(res =>
-                                                        `${this.resources[res].icon} ${section.unlockCondition[res]}`
-                                                    ).join(', ')}
+
+                                            ${section.level > 0 && production ? `
+                                                <div style="background: rgba(0,255,136,0.1); padding: 12px; border-radius: 6px; margin-bottom: 12px; border: 1px solid var(--accent-green);">
+                                                    <strong style="color: var(--accent-green);">📊 Produzione:</strong> ${production}
                                                 </div>
-                                            </div>
-                                        ` : ''}
+                                            ` : ''}
+
+                                            ${!locked && section.level < section.maxLevel ? `
+                                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                                                    <div style="background: rgba(0,217,255,0.1); padding: 10px; border-radius: 6px; border: 1px solid var(--accent-cyan);">
+                                                        <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 4px;">Prossimo livello</div>
+                                                        <div style="font-weight: 700; color: var(--accent-cyan); font-size: 0.85rem; white-space: nowrap;">${nextLevelBonus || 'Bonus'}</div>
+                                                    </div>
+                                                    <div style="background: rgba(255,215,0,0.1); padding: 10px; border-radius: 6px; border: 1px solid var(--accent-yellow);">
+                                                        <div style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 4px;">Costo</div>
+                                                        <div style="font-weight: 700; color: var(--accent-yellow); font-size: 0.85rem; white-space: nowrap;">
+                                                            ${Object.keys(cost).map(res => 
+                                                                `${this.resources[res].icon}${cost[res]}`
+                                                            ).join(' ')}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ` : locked ? `
+                                                <div style="text-align: center; padding: 15px; background: rgba(255,51,51,0.1); border-radius: 6px; border: 1px solid var(--accent-red);">
+                                                    <div style="font-size: 1.1rem; margin-bottom: 8px;">🔒 BLOCCATO</div>
+                                                    <div style="color: var(--text-secondary); font-size: 0.85rem;">
+                                                        Richiede: ${Object.keys(section.unlockCondition).map(res =>
+                                                            `${this.resources[res].icon} ${section.unlockCondition[res]}`
+                                                        ).join(', ')}
+                                                    </div>
+                                                </div>
+                                            ` : ''}
+                                        </div>
                                     </div>
-                                </div>
-                            `;
-                        }).join('')}
+                                `;
+                            }).join('')}
+                        </div>
                     </div>
                 `;
             },
