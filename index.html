@@ -2679,9 +2679,9 @@ async function loadLeaderboard() {
                         oneTimeBonus: section.oneTimeBonus
                     });
                     
-                    // ✅ Aggiorna UI
+                    // ✅ Aggiorna UI completa
                     this.renderResources();
-                    this.updateWorkshopLevelsDisplay();
+                    this.renderWorkshop(); // Re-render completo
                     this.renderWorkshopQueue(); // Mostra timer
                     
                     // ✅ Salva
@@ -4316,7 +4316,7 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                     <div class="page-container">
                         <div style="display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 20px; margin-bottom: 20px;">
                             <!-- COLONNA SINISTRA (3 reparti) -->
-                            <div style="display: flex; flex-direction: column; gap: 15px;">
+                            <div style="display: flex; flex-direction: column; gap: 10px;">
                                 ${workshopSections.slice(0, 3).map((key, idx) => {
                                     const section = this.workshop[key];
                                     const imageName = imageMap[key] || 'workshop.jpg';
@@ -4330,12 +4330,12 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                                                     document.getElementById('workshop-detail-${idx}').style.display = 'block';
                                                     document.getElementById('workshopImage').src = 'images/sections/${imageName}';
                                                 "
-                                                style="flex: 1; text-align: left; padding: 15px; background: ${idx === activeSection ? 'var(--accent-cyan)' : 'rgba(255,255,255,0.05)'}; border: 2px solid ${idx === activeSection ? 'var(--accent-cyan)' : 'rgba(255,255,255,0.1)'}; border-radius: 10px; color: ${idx === activeSection ? '#1a0033' : 'white'}; cursor: pointer; transition: all 0.3s;">
-                                            <div style="display: flex; align-items: center; gap: 12px;">
-                                                <div style="font-size: 2rem;">${section.icon}</div>
+                                                style="flex: 1; text-align: left; padding: 10px; background: ${idx === activeSection ? 'var(--accent-cyan)' : 'rgba(255,255,255,0.05)'}; border: 2px solid ${idx === activeSection ? 'var(--accent-cyan)' : 'rgba(255,255,255,0.1)'}; border-radius: 8px; color: ${idx === activeSection ? '#1a0033' : 'white'}; cursor: pointer; transition: all 0.3s;">
+                                            <div style="display: flex; align-items: center; gap: 10px;">
+                                                <div style="font-size: 1.5rem;">${section.icon}</div>
                                                 <div style="flex: 1;">
-                                                    <div style="font-weight: 700; font-size: 1rem;">${section.name}</div>
-                                                    <div style="font-size: 0.8rem; opacity: 0.8;">Lv ${section.level}/${section.maxLevel}</div>
+                                                    <div style="font-weight: 700; font-size: 0.9rem;">${section.name}</div>
+                                                    <div style="font-size: 0.75rem; opacity: 0.8;">Lv ${section.level}/${section.maxLevel}</div>
                                                 </div>
                                             </div>
                                         </button>
@@ -4344,17 +4344,17 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                             </div>
                             
                             <!-- IMMAGINE CENTRALE -->
-                            <div class="section-image-container" style="height: 300px;">
+                            <div class="section-image-container" style="height: 240px;">
                                 <img id="workshopImage" 
                                      src="images/sections/${initialImage}" 
                                      class="section-image" 
                                      alt="Officina"
                                      style="width: 100%; height: 100%; object-fit: cover; border-radius: 12px;"
-                                     onerror="this.style.display='none'; this.parentElement.style.background='linear-gradient(135deg, #1a1a1a, #0a0a0a)'; this.parentElement.innerHTML='<div style=text-align:center;padding-top:100px><div style=font-size:4rem>🔧</div></div>'">
+                                     onerror="this.style.display='none'; this.parentElement.style.background='linear-gradient(135deg, #1a1a1a, #0a0a0a)'; this.parentElement.innerHTML='<div style=text-align:center;padding-top:80px><div style=font-size:4rem>🔧</div></div>'">
                             </div>
                             
                             <!-- COLONNA DESTRA (3 reparti) -->
-                            <div style="display: flex; flex-direction: column; gap: 15px;">
+                            <div style="display: flex; flex-direction: column; gap: 10px;">
                                 ${workshopSections.slice(3, 6).map((key, idx) => {
                                     const realIdx = idx + 3;
                                     const section = this.workshop[key];
@@ -4369,12 +4369,12 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                                                     document.getElementById('workshop-detail-${realIdx}').style.display = 'block';
                                                     document.getElementById('workshopImage').src = 'images/sections/${imageName}';
                                                 "
-                                                style="flex: 1; text-align: left; padding: 15px; background: ${realIdx === activeSection ? 'var(--accent-cyan)' : 'rgba(255,255,255,0.05)'}; border: 2px solid ${realIdx === activeSection ? 'var(--accent-cyan)' : 'rgba(255,255,255,0.1)'}; border-radius: 10px; color: ${realIdx === activeSection ? '#1a0033' : 'white'}; cursor: pointer; transition: all 0.3s;">
-                                            <div style="display: flex; align-items: center; gap: 12px;">
-                                                <div style="font-size: 2rem;">${section.icon}</div>
+                                                style="flex: 1; text-align: left; padding: 10px; background: ${realIdx === activeSection ? 'var(--accent-cyan)' : 'rgba(255,255,255,0.05)'}; border: 2px solid ${realIdx === activeSection ? 'var(--accent-cyan)' : 'rgba(255,255,255,0.1)'}; border-radius: 8px; color: ${realIdx === activeSection ? '#1a0033' : 'white'}; cursor: pointer; transition: all 0.3s;">
+                                            <div style="display: flex; align-items: center; gap: 10px;">
+                                                <div style="font-size: 1.5rem;">${section.icon}</div>
                                                 <div style="flex: 1;">
-                                                    <div style="font-weight: 700; font-size: 1rem;">${section.name}</div>
-                                                    <div style="font-size: 0.8rem; opacity: 0.8;">Lv ${section.level}/${section.maxLevel}</div>
+                                                    <div style="font-weight: 700; font-size: 0.9rem;">${section.name}</div>
+                                                    <div style="font-size: 0.75rem; opacity: 0.8;">Lv ${section.level}/${section.maxLevel}</div>
                                                 </div>
                                             </div>
                                         </button>
@@ -4384,14 +4384,14 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                         </div>
                         
                         <!-- STATS TOTALI (sotto immagine) -->
-                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-bottom: 20px; padding: 15px; background: rgba(255,255,255,0.03); border-radius: 10px; border: 2px solid rgba(255,255,255,0.1);">
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 15px; padding: 12px; background: rgba(255,255,255,0.03); border-radius: 8px; border: 2px solid rgba(255,255,255,0.1);">
                             <div style="text-align: center;">
-                                <div style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 5px;">LIVELLI TOTALI</div>
-                                <div style="font-family: Orbitron; font-size: 1.5rem; color: var(--accent-cyan);">${totalLevels}/${maxTotalLevels}</div>
+                                <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 4px;">LIVELLI TOTALI</div>
+                                <div style="font-family: Orbitron; font-size: 1.3rem; color: var(--accent-cyan);">${totalLevels}/${maxTotalLevels}</div>
                             </div>
                             <div style="text-align: center;">
-                                <div style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 5px;">PRODUZIONE/H</div>
-                                <div style="font-family: Orbitron; font-size: 1.2rem;">
+                                <div style="font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 4px;">PRODUZIONE/H</div>
+                                <div style="font-family: Orbitron; font-size: 1rem;">
                                     ${Object.keys(totalProduction).map(res => 
                                         `<div style="color: var(--accent-green);">+${totalProduction[res]} ${this.resources[res]?.icon || res}</div>`
                                     ).join('') || '<div style="color: var(--text-secondary);">-</div>'}
