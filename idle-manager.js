@@ -712,33 +712,6 @@ const IdleManager = {
                     ${expenseCategories.map(cat => this.renderMiniCard(cat)).join('')}
                 </div>
             </div>
-            
-            <!-- STATS in basso -->
-            <div style="margin-top: 40px; padding: 20px; background: rgba(255,255,255,0.03); border-radius: 12px; border: 2px solid rgba(255,255,255,0.1);">
-                <h3 style="font-family: Orbitron; color: var(--accent-cyan); margin-bottom: 15px; text-align: center;">
-                    📊 STATISTICHE
-                </h3>
-                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; text-align: center;">
-                    <div>
-                        <div style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 5px;">Saldo Attuale</div>
-                        <div style="font-family: Orbitron; font-size: 1.5rem; color: var(--accent-yellow);">
-                            €${this.balance.toLocaleString('it-IT', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                        </div>
-                    </div>
-                    <div>
-                        <div style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 5px;">Tempo di Gioco</div>
-                        <div style="font-family: Orbitron; font-size: 1.5rem; color: var(--accent-cyan);">
-                            ${Math.floor(this.stats.playTimeSeconds / 3600)}h ${Math.floor((this.stats.playTimeSeconds % 3600) / 60)}m
-                        </div>
-                    </div>
-                    <div>
-                        <div style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 5px;">Livello Medio</div>
-                        <div style="font-family: Orbitron; font-size: 1.5rem; color: var(--accent-green);">
-                            ${this.getAverageLevel()}/100
-                        </div>
-                    </div>
-                </div>
-            </div>
         `;
     },
     
@@ -749,16 +722,31 @@ const IdleManager = {
         const canAfford = this.balance >= cost;
         const maxed = level >= this.MAX_LEVEL;
         
-        // Calcola rate usando le funzioni esistenti
-        let rate = 0;
-        if (cat.key === 'pilot') rate = this.pilotIncome(level);
-        else if (cat.key === 'sponsor') rate = this.sponsorIncome(level);
-        else if (cat.key === 'merch') rate = this.merchIncome(level);
-        else if (cat.key === 'techSponsor') rate = this.techSponsorIncome(level);
-        else if (cat.key === 'tv') rate = this.tvIncome(level);
-        else if (cat.key === 'team') rate = this.teamCost(level);
-        else if (cat.key === 'car') rate = this.carCost(level);
-        else if (cat.key === 'structures') rate = this.structuresCost(level);
+        // Calcola rate ATTUALE
+        let currentRate = 0;
+        if (cat.key === 'pilot') currentRate = this.pilotIncome(level);
+        else if (cat.key === 'sponsor') currentRate = this.sponsorIncome(level);
+        else if (cat.key === 'merch') currentRate = this.merchIncome(level);
+        else if (cat.key === 'techSponsor') currentRate = this.techSponsorIncome(level);
+        else if (cat.key === 'tv') currentRate = this.tvIncome(level);
+        else if (cat.key === 'team') currentRate = this.teamCost(level);
+        else if (cat.key === 'car') currentRate = this.carCost(level);
+        else if (cat.key === 'structures') currentRate = this.structuresCost(level);
+        
+        // Calcola rate PROSSIMO LIVELLO
+        let nextRate = 0;
+        if (!maxed) {
+            if (cat.key === 'pilot') nextRate = this.pilotIncome(level + 1);
+            else if (cat.key === 'sponsor') nextRate = this.sponsorIncome(level + 1);
+            else if (cat.key === 'merch') nextRate = this.merchIncome(level + 1);
+            else if (cat.key === 'techSponsor') nextRate = this.techSponsorIncome(level + 1);
+            else if (cat.key === 'tv') nextRate = this.tvIncome(level + 1);
+            else if (cat.key === 'team') nextRate = this.teamCost(level + 1);
+            else if (cat.key === 'car') nextRate = this.carCost(level + 1);
+            else if (cat.key === 'structures') nextRate = this.structuresCost(level + 1);
+        }
+        
+        const increment = nextRate - currentRate;
         
         // Informazioni bonus per ogni categoria
         const bonusInfo = {
@@ -794,9 +782,18 @@ const IdleManager = {
                     <span style="color: var(--accent-cyan);">Lv ${level}</span>
                     <span style="color: var(--text-secondary);">/100</span>
                 </div>
-                <div style="font-size: 0.8rem; margin-bottom: 8px; color: ${rate >= 0 ? 'var(--accent-green)' : 'var(--accent-red)'};">
-                    ${rate >= 0 ? '+' : ''}${rate.toFixed(2)}€/s
-                </div>
+                
+                <!-- MOSTRA INCREMENTO PROSSIMO LIVELLO -->
+                ${!maxed ? `
+                    <div style="font-size: 0.8rem; margin-bottom: 8px; color: ${increment >= 0 ? 'var(--accent-green)' : 'var(--accent-red)'};">
+                        ${increment >= 0 ? '+' : ''}${increment.toFixed(3)}€/s
+                    </div>
+                ` : `
+                    <div style="font-size: 0.8rem; margin-bottom: 8px; color: var(--accent-yellow);">
+                        MAX
+                    </div>
+                `}
+                
                 <button 
                     onclick="IdleManager.upgrade('${cat.key}')"
                     class="upgrade-btn-mini"
@@ -1007,102 +1004,9 @@ const IdleManager = {
         
         // Check progresso unlock
         const allMaxLevel = Object.values(this.levels).every(lv => lv >= this.MAX_LEVEL);
-        const progressLevel = allMaxLevel ? 100 : (avgLevel / this.MAX_LEVEL) * 100;
-        const progressBalance = Math.min(100, (this.balance / this.UNLOCK_REQUIREMENTS.minBalance) * 100);
         
-        return `
-            <div style="background: rgba(0,217,255,0.05); border: 2px solid rgba(0,217,255,0.2); border-radius: 12px; padding: 30px;">
-                <h3 style="color: var(--accent-cyan); margin-bottom: 25px; font-size: 1.5rem;">📊 STATISTICHE</h3>
-                
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 25px; margin-bottom: 40px;">
-                    <div>
-                        <div style="color: rgba(255,255,255,0.6); font-size: 0.9rem; margin-bottom: 8px;">💰 Saldo attuale</div>
-                        <div style="font-size: 1.8rem; color: var(--accent-yellow); font-weight: bold;">
-                            ${this.formatMoney(this.balance)}
-                        </div>
-                    </div>
-                    
-                    <div>
-                        <div style="color: rgba(255,255,255,0.6); font-size: 0.9rem; margin-bottom: 8px;">⏰ Tempo di gioco</div>
-                        <div style="font-size: 1.8rem; color: white; font-weight: bold;">
-                            ${hours}h ${minutes}min
-                        </div>
-                    </div>
-                    
-                    <div>
-                        <div style="color: rgba(255,255,255,0.6); font-size: 0.9rem; margin-bottom: 8px;">📈 Livello medio</div>
-                        <div style="font-size: 1.8rem; color: var(--accent-cyan); font-weight: bold;">
-                            ${avgLevel.toFixed(1)}
-                        </div>
-                    </div>
-                </div>
-                
-                <hr style="border: 1px solid rgba(255,255,255,0.1); margin: 40px 0;">
-                
-                <h3 style="color: gold; margin-bottom: 25px; font-size: 1.5rem;">🏆 PROGRESSO UNLOCK AUTO SPECIALE</h3>
-                
-                <div style="margin-bottom: 30px;">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                        <span style="color: rgba(255,255,255,0.8);">Tutti i livelli a 100</span>
-                        <span style="color: ${allMaxLevel ? 'var(--accent-green)' : 'var(--accent-yellow)'}; font-weight: bold;">
-                            ${allMaxLevel ? '✅ COMPLETATO' : Math.floor(progressLevel) + '%'}
-                        </span>
-                    </div>
-                    <div style="background: rgba(0,0,0,0.3); height: 30px; border-radius: 15px; overflow: hidden;">
-                        <div style="
-                            width: ${progressLevel}%;
-                            height: 100%;
-                            background: ${allMaxLevel ? 'var(--accent-green)' : 'linear-gradient(90deg, var(--accent-cyan), var(--accent-purple))'};
-                            transition: width 0.5s;
-                        "></div>
-                    </div>
-                </div>
-                
-                <div style="margin-bottom: 30px;">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                        <span style="color: rgba(255,255,255,0.8);">Saldo minimo 1.000.000€</span>
-                        <span style="color: ${this.balance >= this.UNLOCK_REQUIREMENTS.minBalance ? 'var(--accent-green)' : 'var(--accent-yellow)'}; font-weight: bold;">
-                            ${this.balance >= this.UNLOCK_REQUIREMENTS.minBalance ? '✅ COMPLETATO' : Math.floor(progressBalance) + '%'}
-                        </span>
-                    </div>
-                    <div style="background: rgba(0,0,0,0.3); height: 30px; border-radius: 15px; overflow: hidden;">
-                        <div style="
-                            width: ${progressBalance}%;
-                            height: 100%;
-                            background: ${this.balance >= this.UNLOCK_REQUIREMENTS.minBalance ? 'var(--accent-green)' : 'linear-gradient(90deg, var(--accent-yellow), gold)'};
-                            transition: width 0.5s;
-                        "></div>
-                    </div>
-                </div>
-                
-                ${allMaxLevel && this.balance >= this.UNLOCK_REQUIREMENTS.minBalance ? `
-                    <div style="
-                        background: linear-gradient(135deg, gold, #ffd700);
-                        color: #1a0033;
-                        padding: 30px;
-                        border-radius: 15px;
-                        text-align: center;
-                        font-family: Orbitron;
-                        font-size: 1.5rem;
-                        font-weight: bold;
-                        animation: pulse 2s infinite;
-                    ">
-                        🏆 AUTO SPECIALE SBLOCCATA! 🏆
-                    </div>
-                ` : `
-                    <div style="
-                        background: rgba(255,215,0,0.1);
-                        border: 2px solid rgba(255,215,0,0.3);
-                        padding: 20px;
-                        border-radius: 10px;
-                        text-align: center;
-                        color: rgba(255,255,255,0.8);
-                    ">
-                        Completa entrambi i requisiti per sbloccare l'auto speciale!
-                    </div>
-                `}
-            </div>
-        `;
+        // Nessuna sezione statistiche - rimossa
+        return '';
     },
     
     // Cleanup
