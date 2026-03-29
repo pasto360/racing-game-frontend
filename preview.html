@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Staff Preview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --surface: #111111;
+      --border: #222222;
+      --accent: #c8f135;
+      --text: #f0f0f0;
+      --muted: #555555;
+      --danger: #ff4444;
+      --radius: 12px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+    }
+
+    /* ── NOISE OVERLAY ── */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── LOGIN SCREEN ── */
+    #login-screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      width: 100%;
+      position: relative;
+      z-index: 1;
+    }
+
+    .login-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 48px 40px;
+      width: 100%;
+      max-width: 380px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      box-shadow: 0 0 80px rgba(200, 241, 53, 0.04);
+    }
+
+    .login-logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 2.4rem;
+      letter-spacing: 0.12em;
+      color: var(--accent);
+      text-align: center;
+    }
+
+    .login-subtitle {
+      font-size: 0.8rem;
+      color: var(--muted);
+      text-align: center;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-top: -16px;
+    }
+
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .input-group label {
+      font-size: 0.75rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .input-group input {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 14px 16px;
+      border-radius: 10px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s;
+      width: 100%;
+    }
+
+    .input-group input:focus {
+      border-color: var(--accent);
+    }
+
+    .btn-login {
+      background: var(--accent);
+      color: #0a0a0a;
+      border: none;
+      border-radius: 10px;
+      padding: 14px;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.1rem;
+      letter-spacing: 0.12em;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.15s;
+    }
+
+    .btn-login:hover { opacity: 0.88; transform: translateY(-1px); }
+    .btn-login:active { transform: translateY(0); }
+
+    .login-error {
+      font-size: 0.8rem;
+      color: var(--danger);
+      text-align: center;
+      min-height: 18px;
+      letter-spacing: 0.04em;
+    }
+
+    /* ── MAIN APP ── */
+    #app {
+      display: none;
+      width: 100%;
+      max-width: 1100px;
+      position: relative;
+      z-index: 1;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-bottom: 32px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 40px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .header-logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 2rem;
+      letter-spacing: 0.15em;
+      color: var(--accent);
+    }
+
+    .header-badge {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 6px 16px;
+      font-size: 0.75rem;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    /* ── ADD VIDEO FORM ── */
+    .add-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 28px;
+      margin-bottom: 40px;
+    }
+
+    .section-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1.1rem;
+      letter-spacing: 0.15em;
+      color: var(--muted);
+      margin-bottom: 20px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr auto;
+      gap: 12px;
+      align-items: end;
+    }
+
+    @media (max-width: 640px) {
+      .form-row { grid-template-columns: 1fr; }
+    }
+
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field label { font-size: 0.72rem; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
+
+    .field input, .field textarea {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 11px 14px;
+      border-radius: 8px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.2s;
+      width: 100%;
+    }
+
+    .field input:focus, .field textarea:focus { border-color: var(--accent); }
+
+    .btn-add {
+      background: var(--accent);
+      color: #0a0a0a;
+      border: none;
+      border-radius: 8px;
+      padding: 11px 22px;
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1rem;
+      letter-spacing: 0.1em;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: opacity 0.2s;
+      height: fit-content;
+    }
+
+    .btn-add:hover { opacity: 0.85; }
+
+    /* ── VIDEO GRID ── */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 24px;
+    }
+
+    .video-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+
+    .video-card:hover {
+      border-color: #333;
+      transform: translateY(-2px);
+    }
+
+    .video-wrapper {
+      position: relative;
+      padding-bottom: 56.25%;
+      background: #000;
+    }
+
+    .video-wrapper video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .card-body {
+      padding: 16px 18px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .card-title {
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .card-note {
+      font-size: 0.75rem;
+      color: var(--muted);
+      margin-top: 3px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .btn-remove {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      border-radius: 6px;
+      padding: 5px 10px;
+      font-size: 0.7rem;
+      cursor: pointer;
+      letter-spacing: 0.06em;
+      flex-shrink: 0;
+      transition: border-color 0.2s, color 0.2s;
+    }
+
+    .btn-remove:hover { border-color: var(--danger); color: var(--danger); }
+
+    .empty-state {
+      grid-column: 1 / -1;
+      text-align: center;
+      color: var(--muted);
+      padding: 60px 0;
+      font-size: 0.9rem;
+      letter-spacing: 0.04em;
+    }
+
+    /* ── SHAKE ANIM ── */
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-6px); }
+      40% { transform: translateX(6px); }
+      60% { transform: translateX(-4px); }
+      80% { transform: translateX(4px); }
+    }
+    .shake { animation: shake 0.4s ease; }
+  </style>
+</head>
+<body>
+
+<!-- ────────── LOGIN ────────── -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">STAFF PREVIEW</div>
+    <p class="login-subtitle">Area riservata</p>
+
+    <div class="input-group">
+      <label>Password</label>
+      <input id="pwd-input" type="password" placeholder="••••••••" autocomplete="current-password" />
+    </div>
+
+    <button class="btn-login" onclick="checkPassword()">ACCEDI</button>
+    <div class="login-error" id="login-error"></div>
+  </div>
+</div>
+
+<!-- ────────── APP ────────── -->
+<div id="app">
+  <header>
+    <div class="header-logo">STAFF PREVIEW</div>
+    <span class="header-badge">Solo staff · Non condividere</span>
+  </header>
+
+  <!-- Aggiungi video -->
+  <div class="add-section">
+    <div class="section-title">▸ Aggiungi video</div>
+    <div class="form-row">
+      <div class="field">
+        <label>Titolo</label>
+        <input id="v-title" type="text" placeholder="Es. Reel Marzo 2025" />
+      </div>
+      <div class="field">
+        <label>URL video (Altervista / diretto)</label>
+        <input id="v-url" type="url" placeholder="https://tuosito.altervista.org/video.mp4" />
+      </div>
+      <button class="btn-add" onclick="addVideo()">+ AGGIUNGI</button>
+    </div>
+    <div class="field" style="margin-top:12px">
+      <label>Nota (opzionale)</label>
+      <input id="v-note" type="text" placeholder="Es. Controlla il sottotitolo al secondo 12" />
+    </div>
+  </div>
+
+  <!-- Griglia video -->
+  <div class="grid" id="video-grid">
+    <div class="empty-state">Nessun video aggiunto. Incolla l'URL di un video qui sopra.</div>
+  </div>
+</div>
+
+<script>
+  // ─── CONFIG ───────────────────────────────────────────────
+  // Questo è l'hash SHA-256 della tua password.
+  // La password VERA non è mai scritta nel codice.
+  // Per generare un nuovo hash: https://emn178.github.io/online-tools/sha256.html
+  // Password di esempio → "staffsegreto2025" → hash sotto:
+  const PASSWORD_HASH = "263eca2d934ade87bad6606ac09ee3a47fe5c01f693ad4a6da7b7a5b34502a60";
+  // ──────────────────────────────────────────────────────────
+
+  let videos = JSON.parse(localStorage.getItem('staff_videos') || '[]');
+
+  // Hash SHA-256 nativo del browser
+  async function sha256(message) {
+    const msgBuffer = new TextEncoder().encode(message);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  async function checkPassword() {
+    const input = document.getElementById('pwd-input').value;
+    const hash = await sha256(input);
+
+    if (hash === PASSWORD_HASH) {
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('app').style.display = 'block';
+      renderGrid();
+    } else {
+      const box = document.querySelector('.login-box');
+      const err = document.getElementById('login-error');
+      err.textContent = 'Password errata. Riprova.';
+      box.classList.remove('shake');
+      void box.offsetWidth;
+      box.classList.add('shake');
+    }
+  }
+
+  // Enter per accedere
+  document.getElementById('pwd-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') checkPassword();
+  });
+
+  function saveVideos() {
+    localStorage.setItem('staff_videos', JSON.stringify(videos));
+  }
+
+  function addVideo() {
+    const title = document.getElementById('v-title').value.trim();
+    const url   = document.getElementById('v-url').value.trim();
+    const note  = document.getElementById('v-note').value.trim();
+
+    if (!url) { alert('Inserisci l\'URL del video.'); return; }
+
+    videos.push({ id: Date.now(), title: title || 'Video senza titolo', url, note });
+    saveVideos();
+    renderGrid();
+
+    document.getElementById('v-title').value = '';
+    document.getElementById('v-url').value   = '';
+    document.getElementById('v-note').value  = '';
+  }
+
+  function removeVideo(id) {
+    videos = videos.filter(v => v.id !== id);
+    saveVideos();
+    renderGrid();
+  }
+
+  function renderGrid() {
+    const grid = document.getElementById('video-grid');
+    if (videos.length === 0) {
+      grid.innerHTML = '<div class="empty-state">Nessun video aggiunto. Incolla l\'URL di un video qui sopra.</div>';
+      return;
+    }
+
+    grid.innerHTML = videos.map(v => `
+      <div class="video-card">
+        <div class="video-wrapper">
+          <video controls preload="metadata">
+            <source src="${v.url}" type="video/mp4" />
+            Il tuo browser non supporta questo formato.
+          </video>
+        </div>
+        <div class="card-body">
+          <div>
+            <div class="card-title">${escHtml(v.title)}</div>
+            ${v.note ? `<div class="card-note">${escHtml(v.note)}</div>` : ''}
+          </div>
+          <button class="btn-remove" onclick="removeVideo(${v.id})">Rimuovi</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function escHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+</script>
+</body>
+</html>
