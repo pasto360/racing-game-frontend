@@ -10,7 +10,6 @@
     :root {
       --bg: #0a0a0a;
       --surface: #111111;
-      --surface2: #161616;
       --border: #1e1e1e;
       --border2: #2a2a2a;
       --accent: #c8f135;
@@ -30,7 +29,6 @@
       min-height: 100vh;
     }
 
-    /* noise */
     body::before {
       content: '';
       position: fixed;
@@ -40,10 +38,9 @@
       z-index: 0;
     }
 
-    /* ══════════════ LOGIN SCREEN ══════════════ */
+    /* ══ LOGIN ══ */
     #login-screen {
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
       min-height: 100vh;
@@ -64,45 +61,14 @@
       gap: 0;
     }
 
-    .login-wordmark {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 2.6rem;
-      letter-spacing: 0.14em;
-      color: var(--accent);
-      text-align: center;
-      margin-bottom: 4px;
-    }
+    .login-wordmark { font-family: 'Bebas Neue', sans-serif; font-size: 2.6rem; letter-spacing: 0.14em; color: var(--accent); text-align: center; margin-bottom: 4px; }
+    .login-sub { font-size: 0.72rem; color: var(--muted); text-align: center; letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 36px; }
 
-    .login-sub {
-      font-size: 0.72rem;
-      color: var(--muted);
-      text-align: center;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      margin-bottom: 36px;
-    }
+    .role-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 28px; }
 
-    /* role tabs */
-    .role-tabs {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-      margin-bottom: 28px;
-    }
-
-    .role-tab {
-      border: 1px solid var(--border2);
-      border-radius: 10px;
-      padding: 12px 8px;
-      text-align: center;
-      cursor: pointer;
-      transition: border-color 0.2s, background 0.2s;
-      background: var(--bg);
-    }
-
+    .role-tab { border: 1px solid var(--border2); border-radius: 10px; padding: 12px 8px; text-align: center; cursor: pointer; transition: border-color 0.2s, background 0.2s; background: var(--bg); }
     .role-tab .tab-icon { font-size: 1.2rem; display: block; margin-bottom: 4px; }
     .role-tab .tab-label { font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); transition: color 0.2s; }
-
     .role-tab.active-staff { border-color: var(--accent2); background: rgba(79,142,247,0.06); }
     .role-tab.active-staff .tab-label { color: var(--accent2); }
     .role-tab.active-admin { border-color: var(--accent); background: rgba(200,241,53,0.06); }
@@ -110,256 +76,130 @@
 
     .field-group { display: flex; flex-direction: column; gap: 7px; margin-bottom: 20px; }
     .field-group label { font-size: 0.71rem; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; }
-
-    .field-group input {
-      background: var(--bg);
-      border: 1px solid var(--border2);
-      color: var(--text);
-      padding: 13px 16px;
-      border-radius: 10px;
-      font-family: 'DM Sans', sans-serif;
-      font-size: 1rem;
-      outline: none;
-      transition: border-color 0.2s;
-      width: 100%;
-    }
-
+    .field-group input { background: var(--bg); border: 1px solid var(--border2); color: var(--text); padding: 13px 16px; border-radius: 10px; font-family: 'DM Sans', sans-serif; font-size: 1rem; outline: none; transition: border-color 0.2s; width: 100%; }
     .field-group input:focus { border-color: var(--accent); }
 
-    .btn-enter {
-      width: 100%;
-      border: none;
-      border-radius: 10px;
-      padding: 14px;
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 1.15rem;
-      letter-spacing: 0.14em;
-      cursor: pointer;
-      transition: opacity 0.2s, transform 0.15s;
-      margin-bottom: 16px;
-    }
-
+    .btn-enter { width: 100%; border: none; border-radius: 10px; padding: 14px; font-family: 'Bebas Neue', sans-serif; font-size: 1.15rem; letter-spacing: 0.14em; cursor: pointer; transition: opacity 0.2s, transform 0.15s; margin-bottom: 16px; }
     .btn-enter.staff-btn { background: var(--accent2); color: #fff; }
     .btn-enter.admin-btn { background: var(--accent); color: #0a0a0a; }
     .btn-enter:hover { opacity: 0.85; transform: translateY(-1px); }
     .btn-enter:active { transform: translateY(0); }
+    .login-err { font-size: 0.78rem; color: var(--danger); text-align: center; min-height: 18px; }
 
-    .login-err { font-size: 0.78rem; color: var(--danger); text-align: center; min-height: 18px; letter-spacing: 0.03em; }
+    /* ══ APP ══ */
+    #app { display: none; position: relative; z-index: 1; min-height: 100vh; flex-direction: column; }
 
-    /* ══════════════ MAIN APP ══════════════ */
-    #app {
-      display: none;
-      position: relative;
-      z-index: 1;
-      min-height: 100vh;
-      flex-direction: column;
-    }
-
-    /* top bar */
-    .topbar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 20px 36px;
-      border-bottom: 1px solid var(--border);
-      gap: 16px;
-      flex-wrap: wrap;
-    }
-
+    .topbar { display: flex; align-items: center; justify-content: space-between; padding: 20px 36px; border-bottom: 1px solid var(--border); gap: 16px; flex-wrap: wrap; }
     .topbar-left { display: flex; align-items: center; gap: 16px; }
     .topbar-logo { font-family: 'Bebas Neue', sans-serif; font-size: 1.7rem; letter-spacing: 0.16em; color: var(--accent); }
 
-    .role-pill {
-      font-size: 0.68rem;
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      padding: 4px 12px;
-      border-radius: 999px;
-      border: 1px solid;
-    }
-
+    .role-pill { font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; padding: 4px 12px; border-radius: 999px; border: 1px solid; }
     .role-pill.staff { color: var(--accent2); border-color: var(--accent2); background: rgba(79,142,247,0.08); }
     .role-pill.admin { color: var(--accent); border-color: var(--accent); background: rgba(200,241,53,0.08); }
 
-    .btn-logout {
-      background: transparent;
-      border: 1px solid var(--border2);
-      color: var(--muted);
-      border-radius: 8px;
-      padding: 7px 14px;
-      font-size: 0.75rem;
-      cursor: pointer;
-      letter-spacing: 0.06em;
-      transition: border-color 0.2s, color 0.2s;
-    }
+    .btn-logout { background: transparent; border: 1px solid var(--border2); color: var(--muted); border-radius: 8px; padding: 7px 14px; font-size: 0.75rem; cursor: pointer; letter-spacing: 0.06em; transition: border-color 0.2s, color 0.2s; }
     .btn-logout:hover { border-color: var(--danger); color: var(--danger); }
 
-    /* layout */
-    .main-layout {
-      display: flex;
-      min-height: calc(100vh - 73px);
-    }
+    .main-layout { display: flex; min-height: calc(100vh - 73px); }
 
-    /* ── ADMIN SIDEBAR ── */
-    #admin-panel {
-      width: 340px;
-      flex-shrink: 0;
-      border-right: 1px solid var(--border);
-      padding: 32px 28px;
-      display: none;
-      flex-direction: column;
-      gap: 0;
-      background: var(--surface);
-    }
+    /* ══ ADMIN PANEL ══ */
+    #admin-panel { width: 360px; flex-shrink: 0; border-right: 1px solid var(--border); padding: 28px; display: none; flex-direction: column; gap: 0; background: var(--surface); overflow-y: auto; }
 
-    .panel-title {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 1rem;
-      letter-spacing: 0.18em;
-      color: var(--muted);
-      margin-bottom: 24px;
-    }
+    .panel-title { font-family: 'Bebas Neue', sans-serif; font-size: 1rem; letter-spacing: 0.18em; color: var(--muted); margin-bottom: 20px; }
 
-    .add-form { display: flex; flex-direction: column; gap: 14px; }
+    /* type switcher */
+    .type-switcher { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 20px; }
+    .type-btn { border: 1px solid var(--border2); border-radius: 9px; padding: 9px 8px; text-align: center; cursor: pointer; background: var(--bg); font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); transition: all 0.2s; }
+    .type-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(200,241,53,0.06); }
 
-    .add-form label { font-size: 0.7rem; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; display: block; margin-bottom: 5px; }
-
-    .add-form input, .add-form textarea {
-      background: var(--bg);
-      border: 1px solid var(--border2);
-      color: var(--text);
-      padding: 11px 14px;
-      border-radius: 9px;
-      font-family: 'DM Sans', sans-serif;
-      font-size: 0.88rem;
-      outline: none;
-      transition: border-color 0.2s;
-      width: 100%;
-    }
-
+    .add-form { display: flex; flex-direction: column; gap: 12px; }
+    .add-form label { font-size: 0.7rem; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; display: block; margin-bottom: 4px; }
+    .add-form input, .add-form textarea { background: var(--bg); border: 1px solid var(--border2); color: var(--text); padding: 10px 13px; border-radius: 9px; font-family: 'DM Sans', sans-serif; font-size: 0.88rem; outline: none; transition: border-color 0.2s; width: 100%; }
     .add-form input:focus, .add-form textarea:focus { border-color: var(--accent); }
-    .add-form textarea { resize: vertical; min-height: 72px; }
+    .add-form textarea { resize: vertical; min-height: 64px; }
 
-    .btn-add-video {
-      background: var(--accent);
-      color: #0a0a0a;
-      border: none;
-      border-radius: 9px;
-      padding: 12px;
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 1rem;
-      letter-spacing: 0.12em;
-      cursor: pointer;
-      transition: opacity 0.2s;
-      margin-top: 4px;
-    }
-    .btn-add-video:hover { opacity: 0.85; }
+    .form-row2 { display: grid; grid-template-columns: 2fr 1fr; gap: 10px; }
 
-    .divider { border: none; border-top: 1px solid var(--border); margin: 28px 0; }
+    .btn-add-item { background: var(--accent); color: #0a0a0a; border: none; border-radius: 9px; padding: 11px; font-family: 'Bebas Neue', sans-serif; font-size: 1rem; letter-spacing: 0.12em; cursor: pointer; transition: opacity 0.2s; margin-top: 4px; }
+    .btn-add-item:hover { opacity: 0.85; }
 
-    .panel-subtitle {
-      font-size: 0.68rem;
-      color: var(--muted);
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      margin-bottom: 14px;
-    }
+    .divider { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
+    .panel-subtitle { font-size: 0.68rem; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 12px; }
 
-    /* video list in admin */
-    .admin-video-list { display: flex; flex-direction: column; gap: 10px; overflow-y: auto; max-height: 340px; }
-
-    .admin-video-item {
-      background: var(--bg);
-      border: 1px solid var(--border2);
-      border-radius: 9px;
-      padding: 12px 14px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-    }
-
-    .admin-video-item .item-title { font-size: 0.82rem; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .admin-video-item .item-url { font-size: 0.68rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
-
-    .btn-del {
-      background: transparent;
-      border: 1px solid var(--border2);
-      color: var(--muted);
-      border-radius: 6px;
-      padding: 4px 9px;
-      font-size: 0.68rem;
-      cursor: pointer;
-      flex-shrink: 0;
-      transition: border-color 0.2s, color 0.2s;
-    }
+    .admin-list { display: flex; flex-direction: column; gap: 8px; overflow-y: auto; max-height: 300px; }
+    .admin-item { background: var(--bg); border: 1px solid var(--border2); border-radius: 9px; padding: 10px 13px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+    .admin-item .item-type { font-size: 0.65rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 2px; }
+    .admin-item .item-title { font-size: 0.82rem; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .btn-del { background: transparent; border: 1px solid var(--border2); color: var(--muted); border-radius: 6px; padding: 4px 9px; font-size: 0.68rem; cursor: pointer; flex-shrink: 0; transition: border-color 0.2s, color 0.2s; }
     .btn-del:hover { border-color: var(--danger); color: var(--danger); }
-
     .admin-empty { font-size: 0.78rem; color: var(--muted); font-style: italic; text-align: center; padding: 20px 0; }
 
-    /* ── VIDEO GRID ── */
-    .content-area {
-      flex: 1;
-      padding: 36px;
-      overflow-y: auto;
-    }
+    /* ══ CONTENT ══ */
+    .content-area { flex: 1; padding: 36px; overflow-y: auto; }
 
-    .content-header {
-      display: flex;
-      align-items: baseline;
-      gap: 12px;
-      margin-bottom: 28px;
-    }
+    /* filter tabs */
+    .filter-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 28px; flex-wrap: wrap; }
+    .content-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; letter-spacing: 0.14em; color: var(--text); margin-right: 6px; }
+    .filter-btn { border: 1px solid var(--border2); border-radius: 999px; padding: 5px 16px; font-size: 0.72rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); background: transparent; cursor: pointer; transition: all 0.2s; }
+    .filter-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(200,241,53,0.06); }
 
-    .content-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; letter-spacing: 0.14em; color: var(--text); }
-    .content-count { font-size: 0.75rem; color: var(--muted); }
+    .error-banner { background: #1a0000; border: 1px solid #440000; border-radius: 10px; padding: 14px 18px; color: var(--danger); font-size: 0.82rem; margin-bottom: 28px; display: none; }
 
-    .error-banner {
-      background: #1a0000;
-      border: 1px solid #440000;
-      border-radius: 10px;
-      padding: 14px 18px;
-      color: var(--danger);
-      font-size: 0.82rem;
-      margin-bottom: 28px;
-      display: none;
-    }
-
+    /* grid */
     .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
 
-    .video-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      overflow: hidden;
-      transition: border-color 0.25s, transform 0.2s, box-shadow 0.2s;
-    }
-
-    .video-card:hover { border-color: var(--border2); transform: translateY(-3px); box-shadow: 0 12px 40px rgba(0,0,0,0.4); }
+    /* video card */
+    .item-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; transition: border-color 0.25s, transform 0.2s, box-shadow 0.2s; }
+    .item-card:hover { border-color: var(--border2); transform: translateY(-3px); box-shadow: 0 12px 40px rgba(0,0,0,0.4); }
 
     .video-wrapper { position: relative; padding-bottom: 56.25%; background: #000; }
     .video-wrapper video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
 
     .card-body { padding: 14px 16px; }
+    .card-type { font-size: 0.65rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; }
     .card-title { font-size: 0.88rem; font-weight: 500; color: var(--text); }
     .card-note { font-size: 0.73rem; color: var(--muted); margin-top: 4px; line-height: 1.4; font-style: italic; }
 
-    .empty-state, .loading-state {
-      grid-column: 1 / -1;
-      text-align: center;
-      color: var(--muted);
-      padding: 80px 0;
-      font-size: 0.88rem;
-      letter-spacing: 0.04em;
-    }
+    /* gallery card */
+    .gallery-thumb-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 3px; background: #000; cursor: pointer; }
+    .gallery-thumb-grid img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; transition: opacity 0.2s; }
+    .gallery-thumb-grid img:hover { opacity: 0.8; }
+    .gallery-count-bar { padding: 10px 16px; background: var(--surface); font-size: 0.75rem; color: var(--muted); display: flex; align-items: center; justify-content: space-between; }
+    .btn-open-gallery { background: transparent; border: 1px solid var(--border2); color: var(--muted); border-radius: 6px; padding: 4px 10px; font-size: 0.7rem; cursor: pointer; transition: all 0.2s; }
+    .btn-open-gallery:hover { border-color: var(--accent); color: var(--accent); }
+
+    .empty-state, .loading-state { grid-column: 1 / -1; text-align: center; color: var(--muted); padding: 80px 0; font-size: 0.88rem; letter-spacing: 0.04em; }
+
+    /* ══ LIGHTBOX ══ */
+    #lightbox { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 9999; display: none; flex-direction: column; align-items: center; justify-content: center; }
+    #lightbox.open { display: flex; }
+
+    .lb-header { position: absolute; top: 0; left: 0; right: 0; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; }
+    .lb-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; letter-spacing: 0.14em; color: var(--accent); }
+    .lb-counter { font-size: 0.78rem; color: var(--muted); }
+    .lb-close { background: transparent; border: 1px solid var(--border2); color: var(--muted); border-radius: 8px; padding: 7px 14px; font-size: 0.8rem; cursor: pointer; transition: all 0.2s; }
+    .lb-close:hover { border-color: var(--danger); color: var(--danger); }
+
+    .lb-img-wrap { flex: 1; display: flex; align-items: center; justify-content: center; padding: 70px 80px; width: 100%; }
+    .lb-img-wrap img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 8px; }
+
+    .lb-nav { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.05); border: 1px solid var(--border2); color: var(--text); border-radius: 10px; padding: 14px 18px; font-size: 1.2rem; cursor: pointer; transition: background 0.2s; }
+    .lb-nav:hover { background: rgba(255,255,255,0.1); }
+    .lb-prev { left: 16px; }
+    .lb-next { right: 16px; }
+
+    .lb-strip { position: absolute; bottom: 0; left: 0; right: 0; display: flex; gap: 6px; padding: 14px 24px; overflow-x: auto; justify-content: center; }
+    .lb-strip img { width: 56px; height: 56px; object-fit: cover; border-radius: 6px; cursor: pointer; opacity: 0.4; transition: opacity 0.2s; border: 2px solid transparent; flex-shrink: 0; }
+    .lb-strip img.active { opacity: 1; border-color: var(--accent); }
 
     /* responsive */
     @media (max-width: 700px) {
       .topbar { padding: 16px 18px; }
       .main-layout { flex-direction: column; }
-      #admin-panel { width: 100%; border-right: none; border-bottom: 1px solid var(--border); }
+      #admin-panel { width: 100%; border-right: none; border-bottom: 1px solid var(--border); max-height: none; }
       .content-area { padding: 20px; }
-      .admin-video-list { max-height: 200px; }
+      .lb-img-wrap { padding: 70px 50px; }
+      .lb-nav { padding: 10px 13px; }
     }
 
     @keyframes shake {
@@ -374,12 +214,11 @@
 </head>
 <body>
 
-<!-- ══════════ LOGIN ══════════ -->
+<!-- LOGIN -->
 <div id="login-screen">
   <div class="login-card">
     <div class="login-wordmark">STAFF PREVIEW</div>
     <p class="login-sub">Area riservata</p>
-
     <div class="role-tabs">
       <div class="role-tab active-staff" id="tab-staff" onclick="selectRole('staff')">
         <span class="tab-icon">👁️</span>
@@ -390,21 +229,17 @@
         <span class="tab-label">Admin</span>
       </div>
     </div>
-
     <div class="field-group">
       <label>Password</label>
       <input id="pwd-input" type="password" placeholder="••••••••" autocomplete="current-password" />
     </div>
-
     <button class="btn-enter staff-btn" id="btn-enter" onclick="checkPassword()">ACCEDI</button>
     <div class="login-err" id="login-error"></div>
   </div>
 </div>
 
-<!-- ══════════ APP ══════════ -->
+<!-- APP -->
 <div id="app">
-
-  <!-- Top bar -->
   <div class="topbar">
     <div class="topbar-left">
       <div class="topbar-logo">STAFF PREVIEW</div>
@@ -415,82 +250,124 @@
 
   <div class="main-layout">
 
-    <!-- Admin sidebar -->
+    <!-- Admin panel -->
     <div id="admin-panel">
-      <div class="panel-title">▸ Gestione video</div>
+      <div class="panel-title">▸ Aggiungi contenuto</div>
 
-      <div class="add-form">
+      <div class="type-switcher">
+        <div class="type-btn active" id="type-video" onclick="switchType('video')">🎬 Video</div>
+        <div class="type-btn" id="type-gallery" onclick="switchType('gallery')">🖼️ Galleria</div>
+      </div>
+
+      <!-- Video form -->
+      <div class="add-form" id="form-video">
         <div>
           <label>Titolo</label>
           <input id="v-title" type="text" placeholder="Es. Reel Aprile 2025" />
         </div>
         <div>
           <label>URL video (Altervista)</label>
-          <input id="v-url" type="url" placeholder="https://tuosito.altervista.org/video.mp4" />
+          <input id="v-url" type="url" placeholder="https://easygame.altervista.org/video.mp4" />
         </div>
         <div>
           <label>Nota per lo staff (opzionale)</label>
           <textarea id="v-note" placeholder="Es. Controlla il sottotitolo al secondo 12…"></textarea>
         </div>
-        <button class="btn-add-video" onclick="addVideo()">+ AGGIUNGI VIDEO</button>
+        <button class="btn-add-item" onclick="addItem('video')">+ AGGIUNGI VIDEO</button>
+      </div>
+
+      <!-- Gallery form -->
+      <div class="add-form" id="form-gallery" style="display:none">
+        <div>
+          <label>Titolo galleria</label>
+          <input id="g-title" type="text" placeholder="Es. Galleria Marzo 2025" />
+        </div>
+        <div>
+          <label>URL cartella (Altervista)</label>
+          <input id="g-folder" type="url" placeholder="https://easygame.altervista.org/gallerie/galleria1/" />
+        </div>
+        <div class="form-row2">
+          <div>
+            <label>Numero foto</label>
+            <input id="g-count" type="number" min="1" placeholder="Es. 10" />
+          </div>
+          <div>
+            <label>Estensione</label>
+            <input id="g-ext" type="text" placeholder="jpg" value="jpg" />
+          </div>
+        </div>
+        <div>
+          <label>Nota per lo staff (opzionale)</label>
+          <textarea id="g-note" placeholder="Es. Guarda la foto 5…"></textarea>
+        </div>
+        <button class="btn-add-item" onclick="addItem('gallery')">+ AGGIUNGI GALLERIA</button>
       </div>
 
       <hr class="divider" />
-
-      <div class="panel-subtitle">Video nella lista</div>
-      <div class="admin-video-list" id="admin-list">
-        <div class="admin-empty">Nessun video caricato.</div>
+      <div class="panel-subtitle">Contenuti nella lista</div>
+      <div class="admin-list" id="admin-list">
+        <div class="admin-empty">Nessun contenuto caricato.</div>
       </div>
     </div>
 
-    <!-- Content area -->
+    <!-- Content -->
     <div class="content-area">
-      <div class="content-header">
+      <div class="filter-bar">
         <div class="content-title">Anteprime</div>
-        <div class="content-count" id="video-count"></div>
+        <button class="filter-btn active" onclick="setFilter('all', this)">Tutti</button>
+        <button class="filter-btn" onclick="setFilter('video', this)">Video</button>
+        <button class="filter-btn" onclick="setFilter('gallery', this)">Gallerie</button>
       </div>
 
       <div class="error-banner" id="error-banner">
-        ⚠️ Impossibile caricare i video. Verifica che <strong>videos.json</strong> sia presente nel repo GitHub e che l'URL nella configurazione sia corretto.
+        ⚠️ Impossibile caricare i contenuti. Verifica che <strong>videos.json</strong> sia presente nel repo GitHub e che l'URL nella configurazione sia corretto.
       </div>
 
-      <div class="grid" id="video-grid">
-        <div class="loading-state">Caricamento video…</div>
+      <div class="grid" id="content-grid">
+        <div class="loading-state">Caricamento…</div>
       </div>
     </div>
 
   </div>
 </div>
 
+<!-- LIGHTBOX -->
+<div id="lightbox">
+  <div class="lb-header">
+    <div class="lb-title" id="lb-title"></div>
+    <div style="display:flex;align-items:center;gap:16px">
+      <span class="lb-counter" id="lb-counter"></span>
+      <button class="lb-close" onclick="closeLightbox()">✕ Chiudi</button>
+    </div>
+  </div>
+  <div class="lb-img-wrap"><img id="lb-img" src="" alt="" /></div>
+  <button class="lb-nav lb-prev" onclick="lbNav(-1)">‹</button>
+  <button class="lb-nav lb-next" onclick="lbNav(1)">›</button>
+  <div class="lb-strip" id="lb-strip"></div>
+</div>
+
 <script>
   // ════════════════════════════════════════════════════
   //  CONFIGURAZIONE
   // ════════════════════════════════════════════════════
-
-  // Hash SHA-256 della password STAFF (solo visualizzazione)
-  // Genera il tuo su: https://emn178.github.io/online-tools/sha256.html
-  const STAFF_HASH = "263eca2d934ade87bad6606ac09ee3a47fe5c01f693ad4a6da7b7a5b34502a60";
-
-  // Hash SHA-256 della password ADMIN (gestione video)
-  const ADMIN_HASH  = "263eca2d934ade87bad6606ac09ee3a47fe5c01f693ad4a6da7b7a5b34502a60";
-
-  // URL raw del file videos.json su GitHub
-  // Sostituisci TUONOME e TUOREPO con i tuoi dati reali
-  // Esempio: https://raw.githubusercontent.com/mario99/staff-preview/main/videos.json
+  const STAFF_HASH      = "a3b44c02a7cff8a41196ee0da56843c7f4d50f4e3f7e1c8e2b9a43f9e6c8d72";
+  const ADMIN_HASH      = "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8";
   const VIDEOS_JSON_URL = "https://raw.githubusercontent.com/pasto360/racing-game-frontend/main/videos.json";
-
   // ════════════════════════════════════════════════════
 
-  let currentRole = 'staff';
-  let videos = [];
+  let currentRole  = 'staff';
+  let items        = [];
+  let currentFilter = 'all';
+  let lbImages     = [];
+  let lbIndex      = 0;
+  let lbTitle      = '';
 
-  // ── Selezione ruolo ──
+  // ── Role tabs ──
   function selectRole(role) {
     currentRole = role;
     document.getElementById('tab-staff').className = 'role-tab' + (role === 'staff' ? ' active-staff' : '');
     document.getElementById('tab-admin').className  = 'role-tab' + (role === 'admin'  ? ' active-admin'  : '');
-    const btn = document.getElementById('btn-enter');
-    btn.className = 'btn-enter ' + (role === 'admin' ? 'admin-btn' : 'staff-btn');
+    document.getElementById('btn-enter').className  = 'btn-enter ' + (role === 'admin' ? 'admin-btn' : 'staff-btn');
     document.getElementById('login-error').textContent = '';
   }
 
@@ -502,8 +379,8 @@
 
   // ── Login ──
   async function checkPassword() {
-    const input = document.getElementById('pwd-input').value;
-    const hash  = await sha256(input);
+    const input    = document.getElementById('pwd-input').value;
+    const hash     = await sha256(input);
     const expected = currentRole === 'admin' ? ADMIN_HASH : STAFF_HASH;
 
     if (hash === expected) {
@@ -511,16 +388,11 @@
       const app = document.getElementById('app');
       app.style.display = 'flex';
       app.style.flexDirection = 'column';
-
       const pill = document.getElementById('role-pill');
       pill.textContent = currentRole === 'admin' ? 'Admin' : 'Staff';
       pill.className   = 'role-pill ' + currentRole;
-
-      if (currentRole === 'admin') {
-        document.getElementById('admin-panel').style.display = 'flex';
-      }
-
-      loadVideos();
+      if (currentRole === 'admin') document.getElementById('admin-panel').style.display = 'flex';
+      loadItems();
     } else {
       const card = document.querySelector('.login-card');
       document.getElementById('login-error').textContent = 'Password errata. Riprova.';
@@ -530,11 +402,8 @@
     }
   }
 
-  document.getElementById('pwd-input').addEventListener('keydown', e => {
-    if (e.key === 'Enter') checkPassword();
-  });
+  document.getElementById('pwd-input').addEventListener('keydown', e => { if (e.key === 'Enter') checkPassword(); });
 
-  // ── Logout ──
   function logout() {
     document.getElementById('app').style.display = 'none';
     document.getElementById('login-screen').style.display = 'flex';
@@ -544,13 +413,29 @@
     selectRole('staff');
   }
 
-  // ── Carica video da GitHub JSON ──
-  async function loadVideos() {
-    const grid = document.getElementById('video-grid');
+  // ── Type switcher (admin) ──
+  function switchType(type) {
+    document.getElementById('type-video').className   = 'type-btn' + (type === 'video'   ? ' active' : '');
+    document.getElementById('type-gallery').className = 'type-btn' + (type === 'gallery' ? ' active' : '');
+    document.getElementById('form-video').style.display   = type === 'video'   ? 'flex' : 'none';
+    document.getElementById('form-gallery').style.display = type === 'gallery' ? 'flex' : 'none';
+  }
+
+  // ── Filter ──
+  function setFilter(f, btn) {
+    currentFilter = f;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderGrid();
+  }
+
+  // ── Load from GitHub ──
+  async function loadItems() {
+    const grid = document.getElementById('content-grid');
     try {
       const res = await fetch(VIDEOS_JSON_URL + '?t=' + Date.now());
       if (!res.ok) throw new Error('HTTP ' + res.status);
-      videos = await res.json();
+      items = await res.json();
       renderGrid();
       if (currentRole === 'admin') renderAdminList();
     } catch(e) {
@@ -559,120 +444,178 @@
     }
   }
 
-  // ── Griglia staff ──
+  // ── Render grid ──
   function renderGrid() {
-    const grid  = document.getElementById('video-grid');
-    const count = document.getElementById('video-count');
-    count.textContent = videos.length ? videos.length + ' video' : '';
+    const grid = document.getElementById('content-grid');
+    const filtered = currentFilter === 'all' ? items : items.filter(i => i.type === currentFilter);
 
-    if (!videos.length) {
-      grid.innerHTML = '<div class="empty-state">Nessun video disponibile al momento.</div>';
+    if (!filtered.length) {
+      grid.innerHTML = '<div class="empty-state">Nessun contenuto disponibile.</div>';
       return;
     }
 
-    grid.innerHTML = videos.map(v => `
-      <div class="video-card">
+    grid.innerHTML = filtered.map((item, idx) => {
+      const realIdx = items.indexOf(item);
+      return item.type === 'gallery' ? renderGalleryCard(item, realIdx) : renderVideoCard(item);
+    }).join('');
+  }
+
+  function renderVideoCard(v) {
+    return `
+      <div class="item-card">
         <div class="video-wrapper">
           <video controls preload="metadata">
             <source src="${esc(v.url)}" type="video/mp4" />
           </video>
         </div>
         <div class="card-body">
+          <div class="card-type">🎬 Video</div>
           <div class="card-title">${esc(v.title || 'Video senza titolo')}</div>
           ${v.note ? `<div class="card-note">${esc(v.note)}</div>` : ''}
         </div>
-      </div>
-    `).join('');
+      </div>`;
   }
 
-  // ── Lista admin ──
+  function renderGalleryCard(g, idx) {
+    const folder = g.folder.endsWith('/') ? g.folder : g.folder + '/';
+    const ext    = g.ext || 'jpg';
+    const count  = parseInt(g.count) || 0;
+    const preview = Math.min(count, 6);
+    const thumbs = Array.from({length: preview}, (_,i) =>
+      `<img src="${esc(folder)}foto${i+1}.${esc(ext)}" alt="foto ${i+1}" onclick="openLightbox(${idx}, ${i})" loading="lazy" />`
+    ).join('');
+
+    return `
+      <div class="item-card">
+        <div class="gallery-thumb-grid">${thumbs}</div>
+        <div class="card-body">
+          <div class="card-type">🖼️ Galleria · ${count} foto</div>
+          <div class="card-title">${esc(g.title || 'Galleria senza titolo')}</div>
+          ${g.note ? `<div class="card-note">${esc(g.note)}</div>` : ''}
+        </div>
+        <div class="gallery-count-bar">
+          <span>${count} foto</span>
+          <button class="btn-open-gallery" onclick="openLightbox(${idx}, 0)">Apri galleria →</button>
+        </div>
+      </div>`;
+  }
+
+  // ── Admin list ──
   function renderAdminList() {
     const list = document.getElementById('admin-list');
-    if (!videos.length) {
-      list.innerHTML = '<div class="admin-empty">Nessun video caricato.</div>';
-      return;
-    }
-    list.innerHTML = videos.map((v, i) => `
-      <div class="admin-video-item">
+    if (!items.length) { list.innerHTML = '<div class="admin-empty">Nessun contenuto caricato.</div>'; return; }
+    list.innerHTML = items.map((item, i) => `
+      <div class="admin-item">
         <div style="overflow:hidden">
-          <div class="item-title">${esc(v.title || 'Senza titolo')}</div>
-          <div class="item-url">${esc(v.url)}</div>
+          <div class="item-type">${item.type === 'gallery' ? '🖼️ Galleria' : '🎬 Video'}</div>
+          <div class="item-title">${esc(item.title || 'Senza titolo')}</div>
         </div>
-        <button class="btn-del" onclick="removeVideo(${i})">✕</button>
-      </div>
-    `).join('');
+        <button class="btn-del" onclick="removeItem(${i})">✕</button>
+      </div>`).join('');
   }
 
-  // ── Aggiungi video (admin) ──
-  function addVideo() {
-    const title = document.getElementById('v-title').value.trim();
-    const url   = document.getElementById('v-url').value.trim();
-    const note  = document.getElementById('v-note').value.trim();
-
-    if (!url) { alert('Inserisci l\'URL del video.'); return; }
-
-    videos.push({ title: title || 'Video senza titolo', url, note });
-    renderGrid();
-    renderAdminList();
-    showJsonModal();
-
-    document.getElementById('v-title').value = '';
-    document.getElementById('v-url').value   = '';
-    document.getElementById('v-note').value  = '';
-  }
-
-  // ── Rimuovi video (admin) ──
-  function removeVideo(index) {
-    videos.splice(index, 1);
+  // ── Add item ──
+  function addItem(type) {
+    let newItem;
+    if (type === 'video') {
+      const url = document.getElementById('v-url').value.trim();
+      if (!url) { alert('Inserisci l\'URL del video.'); return; }
+      newItem = { type: 'video', title: document.getElementById('v-title').value.trim() || 'Video senza titolo', url, note: document.getElementById('v-note').value.trim() };
+      ['v-title','v-url','v-note'].forEach(id => document.getElementById(id).value = '');
+    } else {
+      const folder = document.getElementById('g-folder').value.trim();
+      const count  = parseInt(document.getElementById('g-count').value);
+      if (!folder) { alert('Inserisci l\'URL della cartella.'); return; }
+      if (!count || count < 1) { alert('Inserisci un numero di foto valido.'); return; }
+      newItem = { type: 'gallery', title: document.getElementById('g-title').value.trim() || 'Galleria senza titolo', folder, count, ext: document.getElementById('g-ext').value.trim() || 'jpg', note: document.getElementById('g-note').value.trim() };
+      ['g-title','g-folder','g-count','g-note'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('g-ext').value = 'jpg';
+    }
+    items.push(newItem);
     renderGrid();
     renderAdminList();
     showJsonModal();
   }
 
-  // ── Mostra JSON aggiornato da copiare su GitHub ──
+  function removeItem(index) {
+    items.splice(index, 1);
+    renderGrid();
+    renderAdminList();
+    showJsonModal();
+  }
+
+  // ── JSON modal ──
   function showJsonModal() {
-    const json = JSON.stringify(videos, null, 2);
+    const json = JSON.stringify(items, null, 2);
     const existing = document.getElementById('json-modal');
     if (existing) existing.remove();
-
     const modal = document.createElement('div');
     modal.id = 'json-modal';
-    modal.style.cssText = `
-      position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:999;
-      display:flex; align-items:center; justify-content:center; padding:24px;
-    `;
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.88);z-index:9998;display:flex;align-items:center;justify-content:center;padding:24px;';
     modal.innerHTML = `
-      <div style="background:#111; border:1px solid #2a2a2a; border-radius:16px; padding:32px; max-width:600px; width:100%; max-height:80vh; display:flex; flex-direction:column; gap:16px;">
-        <div style="font-family:'Bebas Neue',sans-serif; font-size:1.1rem; letter-spacing:0.15em; color:#c8f135;">AGGIORNA videos.json SU GITHUB</div>
-        <p style="font-size:0.8rem; color:#555; line-height:1.5;">Copia questo contenuto e incollalo nel file <strong style="color:#888">videos.json</strong> del tuo repo GitHub (clicca il file → matita → incolla → commit).</p>
-        <textarea readonly id="json-output" style="background:#0a0a0a; border:1px solid #222; color:#c8f135; border-radius:9px; padding:14px; font-family:monospace; font-size:0.78rem; flex:1; min-height:220px; resize:none; outline:none; width:100%">${esc(json)}</textarea>
-        <div style="display:flex; gap:10px;">
-          <button onclick="copyJson()" style="background:#c8f135; color:#0a0a0a; border:none; border-radius:9px; padding:11px 20px; font-family:'Bebas Neue',sans-serif; font-size:0.95rem; letter-spacing:0.1em; cursor:pointer; flex:1;">COPIA</button>
-          <button onclick="document.getElementById('json-modal').remove()" style="background:transparent; border:1px solid #2a2a2a; color:#555; border-radius:9px; padding:11px 20px; font-size:0.82rem; cursor:pointer;">Chiudi</button>
+      <div style="background:#111;border:1px solid #2a2a2a;border-radius:16px;padding:32px;max-width:620px;width:100%;max-height:80vh;display:flex;flex-direction:column;gap:16px;">
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:0.15em;color:#c8f135;">AGGIORNA videos.json SU GITHUB</div>
+        <p style="font-size:0.8rem;color:#555;line-height:1.5;">Copia questo contenuto e incollalo nel file <strong style="color:#888">videos.json</strong> del tuo repo GitHub (clicca il file → matita → incolla → commit).</p>
+        <textarea readonly id="json-output" style="background:#0a0a0a;border:1px solid #222;color:#c8f135;border-radius:9px;padding:14px;font-family:monospace;font-size:0.78rem;flex:1;min-height:240px;resize:none;outline:none;width:100%">${esc(json)}</textarea>
+        <div style="display:flex;gap:10px;">
+          <button onclick="copyJson()" style="background:#c8f135;color:#0a0a0a;border:none;border-radius:9px;padding:11px 20px;font-family:'Bebas Neue',sans-serif;font-size:0.95rem;letter-spacing:0.1em;cursor:pointer;flex:1;">COPIA</button>
+          <button onclick="document.getElementById('json-modal').remove()" style="background:transparent;border:1px solid #2a2a2a;color:#555;border-radius:9px;padding:11px 20px;font-size:0.82rem;cursor:pointer;">Chiudi</button>
         </div>
-      </div>
-    `;
+      </div>`;
     document.body.appendChild(modal);
   }
 
   function copyJson() {
     const ta = document.getElementById('json-output');
     ta.select();
-    navigator.clipboard.writeText(ta.value).then(() => {
-      const btn = ta.nextElementSibling?.querySelector('button');
-      // small feedback
-    });
-    ta.select();
-    document.execCommand('copy');
+    try { navigator.clipboard.writeText(ta.value); } catch(e) { document.execCommand('copy'); }
     alert('JSON copiato! Ora incollalo nel file videos.json su GitHub.');
   }
 
+  // ── Lightbox ──
+  function openLightbox(itemIdx, photoIdx) {
+    const item   = items[itemIdx];
+    const folder = item.folder.endsWith('/') ? item.folder : item.folder + '/';
+    const ext    = item.ext || 'jpg';
+    lbImages     = Array.from({length: item.count}, (_,i) => `${folder}foto${i+1}.${ext}`);
+    lbTitle      = item.title || 'Galleria';
+    lbIndex      = photoIdx;
+    document.getElementById('lightbox').classList.add('open');
+    document.body.style.overflow = 'hidden';
+    lbRender();
+  }
+
+  function closeLightbox() {
+    document.getElementById('lightbox').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  function lbNav(dir) {
+    lbIndex = (lbIndex + dir + lbImages.length) % lbImages.length;
+    lbRender();
+  }
+
+  function lbRender() {
+    document.getElementById('lb-img').src       = lbImages[lbIndex];
+    document.getElementById('lb-title').textContent   = lbTitle;
+    document.getElementById('lb-counter').textContent = `${lbIndex + 1} / ${lbImages.length}`;
+    document.getElementById('lb-strip').innerHTML = lbImages.map((src, i) =>
+      `<img src="${esc(src)}" class="${i === lbIndex ? 'active' : ''}" onclick="lbIndex=${i};lbRender()" loading="lazy" />`
+    ).join('');
+    const strip = document.getElementById('lb-strip');
+    const activeThumb = strip.children[lbIndex];
+    if (activeThumb) activeThumb.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+  }
+
+  document.addEventListener('keydown', e => {
+    if (!document.getElementById('lightbox').classList.contains('open')) return;
+    if (e.key === 'ArrowRight') lbNav(1);
+    if (e.key === 'ArrowLeft')  lbNav(-1);
+    if (e.key === 'Escape')     closeLightbox();
+  });
+
   function esc(s) {
-    return String(s)
-      .replace(/&/g,'&amp;')
-      .replace(/</g,'&lt;')
-      .replace(/>/g,'&gt;')
-      .replace(/"/g,'&quot;');
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 </script>
 </body>
