@@ -113,18 +113,11 @@
     .add-form input:focus, .add-form textarea:focus { border-color: var(--accent); }
     .add-form textarea { resize: vertical; min-height: 64px; }
 
-    /* URL preview badge */
-    .url-preview {
-      font-size: 0.7rem;
-      color: var(--accent);
-      background: rgba(200,241,53,0.06);
-      border: 1px solid rgba(200,241,53,0.15);
-      border-radius: 7px;
-      padding: 7px 10px;
-      font-family: monospace;
-      word-break: break-all;
-      display: none;
-    }
+    .url-preview { font-size: 0.7rem; color: var(--accent); background: rgba(200,241,53,0.06); border: 1px solid rgba(200,241,53,0.15); border-radius: 7px; padding: 7px 10px; font-family: monospace; word-break: break-all; display: none; margin-top: 6px; }
+
+    /* info box */
+    .info-box { background: rgba(79,142,247,0.06); border: 1px solid rgba(79,142,247,0.2); border-radius: 9px; padding: 11px 13px; font-size: 0.75rem; color: #7aabff; line-height: 1.5; }
+    .info-box strong { display: block; margin-bottom: 4px; font-size: 0.7rem; letter-spacing: 0.08em; text-transform: uppercase; }
 
     .form-row2 { display: grid; grid-template-columns: 2fr 1fr; gap: 10px; }
 
@@ -134,7 +127,7 @@
     .divider { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
     .panel-subtitle { font-size: 0.68rem; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 12px; }
 
-    .admin-list { display: flex; flex-direction: column; gap: 8px; overflow-y: auto; max-height: 300px; }
+    .admin-list { display: flex; flex-direction: column; gap: 8px; overflow-y: auto; max-height: 260px; }
     .admin-item { background: var(--bg); border: 1px solid var(--border2); border-radius: 9px; padding: 10px 13px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
     .admin-item .item-type { font-size: 0.65rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 2px; }
     .admin-item .item-title { font-size: 0.82rem; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -154,7 +147,6 @@
 
     .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
 
-    /* video card */
     .item-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; transition: border-color 0.25s, transform 0.2s, box-shadow 0.2s; }
     .item-card:hover { border-color: var(--border2); transform: translateY(-3px); box-shadow: 0 12px 40px rgba(0,0,0,0.4); }
 
@@ -166,21 +158,31 @@
     .card-title { font-size: 0.88rem; font-weight: 500; color: var(--text); }
     .card-note { font-size: 0.73rem; color: var(--muted); margin-top: 4px; line-height: 1.4; font-style: italic; }
 
-    /* ── GALLERY CARD ── */
-    /* 3-col thumb grid — immagini ridimensionate e proporzionate */
+    /* ── GALLERY THUMBNAILS (usano le miniature leggere) ── */
     .gallery-thumb-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 2px;
       background: #000;
-      cursor: pointer;
     }
 
     .thumb-wrap {
       position: relative;
       overflow: hidden;
-      aspect-ratio: 4/3;     /* proporzione fissa per tutte le anteprime */
+      aspect-ratio: 4/3;
       background: var(--border);
+      cursor: pointer;
+    }
+
+    /* skeleton shimmer mentre carica la miniatura */
+    .thumb-wrap::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, #161616 25%, #222 50%, #161616 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.4s infinite;
+      z-index: 0;
     }
 
     .thumb-wrap img {
@@ -188,27 +190,15 @@
       inset: 0;
       width: 100%;
       height: 100%;
-      object-fit: cover;     /* ritaglia al centro mantenendo le proporzioni */
+      object-fit: cover;
       display: block;
-      transition: transform 0.3s ease, opacity 0.2s;
-      opacity: 0;            /* fade-in al caricamento */
+      opacity: 0;
+      transition: opacity 0.3s, transform 0.3s;
+      z-index: 1;
     }
 
     .thumb-wrap img.loaded { opacity: 1; }
-    .thumb-wrap:hover img { transform: scale(1.06); }
-
-    /* placeholder skeleton mentre carica */
-    .thumb-wrap::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(90deg, #161616 25%, #1e1e1e 50%, #161616 75%);
-      background-size: 200% 100%;
-      animation: shimmer 1.4s infinite;
-    }
-
-    .thumb-wrap img.loaded + .thumb-wrap::before,
-    .thumb-wrap:has(img.loaded)::before { display: none; }
+    .thumb-wrap:hover img.loaded { transform: scale(1.06); }
 
     @keyframes shimmer {
       0% { background-position: 200% 0; }
@@ -221,26 +211,33 @@
 
     .empty-state, .loading-state { grid-column: 1 / -1; text-align: center; color: var(--muted); padding: 80px 0; font-size: 0.88rem; letter-spacing: 0.04em; }
 
-    /* ══ LIGHTBOX ══ */
-    #lightbox { position: fixed; inset: 0; background: rgba(0,0,0,0.96); z-index: 9999; display: none; flex-direction: column; align-items: center; justify-content: center; }
+    /* ══ LIGHTBOX (carica gli originali) ══ */
+    #lightbox { position: fixed; inset: 0; background: rgba(0,0,0,0.97); z-index: 9999; display: none; flex-direction: column; align-items: center; justify-content: center; }
     #lightbox.open { display: flex; }
 
-    .lb-header { position: absolute; top: 0; left: 0; right: 0; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; }
+    .lb-header { position: absolute; top: 0; left: 0; right: 0; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; background: linear-gradient(to bottom, rgba(0,0,0,0.7), transparent); }
     .lb-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; letter-spacing: 0.14em; color: var(--accent); }
     .lb-counter { font-size: 0.78rem; color: var(--muted); }
     .lb-close { background: transparent; border: 1px solid var(--border2); color: var(--muted); border-radius: 8px; padding: 7px 14px; font-size: 0.8rem; cursor: pointer; transition: all 0.2s; }
     .lb-close:hover { border-color: var(--danger); color: var(--danger); }
 
-    .lb-img-wrap { flex: 1; display: flex; align-items: center; justify-content: center; padding: 70px 80px; width: 100%; }
-    .lb-img-wrap img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 8px; }
+    .lb-img-wrap { flex: 1; display: flex; align-items: center; justify-content: center; padding: 70px 80px; width: 100%; position: relative; }
+    #lb-img { max-width: 100%; max-height: 100%; object-fit: contain; border-radius: 6px; transition: opacity 0.2s; }
+    #lb-img.loading { opacity: 0.3; }
 
-    .lb-nav { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.05); border: 1px solid var(--border2); color: var(--text); border-radius: 10px; padding: 14px 18px; font-size: 1.2rem; cursor: pointer; transition: background 0.2s; }
+    /* spinner mentre carica l'originale */
+    .lb-spinner { position: absolute; width: 36px; height: 36px; border: 3px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; display: none; }
+    .lb-spinner.active { display: block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .lb-nav { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.05); border: 1px solid var(--border2); color: var(--text); border-radius: 10px; padding: 14px 18px; font-size: 1.2rem; cursor: pointer; transition: background 0.2s; z-index: 2; }
     .lb-nav:hover { background: rgba(255,255,255,0.1); }
     .lb-prev { left: 16px; }
     .lb-next { right: 16px; }
 
-    .lb-strip { position: absolute; bottom: 0; left: 0; right: 0; display: flex; gap: 6px; padding: 14px 24px; overflow-x: auto; justify-content: center; }
-    .lb-strip img { width: 56px; height: 56px; object-fit: cover; border-radius: 6px; cursor: pointer; opacity: 0.4; transition: opacity 0.2s; border: 2px solid transparent; flex-shrink: 0; }
+    /* strip con miniature leggere */
+    .lb-strip { position: absolute; bottom: 0; left: 0; right: 0; display: flex; gap: 6px; padding: 12px 24px; overflow-x: auto; justify-content: center; background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); }
+    .lb-strip img { width: 54px; height: 54px; object-fit: cover; border-radius: 6px; cursor: pointer; opacity: 0.4; transition: opacity 0.2s; border: 2px solid transparent; flex-shrink: 0; }
     .lb-strip img.active { opacity: 1; border-color: var(--accent); }
 
     /* responsive */
@@ -249,8 +246,8 @@
       .main-layout { flex-direction: column; }
       #admin-panel { width: 100%; border-right: none; border-bottom: 1px solid var(--border); }
       .content-area { padding: 20px; }
-      .lb-img-wrap { padding: 70px 50px; }
-      .lb-nav { padding: 10px 13px; }
+      .lb-img-wrap { padding: 70px 16px; }
+      .lb-nav { padding: 10px 13px; font-size: 1rem; }
     }
 
     @keyframes shake {
@@ -319,7 +316,7 @@
         <div>
           <label>Nome file video</label>
           <input id="v-filename" type="text" placeholder="Es. nuoto" oninput="updateVideoPreview()" />
-          <div class="url-preview" id="v-url-preview" style="margin-top:6px"></div>
+          <div class="url-preview" id="v-url-preview"></div>
         </div>
         <div>
           <label>Nota per lo staff (opzionale)</label>
@@ -352,6 +349,16 @@
           <label>Nota per lo staff (opzionale)</label>
           <textarea id="g-note" placeholder="Es. Guarda la foto 5…"></textarea>
         </div>
+
+        <!-- Spiegazione struttura cartella -->
+        <div class="info-box">
+          <strong>📁 Struttura cartella su Altervista</strong>
+          La cartella deve contenere:<br>
+          <code>foto1.jpg</code>, <code>foto2.jpg</code>… → originali<br>
+          <code>thumb1.jpg</code>, <code>thumb2.jpg</code>… → miniature leggere<br><br>
+          La griglia carica le <strong>thumb</strong> (veloci), il lightbox carica le <strong>foto</strong> originali solo quando apri l'immagine.
+        </div>
+
         <button class="btn-add-item" onclick="addItem('gallery')">+ AGGIUNGI GALLERIA</button>
       </div>
 
@@ -372,7 +379,7 @@
       </div>
 
       <div class="error-banner" id="error-banner">
-        ⚠️ Impossibile caricare i contenuti. Verifica che <strong>videos.json</strong> sia presente nel repo GitHub e che l'URL nella configurazione sia corretto.
+        ⚠️ Impossibile caricare i contenuti. Verifica che <strong>videos.json</strong> sia presente nel repo GitHub e che l'URL sia corretto.
       </div>
 
       <div class="grid" id="content-grid">
@@ -392,7 +399,10 @@
       <button class="lb-close" onclick="closeLightbox()">✕ Chiudi</button>
     </div>
   </div>
-  <div class="lb-img-wrap"><img id="lb-img" src="" alt="" /></div>
+  <div class="lb-img-wrap">
+    <div class="lb-spinner" id="lb-spinner"></div>
+    <img id="lb-img" src="" alt="" />
+  </div>
   <button class="lb-nav lb-prev" onclick="lbNav(-1)">‹</button>
   <button class="lb-nav lb-next" onclick="lbNav(1)">›</button>
   <div class="lb-strip" id="lb-strip"></div>
@@ -405,19 +415,20 @@
   const STAFF_HASH      = "263eca2d934ade87bad6606ac09ee3a47fe5c01f693ad4a6da7b7a5b34502a60";
   const ADMIN_HASH      = "263eca2d934ade87bad6606ac09ee3a47fe5c01f693ad4a6da7b7a5b34502a60";
   const VIDEOS_JSON_URL = "https://raw.githubusercontent.com/pasto360/racing-game-frontend/main/videos.json";
-
-  // Base URL per i video — l'URL finale sarà BASE_VIDEO_URL + nomefile + ".mp4"
   const BASE_VIDEO_URL  = "http://easygame.altervista.org/video/";
   // ════════════════════════════════════════════════════
 
   let currentRole   = 'staff';
   let items         = [];
   let currentFilter = 'all';
-  let lbImages      = [];
-  let lbIndex       = 0;
-  let lbTitle       = '';
 
-  // ── Anteprima URL video in tempo reale ──
+  // lightbox state
+  let lbOriginals = [];   // foto1.jpg, foto2.jpg, ...
+  let lbThumbs    = [];   // thumb1.jpg, thumb2.jpg, ...
+  let lbIndex     = 0;
+  let lbTitle     = '';
+
+  // ── URL preview video ──
   function updateVideoPreview() {
     const filename = document.getElementById('v-filename').value.trim();
     const preview  = document.getElementById('v-url-preview');
@@ -496,7 +507,7 @@
     renderGrid();
   }
 
-  // ── Load ──
+  // ── Load from GitHub ──
   async function loadItems() {
     const grid = document.getElementById('content-grid');
     try {
@@ -526,13 +537,14 @@
       return item.type === 'gallery' ? renderGalleryCard(item, realIdx) : renderVideoCard(item);
     }).join('');
 
-    // Fade-in lazy images
+    // Fade-in lazy thumbnails
     grid.querySelectorAll('.thumb-wrap img').forEach(img => {
-      if (img.complete) {
-        img.classList.add('loaded');
+      const onLoad = () => img.classList.add('loaded');
+      if (img.complete && img.naturalWidth > 0) {
+        onLoad();
       } else {
-        img.addEventListener('load', () => img.classList.add('loaded'));
-        img.addEventListener('error', () => { img.style.display = 'none'; });
+        img.addEventListener('load', onLoad);
+        img.addEventListener('error', () => { img.closest('.thumb-wrap').style.background = '#1a1a1a'; });
       }
     });
   }
@@ -559,10 +571,10 @@
     const count   = parseInt(g.count) || 0;
     const preview = Math.min(count, 6);
 
-    // Ogni immagine è in un thumb-wrap per controllare dimensioni e proporzioni
+    // Anteprime → thumb1.jpg, thumb2.jpg... (file leggeri)
     const thumbs = Array.from({length: preview}, (_, i) =>
       `<div class="thumb-wrap" onclick="openLightbox(${idx}, ${i})">
-         <img src="${esc(folder)}foto${i+1}.${esc(ext)}" alt="foto ${i+1}" loading="lazy" />
+         <img src="${esc(folder)}thumb${i+1}.${esc(ext)}" alt="foto ${i+1}" loading="lazy" />
        </div>`
     ).join('');
 
@@ -601,11 +613,10 @@
     if (type === 'video') {
       const filename = document.getElementById('v-filename').value.trim();
       if (!filename) { alert('Inserisci il nome del file video.'); return; }
-      const url = BASE_VIDEO_URL + filename + '.mp4';
       newItem = {
         type: 'video',
         title: document.getElementById('v-title').value.trim() || filename,
-        url,
+        url: BASE_VIDEO_URL + filename + '.mp4',
         note: document.getElementById('v-note').value.trim()
       };
       ['v-title','v-filename','v-note'].forEach(id => document.getElementById(id).value = '');
@@ -613,7 +624,7 @@
     } else {
       const folder = document.getElementById('g-folder').value.trim();
       const count  = parseInt(document.getElementById('g-count').value);
-      if (!folder) { alert('Inserisci l\'URL della cartella.'); return; }
+      if (!folder) { alert("Inserisci l'URL della cartella."); return; }
       if (!count || count < 1) { alert('Inserisci un numero di foto valido.'); return; }
       newItem = {
         type: 'gallery',
@@ -650,7 +661,7 @@
     modal.innerHTML = `
       <div style="background:#111;border:1px solid #2a2a2a;border-radius:16px;padding:32px;max-width:620px;width:100%;max-height:80vh;display:flex;flex-direction:column;gap:16px;">
         <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:0.15em;color:#c8f135;">AGGIORNA videos.json SU GITHUB</div>
-        <p style="font-size:0.8rem;color:#555;line-height:1.5;">Copia questo contenuto e incollalo nel file <strong style="color:#888">videos.json</strong> del tuo repo GitHub (clicca il file → matita → incolla → commit).</p>
+        <p style="font-size:0.8rem;color:#555;line-height:1.5;">Copia questo contenuto e incollalo nel file <strong style="color:#888">videos.json</strong> del tuo repo GitHub.</p>
         <textarea readonly id="json-output" style="background:#0a0a0a;border:1px solid #222;color:#c8f135;border-radius:9px;padding:14px;font-family:monospace;font-size:0.78rem;flex:1;min-height:240px;resize:none;outline:none;width:100%">${esc(json)}</textarea>
         <div style="display:flex;gap:10px;">
           <button onclick="copyJson()" style="background:#c8f135;color:#0a0a0a;border:none;border-radius:9px;padding:11px 20px;font-family:'Bebas Neue',sans-serif;font-size:0.95rem;letter-spacing:0.1em;cursor:pointer;flex:1;">COPIA</button>
@@ -668,13 +679,19 @@
   }
 
   // ── Lightbox ──
+  // La griglia carica thumb1.jpg (leggere)
+  // Il lightbox carica foto1.jpg (originali) solo on-demand
   function openLightbox(itemIdx, photoIdx) {
-    const item   = items[itemIdx];
-    const folder = item.folder.endsWith('/') ? item.folder : item.folder + '/';
-    const ext    = item.ext || 'jpg';
-    lbImages     = Array.from({length: item.count}, (_, i) => `${folder}foto${i+1}.${ext}`);
-    lbTitle      = item.title || 'Galleria';
-    lbIndex      = photoIdx;
+    const item    = items[itemIdx];
+    const folder  = item.folder.endsWith('/') ? item.folder : item.folder + '/';
+    const ext     = item.ext || 'jpg';
+    const count   = parseInt(item.count) || 0;
+
+    lbOriginals = Array.from({length: count}, (_, i) => `${folder}foto${i+1}.${ext}`);
+    lbThumbs    = Array.from({length: count}, (_, i) => `${folder}thumb${i+1}.${ext}`);
+    lbTitle     = item.title || 'Galleria';
+    lbIndex     = photoIdx;
+
     document.getElementById('lightbox').classList.add('open');
     document.body.style.overflow = 'hidden';
     lbRender();
@@ -683,20 +700,45 @@
   function closeLightbox() {
     document.getElementById('lightbox').classList.remove('open');
     document.body.style.overflow = '';
+    // Interrompi caricamento immagine corrente
+    document.getElementById('lb-img').src = '';
   }
 
   function lbNav(dir) {
-    lbIndex = (lbIndex + dir + lbImages.length) % lbImages.length;
+    lbIndex = (lbIndex + dir + lbOriginals.length) % lbOriginals.length;
     lbRender();
   }
 
   function lbRender() {
-    document.getElementById('lb-img').src             = lbImages[lbIndex];
+    const img     = document.getElementById('lb-img');
+    const spinner = document.getElementById('lb-spinner');
+
     document.getElementById('lb-title').textContent   = lbTitle;
-    document.getElementById('lb-counter').textContent = `${lbIndex + 1} / ${lbImages.length}`;
-    document.getElementById('lb-strip').innerHTML = lbImages.map((src, i) =>
+    document.getElementById('lb-counter').textContent = `${lbIndex + 1} / ${lbOriginals.length}`;
+
+    // Mostra spinner e sfuma immagine mentre carica l'originale
+    img.classList.add('loading');
+    spinner.classList.add('active');
+
+    const originalSrc = lbOriginals[lbIndex];
+    const tmpImg = new Image();
+    tmpImg.onload = () => {
+      img.src = originalSrc;
+      img.classList.remove('loading');
+      spinner.classList.remove('active');
+    };
+    tmpImg.onerror = () => {
+      img.src = originalSrc; // prova comunque
+      img.classList.remove('loading');
+      spinner.classList.remove('active');
+    };
+    tmpImg.src = originalSrc;
+
+    // Strip usa le thumb leggere (già in cache dalla griglia)
+    document.getElementById('lb-strip').innerHTML = lbThumbs.map((src, i) =>
       `<img src="${esc(src)}" class="${i === lbIndex ? 'active' : ''}" onclick="lbIndex=${i};lbRender()" loading="lazy" />`
     ).join('');
+
     const strip = document.getElementById('lb-strip');
     const activeThumb = strip.children[lbIndex];
     if (activeThumb) activeThumb.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
