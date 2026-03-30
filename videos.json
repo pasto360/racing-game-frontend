@@ -1,33 +1,29 @@
 [
   {
-    "type": "video",
     "title": "02_1",
     "url": "http://easygame.altervista.org/video/02_1.mp4",
     "note": ""
   },
   {
-    "type": "video",
     "title": "03_1",
     "url": "http://easygame.altervista.org/video/03_1.mp4",
     "note": ""
   },
   {
-    "type": "video",
     "title": "03_2",
     "url": "http://easygame.altervista.org/video/03_2.mp4",
     "note": ""
   },
   {
-    "type": "video",
     "title": "promo",
     "url": "http://easygame.altervista.org/video/promo.mp4",
     "note": ""
   },
   {
     "type": "gallery",
-    "title": "Galleria esempio",
-    "folder": "http://easygame.altervista.org/gallerie/galleria1/",
-    "count": 10,
+    "title": "galleria 1",
+    "folder": "http://easygame.altervista.org/gallerie/galleria1",
+    "count": 8,
     "ext": "jpg",
     "note": ""
   }
