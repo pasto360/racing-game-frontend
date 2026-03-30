@@ -523,12 +523,20 @@
 
   // ── Render grid ──
   function renderGrid() {
-    const grid     = document.getElementById('content-grid');
-    const filtered = currentFilter === 'all' ? items : items.filter(i => i.type === currentFilter);
+    const grid = document.getElementById('content-grid');
+    let filtered = currentFilter === 'all' ? [...items] : items.filter(i => i.type === currentFilter);
 
     if (!filtered.length) {
       grid.innerHTML = '<div class="empty-state">Nessun contenuto disponibile.</div>';
       return;
+    }
+
+    // Gallerie prima, video dopo
+    if (currentFilter === 'all') {
+      filtered = [
+        ...filtered.filter(i => i.type === 'gallery'),
+        ...filtered.filter(i => i.type === 'video')
+      ];
     }
 
     grid.innerHTML = filtered.map(item => {
@@ -552,7 +560,7 @@
     return `
       <div class="item-card">
         <div class="video-wrapper">
-          <video controls preload="metadata">
+          <video controls preload="none">
             <source src="${esc(v.url)}" type="video/mp4" />
           </video>
         </div>
