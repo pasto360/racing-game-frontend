@@ -5,17 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Staff Preview</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet" />
   <style>
     :root {
       --bg: #0a0a0a;
       --surface: #111111;
-      --border: #222222;
+      --surface2: #161616;
+      --border: #1e1e1e;
+      --border2: #2a2a2a;
       --accent: #c8f135;
+      --accent2: #4f8ef7;
       --text: #f0f0f0;
-      --muted: #555555;
+      --muted: #505050;
       --danger: #ff4444;
-      --radius: 12px;
+      --radius: 14px;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -25,82 +28,94 @@
       color: var(--text);
       font-family: 'DM Sans', sans-serif;
       min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 40px 20px;
     }
 
-    /* ── NOISE OVERLAY ── */
+    /* noise */
     body::before {
       content: '';
       position: fixed;
       inset: 0;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
       pointer-events: none;
       z-index: 0;
     }
 
-    /* ── LOGIN SCREEN ── */
+    /* ══════════════ LOGIN SCREEN ══════════════ */
     #login-screen {
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       min-height: 100vh;
-      width: 100%;
+      padding: 24px;
       position: relative;
       z-index: 1;
     }
 
-    .login-box {
+    .login-card {
       background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 48px 40px;
+      border: 1px solid var(--border2);
+      border-radius: 22px;
+      padding: 52px 44px;
       width: 100%;
-      max-width: 380px;
+      max-width: 400px;
       display: flex;
       flex-direction: column;
-      gap: 24px;
-      box-shadow: 0 0 80px rgba(200, 241, 53, 0.04);
+      gap: 0;
     }
 
-    .login-logo {
+    .login-wordmark {
       font-family: 'Bebas Neue', sans-serif;
-      font-size: 2.4rem;
-      letter-spacing: 0.12em;
+      font-size: 2.6rem;
+      letter-spacing: 0.14em;
       color: var(--accent);
       text-align: center;
+      margin-bottom: 4px;
     }
 
-    .login-subtitle {
-      font-size: 0.8rem;
+    .login-sub {
+      font-size: 0.72rem;
       color: var(--muted);
       text-align: center;
-      letter-spacing: 0.08em;
+      letter-spacing: 0.12em;
       text-transform: uppercase;
-      margin-top: -16px;
+      margin-bottom: 36px;
     }
 
-    .input-group {
-      display: flex;
-      flex-direction: column;
+    /* role tabs */
+    .role-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
       gap: 8px;
+      margin-bottom: 28px;
     }
 
-    .input-group label {
-      font-size: 0.75rem;
-      color: var(--muted);
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-    }
-
-    .input-group input {
+    .role-tab {
+      border: 1px solid var(--border2);
+      border-radius: 10px;
+      padding: 12px 8px;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
       background: var(--bg);
-      border: 1px solid var(--border);
+    }
+
+    .role-tab .tab-icon { font-size: 1.2rem; display: block; margin-bottom: 4px; }
+    .role-tab .tab-label { font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); transition: color 0.2s; }
+
+    .role-tab.active-staff { border-color: var(--accent2); background: rgba(79,142,247,0.06); }
+    .role-tab.active-staff .tab-label { color: var(--accent2); }
+    .role-tab.active-admin { border-color: var(--accent); background: rgba(200,241,53,0.06); }
+    .role-tab.active-admin .tab-label { color: var(--accent); }
+
+    .field-group { display: flex; flex-direction: column; gap: 7px; margin-bottom: 20px; }
+    .field-group label { font-size: 0.71rem; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; }
+
+    .field-group input {
+      background: var(--bg);
+      border: 1px solid var(--border2);
       color: var(--text);
-      padding: 14px 16px;
+      padding: 13px 16px;
       border-radius: 10px;
       font-family: 'DM Sans', sans-serif;
       font-size: 1rem;
@@ -109,353 +124,449 @@
       width: 100%;
     }
 
-    .input-group input:focus {
-      border-color: var(--accent);
-    }
+    .field-group input:focus { border-color: var(--accent); }
 
-    .btn-login {
-      background: var(--accent);
-      color: #0a0a0a;
+    .btn-enter {
+      width: 100%;
       border: none;
       border-radius: 10px;
       padding: 14px;
       font-family: 'Bebas Neue', sans-serif;
-      font-size: 1.1rem;
-      letter-spacing: 0.12em;
+      font-size: 1.15rem;
+      letter-spacing: 0.14em;
       cursor: pointer;
       transition: opacity 0.2s, transform 0.15s;
+      margin-bottom: 16px;
     }
 
-    .btn-login:hover { opacity: 0.88; transform: translateY(-1px); }
-    .btn-login:active { transform: translateY(0); }
+    .btn-enter.staff-btn { background: var(--accent2); color: #fff; }
+    .btn-enter.admin-btn { background: var(--accent); color: #0a0a0a; }
+    .btn-enter:hover { opacity: 0.85; transform: translateY(-1px); }
+    .btn-enter:active { transform: translateY(0); }
 
-    .login-error {
-      font-size: 0.8rem;
-      color: var(--danger);
-      text-align: center;
-      min-height: 18px;
-      letter-spacing: 0.04em;
-    }
+    .login-err { font-size: 0.78rem; color: var(--danger); text-align: center; min-height: 18px; letter-spacing: 0.03em; }
 
-    /* ── MAIN APP ── */
+    /* ══════════════ MAIN APP ══════════════ */
     #app {
       display: none;
-      width: 100%;
-      max-width: 1100px;
       position: relative;
       z-index: 1;
+      min-height: 100vh;
+      flex-direction: column;
     }
 
-    header {
+    /* top bar */
+    .topbar {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding-bottom: 32px;
+      padding: 20px 36px;
       border-bottom: 1px solid var(--border);
-      margin-bottom: 40px;
-      flex-wrap: wrap;
       gap: 16px;
+      flex-wrap: wrap;
     }
 
-    .header-logo {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 2rem;
-      letter-spacing: 0.15em;
-      color: var(--accent);
-    }
+    .topbar-left { display: flex; align-items: center; gap: 16px; }
+    .topbar-logo { font-family: 'Bebas Neue', sans-serif; font-size: 1.7rem; letter-spacing: 0.16em; color: var(--accent); }
 
-    .header-badge {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 999px;
-      padding: 6px 16px;
-      font-size: 0.75rem;
-      color: var(--muted);
-      letter-spacing: 0.08em;
+    .role-pill {
+      font-size: 0.68rem;
+      letter-spacing: 0.1em;
       text-transform: uppercase;
+      padding: 4px 12px;
+      border-radius: 999px;
+      border: 1px solid;
     }
 
-    /* ── ADD VIDEO FORM ── */
-    .add-section {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 28px;
-      margin-bottom: 40px;
-    }
+    .role-pill.staff { color: var(--accent2); border-color: var(--accent2); background: rgba(79,142,247,0.08); }
+    .role-pill.admin { color: var(--accent); border-color: var(--accent); background: rgba(200,241,53,0.08); }
 
-    .section-title {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: 1.1rem;
-      letter-spacing: 0.15em;
+    .btn-logout {
+      background: transparent;
+      border: 1px solid var(--border2);
       color: var(--muted);
-      margin-bottom: 20px;
+      border-radius: 8px;
+      padding: 7px 14px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      letter-spacing: 0.06em;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .btn-logout:hover { border-color: var(--danger); color: var(--danger); }
+
+    /* layout */
+    .main-layout {
+      display: flex;
+      min-height: calc(100vh - 73px);
     }
 
-    .form-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr auto;
-      gap: 12px;
-      align-items: end;
+    /* ── ADMIN SIDEBAR ── */
+    #admin-panel {
+      width: 340px;
+      flex-shrink: 0;
+      border-right: 1px solid var(--border);
+      padding: 32px 28px;
+      display: none;
+      flex-direction: column;
+      gap: 0;
+      background: var(--surface);
     }
 
-    @media (max-width: 640px) {
-      .form-row { grid-template-columns: 1fr; }
+    .panel-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 1rem;
+      letter-spacing: 0.18em;
+      color: var(--muted);
+      margin-bottom: 24px;
     }
 
-    .field { display: flex; flex-direction: column; gap: 6px; }
-    .field label { font-size: 0.72rem; color: var(--muted); letter-spacing: 0.08em; text-transform: uppercase; }
+    .add-form { display: flex; flex-direction: column; gap: 14px; }
 
-    .field input, .field textarea {
+    .add-form label { font-size: 0.7rem; color: var(--muted); letter-spacing: 0.1em; text-transform: uppercase; display: block; margin-bottom: 5px; }
+
+    .add-form input, .add-form textarea {
       background: var(--bg);
-      border: 1px solid var(--border);
+      border: 1px solid var(--border2);
       color: var(--text);
       padding: 11px 14px;
-      border-radius: 8px;
+      border-radius: 9px;
       font-family: 'DM Sans', sans-serif;
-      font-size: 0.9rem;
+      font-size: 0.88rem;
       outline: none;
       transition: border-color 0.2s;
       width: 100%;
     }
 
-    .field input:focus, .field textarea:focus { border-color: var(--accent); }
+    .add-form input:focus, .add-form textarea:focus { border-color: var(--accent); }
+    .add-form textarea { resize: vertical; min-height: 72px; }
 
-    .btn-add {
+    .btn-add-video {
       background: var(--accent);
       color: #0a0a0a;
       border: none;
-      border-radius: 8px;
-      padding: 11px 22px;
+      border-radius: 9px;
+      padding: 12px;
       font-family: 'Bebas Neue', sans-serif;
       font-size: 1rem;
-      letter-spacing: 0.1em;
+      letter-spacing: 0.12em;
       cursor: pointer;
-      white-space: nowrap;
       transition: opacity 0.2s;
-      height: fit-content;
+      margin-top: 4px;
+    }
+    .btn-add-video:hover { opacity: 0.85; }
+
+    .divider { border: none; border-top: 1px solid var(--border); margin: 28px 0; }
+
+    .panel-subtitle {
+      font-size: 0.68rem;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 14px;
     }
 
-    .btn-add:hover { opacity: 0.85; }
+    /* video list in admin */
+    .admin-video-list { display: flex; flex-direction: column; gap: 10px; overflow-y: auto; max-height: 340px; }
+
+    .admin-video-item {
+      background: var(--bg);
+      border: 1px solid var(--border2);
+      border-radius: 9px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .admin-video-item .item-title { font-size: 0.82rem; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .admin-video-item .item-url { font-size: 0.68rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px; }
+
+    .btn-del {
+      background: transparent;
+      border: 1px solid var(--border2);
+      color: var(--muted);
+      border-radius: 6px;
+      padding: 4px 9px;
+      font-size: 0.68rem;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .btn-del:hover { border-color: var(--danger); color: var(--danger); }
+
+    .admin-empty { font-size: 0.78rem; color: var(--muted); font-style: italic; text-align: center; padding: 20px 0; }
 
     /* ── VIDEO GRID ── */
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 24px;
+    .content-area {
+      flex: 1;
+      padding: 36px;
+      overflow-y: auto;
     }
+
+    .content-header {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+
+    .content-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; letter-spacing: 0.14em; color: var(--text); }
+    .content-count { font-size: 0.75rem; color: var(--muted); }
+
+    .error-banner {
+      background: #1a0000;
+      border: 1px solid #440000;
+      border-radius: 10px;
+      padding: 14px 18px;
+      color: var(--danger);
+      font-size: 0.82rem;
+      margin-bottom: 28px;
+      display: none;
+    }
+
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
 
     .video-card {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
       overflow: hidden;
-      transition: border-color 0.2s, transform 0.2s;
+      transition: border-color 0.25s, transform 0.2s, box-shadow 0.2s;
     }
 
-    .video-card:hover {
-      border-color: #333;
-      transform: translateY(-2px);
-    }
+    .video-card:hover { border-color: var(--border2); transform: translateY(-3px); box-shadow: 0 12px 40px rgba(0,0,0,0.4); }
 
-    .video-wrapper {
-      position: relative;
-      padding-bottom: 56.25%;
-      background: #000;
-    }
+    .video-wrapper { position: relative; padding-bottom: 56.25%; background: #000; }
+    .video-wrapper video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
 
-    .video-wrapper video {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-    }
+    .card-body { padding: 14px 16px; }
+    .card-title { font-size: 0.88rem; font-weight: 500; color: var(--text); }
+    .card-note { font-size: 0.73rem; color: var(--muted); margin-top: 4px; line-height: 1.4; font-style: italic; }
 
-    .card-body {
-      padding: 16px 18px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-    }
-
-    .card-title {
-      font-size: 0.9rem;
-      font-weight: 500;
-      color: var(--text);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .card-note {
-      font-size: 0.75rem;
-      color: var(--muted);
-      margin-top: 3px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .btn-remove {
-      background: transparent;
-      border: 1px solid var(--border);
-      color: var(--muted);
-      border-radius: 6px;
-      padding: 5px 10px;
-      font-size: 0.7rem;
-      cursor: pointer;
-      letter-spacing: 0.06em;
-      flex-shrink: 0;
-      transition: border-color 0.2s, color 0.2s;
-    }
-
-    .btn-remove:hover { border-color: var(--danger); color: var(--danger); }
-
-    .empty-state {
+    .empty-state, .loading-state {
       grid-column: 1 / -1;
       text-align: center;
       color: var(--muted);
-      padding: 60px 0;
-      font-size: 0.9rem;
+      padding: 80px 0;
+      font-size: 0.88rem;
       letter-spacing: 0.04em;
     }
 
-    /* ── SHAKE ANIM ── */
+    /* responsive */
+    @media (max-width: 700px) {
+      .topbar { padding: 16px 18px; }
+      .main-layout { flex-direction: column; }
+      #admin-panel { width: 100%; border-right: none; border-bottom: 1px solid var(--border); }
+      .content-area { padding: 20px; }
+      .admin-video-list { max-height: 200px; }
+    }
+
     @keyframes shake {
-      0%, 100% { transform: translateX(0); }
-      20% { transform: translateX(-6px); }
-      40% { transform: translateX(6px); }
+      0%,100% { transform: translateX(0); }
+      20% { transform: translateX(-7px); }
+      40% { transform: translateX(7px); }
       60% { transform: translateX(-4px); }
       80% { transform: translateX(4px); }
     }
-    .shake { animation: shake 0.4s ease; }
+    .shake { animation: shake 0.38s ease; }
   </style>
 </head>
 <body>
 
-<!-- ────────── LOGIN ────────── -->
+<!-- ══════════ LOGIN ══════════ -->
 <div id="login-screen">
-  <div class="login-box">
-    <div class="login-logo">STAFF PREVIEW</div>
-    <p class="login-subtitle">Area riservata</p>
+  <div class="login-card">
+    <div class="login-wordmark">STAFF PREVIEW</div>
+    <p class="login-sub">Area riservata</p>
 
-    <div class="input-group">
+    <div class="role-tabs">
+      <div class="role-tab active-staff" id="tab-staff" onclick="selectRole('staff')">
+        <span class="tab-icon">👁️</span>
+        <span class="tab-label">Staff</span>
+      </div>
+      <div class="role-tab" id="tab-admin" onclick="selectRole('admin')">
+        <span class="tab-icon">⚙️</span>
+        <span class="tab-label">Admin</span>
+      </div>
+    </div>
+
+    <div class="field-group">
       <label>Password</label>
       <input id="pwd-input" type="password" placeholder="••••••••" autocomplete="current-password" />
     </div>
 
-    <button class="btn-login" onclick="checkPassword()">ACCEDI</button>
-    <div class="login-error" id="login-error"></div>
+    <button class="btn-enter staff-btn" id="btn-enter" onclick="checkPassword()">ACCEDI</button>
+    <div class="login-err" id="login-error"></div>
   </div>
 </div>
 
-<!-- ────────── APP ────────── -->
+<!-- ══════════ APP ══════════ -->
 <div id="app">
-  <header>
-    <div class="header-logo">STAFF PREVIEW</div>
-    <span class="header-badge">Solo staff · Non condividere</span>
-  </header>
 
-  <!-- Aggiungi video -->
-  <div class="add-section">
-    <div class="section-title">▸ Aggiungi video</div>
-    <div class="form-row">
-      <div class="field">
-        <label>Titolo</label>
-        <input id="v-title" type="text" placeholder="Es. Reel Marzo 2025" />
-      </div>
-      <div class="field">
-        <label>URL video (Altervista / diretto)</label>
-        <input id="v-url" type="url" placeholder="https://tuosito.altervista.org/video.mp4" />
-      </div>
-      <button class="btn-add" onclick="addVideo()">+ AGGIUNGI</button>
+  <!-- Top bar -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-logo">STAFF PREVIEW</div>
+      <span class="role-pill" id="role-pill">staff</span>
     </div>
-    <div class="field" style="margin-top:12px">
-      <label>Nota (opzionale)</label>
-      <input id="v-note" type="text" placeholder="Es. Controlla il sottotitolo al secondo 12" />
-    </div>
+    <button class="btn-logout" onclick="logout()">Esci</button>
   </div>
 
-  <!-- Griglia video -->
-  <div class="grid" id="video-grid">
-    <div class="empty-state">Nessun video aggiunto. Incolla l'URL di un video qui sopra.</div>
+  <div class="main-layout">
+
+    <!-- Admin sidebar -->
+    <div id="admin-panel">
+      <div class="panel-title">▸ Gestione video</div>
+
+      <div class="add-form">
+        <div>
+          <label>Titolo</label>
+          <input id="v-title" type="text" placeholder="Es. Reel Aprile 2025" />
+        </div>
+        <div>
+          <label>URL video (Altervista)</label>
+          <input id="v-url" type="url" placeholder="https://tuosito.altervista.org/video.mp4" />
+        </div>
+        <div>
+          <label>Nota per lo staff (opzionale)</label>
+          <textarea id="v-note" placeholder="Es. Controlla il sottotitolo al secondo 12…"></textarea>
+        </div>
+        <button class="btn-add-video" onclick="addVideo()">+ AGGIUNGI VIDEO</button>
+      </div>
+
+      <hr class="divider" />
+
+      <div class="panel-subtitle">Video nella lista</div>
+      <div class="admin-video-list" id="admin-list">
+        <div class="admin-empty">Nessun video caricato.</div>
+      </div>
+    </div>
+
+    <!-- Content area -->
+    <div class="content-area">
+      <div class="content-header">
+        <div class="content-title">Anteprime</div>
+        <div class="content-count" id="video-count"></div>
+      </div>
+
+      <div class="error-banner" id="error-banner">
+        ⚠️ Impossibile caricare i video. Verifica che <strong>videos.json</strong> sia presente nel repo GitHub e che l'URL nella configurazione sia corretto.
+      </div>
+
+      <div class="grid" id="video-grid">
+        <div class="loading-state">Caricamento video…</div>
+      </div>
+    </div>
+
   </div>
 </div>
 
 <script>
-  // ─── CONFIG ───────────────────────────────────────────────
-  // Questo è l'hash SHA-256 della tua password.
-  // La password VERA non è mai scritta nel codice.
-  // Per generare un nuovo hash: https://emn178.github.io/online-tools/sha256.html
-  // Password di esempio → "staffsegreto2025" → hash sotto:
-  const PASSWORD_HASH = "263eca2d934ade87bad6606ac09ee3a47fe5c01f693ad4a6da7b7a5b34502a60";
-  // ──────────────────────────────────────────────────────────
+  // ════════════════════════════════════════════════════
+  //  CONFIGURAZIONE
+  // ════════════════════════════════════════════════════
 
-  let videos = JSON.parse(localStorage.getItem('staff_videos') || '[]');
+  // Hash SHA-256 della password STAFF (solo visualizzazione)
+  // Genera il tuo su: https://emn178.github.io/online-tools/sha256.html
+  const STAFF_HASH = "a3b44c02a7cff8a41196ee0da56843c7f4d50f4e3f7e1c8e2b9a43f9e6c8d72";
 
-  // Hash SHA-256 nativo del browser
-  async function sha256(message) {
-    const msgBuffer = new TextEncoder().encode(message);
-    const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  // Hash SHA-256 della password ADMIN (gestione video)
+  const ADMIN_HASH  = "5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8";
+
+  // URL raw del file videos.json su GitHub
+  // Sostituisci TUONOME e TUOREPO con i tuoi dati reali
+  // Esempio: https://raw.githubusercontent.com/mario99/staff-preview/main/videos.json
+  const VIDEOS_JSON_URL = "https://raw.githubusercontent.com/TUONOME/TUOREPO/main/videos.json";
+
+  // ════════════════════════════════════════════════════
+
+  let currentRole = 'staff';
+  let videos = [];
+
+  // ── Selezione ruolo ──
+  function selectRole(role) {
+    currentRole = role;
+    document.getElementById('tab-staff').className = 'role-tab' + (role === 'staff' ? ' active-staff' : '');
+    document.getElementById('tab-admin').className  = 'role-tab' + (role === 'admin'  ? ' active-admin'  : '');
+    const btn = document.getElementById('btn-enter');
+    btn.className = 'btn-enter ' + (role === 'admin' ? 'admin-btn' : 'staff-btn');
+    document.getElementById('login-error').textContent = '';
   }
 
+  // ── SHA-256 ──
+  async function sha256(msg) {
+    const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(msg));
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+  }
+
+  // ── Login ──
   async function checkPassword() {
     const input = document.getElementById('pwd-input').value;
-    const hash = await sha256(input);
+    const hash  = await sha256(input);
+    const expected = currentRole === 'admin' ? ADMIN_HASH : STAFF_HASH;
 
-    if (hash === PASSWORD_HASH) {
+    if (hash === expected) {
       document.getElementById('login-screen').style.display = 'none';
-      document.getElementById('app').style.display = 'block';
-      renderGrid();
+      const app = document.getElementById('app');
+      app.style.display = 'flex';
+      app.style.flexDirection = 'column';
+
+      const pill = document.getElementById('role-pill');
+      pill.textContent = currentRole === 'admin' ? 'Admin' : 'Staff';
+      pill.className   = 'role-pill ' + currentRole;
+
+      if (currentRole === 'admin') {
+        document.getElementById('admin-panel').style.display = 'flex';
+      }
+
+      loadVideos();
     } else {
-      const box = document.querySelector('.login-box');
-      const err = document.getElementById('login-error');
-      err.textContent = 'Password errata. Riprova.';
-      box.classList.remove('shake');
-      void box.offsetWidth;
-      box.classList.add('shake');
+      const card = document.querySelector('.login-card');
+      document.getElementById('login-error').textContent = 'Password errata. Riprova.';
+      card.classList.remove('shake');
+      void card.offsetWidth;
+      card.classList.add('shake');
     }
   }
 
-  // Enter per accedere
   document.getElementById('pwd-input').addEventListener('keydown', e => {
     if (e.key === 'Enter') checkPassword();
   });
 
-  function saveVideos() {
-    localStorage.setItem('staff_videos', JSON.stringify(videos));
+  // ── Logout ──
+  function logout() {
+    document.getElementById('app').style.display = 'none';
+    document.getElementById('login-screen').style.display = 'flex';
+    document.getElementById('pwd-input').value = '';
+    document.getElementById('login-error').textContent = '';
+    document.getElementById('admin-panel').style.display = 'none';
+    selectRole('staff');
   }
 
-  function addVideo() {
-    const title = document.getElementById('v-title').value.trim();
-    const url   = document.getElementById('v-url').value.trim();
-    const note  = document.getElementById('v-note').value.trim();
-
-    if (!url) { alert('Inserisci l\'URL del video.'); return; }
-
-    videos.push({ id: Date.now(), title: title || 'Video senza titolo', url, note });
-    saveVideos();
-    renderGrid();
-
-    document.getElementById('v-title').value = '';
-    document.getElementById('v-url').value   = '';
-    document.getElementById('v-note').value  = '';
-  }
-
-  function removeVideo(id) {
-    videos = videos.filter(v => v.id !== id);
-    saveVideos();
-    renderGrid();
-  }
-
-  function renderGrid() {
+  // ── Carica video da GitHub JSON ──
+  async function loadVideos() {
     const grid = document.getElementById('video-grid');
-    if (videos.length === 0) {
-      grid.innerHTML = '<div class="empty-state">Nessun video aggiunto. Incolla l\'URL di un video qui sopra.</div>';
+    try {
+      const res = await fetch(VIDEOS_JSON_URL + '?t=' + Date.now());
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      videos = await res.json();
+      renderGrid();
+      if (currentRole === 'admin') renderAdminList();
+    } catch(e) {
+      grid.innerHTML = '';
+      document.getElementById('error-banner').style.display = 'block';
+    }
+  }
+
+  // ── Griglia staff ──
+  function renderGrid() {
+    const grid  = document.getElementById('video-grid');
+    const count = document.getElementById('video-count');
+    count.textContent = videos.length ? videos.length + ' video' : '';
+
+    if (!videos.length) {
+      grid.innerHTML = '<div class="empty-state">Nessun video disponibile al momento.</div>';
       return;
     }
 
@@ -463,23 +574,105 @@
       <div class="video-card">
         <div class="video-wrapper">
           <video controls preload="metadata">
-            <source src="${v.url}" type="video/mp4" />
-            Il tuo browser non supporta questo formato.
+            <source src="${esc(v.url)}" type="video/mp4" />
           </video>
         </div>
         <div class="card-body">
-          <div>
-            <div class="card-title">${escHtml(v.title)}</div>
-            ${v.note ? `<div class="card-note">${escHtml(v.note)}</div>` : ''}
-          </div>
-          <button class="btn-remove" onclick="removeVideo(${v.id})">Rimuovi</button>
+          <div class="card-title">${esc(v.title || 'Video senza titolo')}</div>
+          ${v.note ? `<div class="card-note">${esc(v.note)}</div>` : ''}
         </div>
       </div>
     `).join('');
   }
 
-  function escHtml(str) {
-    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  // ── Lista admin ──
+  function renderAdminList() {
+    const list = document.getElementById('admin-list');
+    if (!videos.length) {
+      list.innerHTML = '<div class="admin-empty">Nessun video caricato.</div>';
+      return;
+    }
+    list.innerHTML = videos.map((v, i) => `
+      <div class="admin-video-item">
+        <div style="overflow:hidden">
+          <div class="item-title">${esc(v.title || 'Senza titolo')}</div>
+          <div class="item-url">${esc(v.url)}</div>
+        </div>
+        <button class="btn-del" onclick="removeVideo(${i})">✕</button>
+      </div>
+    `).join('');
+  }
+
+  // ── Aggiungi video (admin) ──
+  function addVideo() {
+    const title = document.getElementById('v-title').value.trim();
+    const url   = document.getElementById('v-url').value.trim();
+    const note  = document.getElementById('v-note').value.trim();
+
+    if (!url) { alert('Inserisci l\'URL del video.'); return; }
+
+    videos.push({ title: title || 'Video senza titolo', url, note });
+    renderGrid();
+    renderAdminList();
+    showJsonModal();
+
+    document.getElementById('v-title').value = '';
+    document.getElementById('v-url').value   = '';
+    document.getElementById('v-note').value  = '';
+  }
+
+  // ── Rimuovi video (admin) ──
+  function removeVideo(index) {
+    videos.splice(index, 1);
+    renderGrid();
+    renderAdminList();
+    showJsonModal();
+  }
+
+  // ── Mostra JSON aggiornato da copiare su GitHub ──
+  function showJsonModal() {
+    const json = JSON.stringify(videos, null, 2);
+    const existing = document.getElementById('json-modal');
+    if (existing) existing.remove();
+
+    const modal = document.createElement('div');
+    modal.id = 'json-modal';
+    modal.style.cssText = `
+      position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:999;
+      display:flex; align-items:center; justify-content:center; padding:24px;
+    `;
+    modal.innerHTML = `
+      <div style="background:#111; border:1px solid #2a2a2a; border-radius:16px; padding:32px; max-width:600px; width:100%; max-height:80vh; display:flex; flex-direction:column; gap:16px;">
+        <div style="font-family:'Bebas Neue',sans-serif; font-size:1.1rem; letter-spacing:0.15em; color:#c8f135;">AGGIORNA videos.json SU GITHUB</div>
+        <p style="font-size:0.8rem; color:#555; line-height:1.5;">Copia questo contenuto e incollalo nel file <strong style="color:#888">videos.json</strong> del tuo repo GitHub (clicca il file → matita → incolla → commit).</p>
+        <textarea readonly id="json-output" style="background:#0a0a0a; border:1px solid #222; color:#c8f135; border-radius:9px; padding:14px; font-family:monospace; font-size:0.78rem; flex:1; min-height:220px; resize:none; outline:none; width:100%">${esc(json)}</textarea>
+        <div style="display:flex; gap:10px;">
+          <button onclick="copyJson()" style="background:#c8f135; color:#0a0a0a; border:none; border-radius:9px; padding:11px 20px; font-family:'Bebas Neue',sans-serif; font-size:0.95rem; letter-spacing:0.1em; cursor:pointer; flex:1;">COPIA</button>
+          <button onclick="document.getElementById('json-modal').remove()" style="background:transparent; border:1px solid #2a2a2a; color:#555; border-radius:9px; padding:11px 20px; font-size:0.82rem; cursor:pointer;">Chiudi</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(modal);
+  }
+
+  function copyJson() {
+    const ta = document.getElementById('json-output');
+    ta.select();
+    navigator.clipboard.writeText(ta.value).then(() => {
+      const btn = ta.nextElementSibling?.querySelector('button');
+      // small feedback
+    });
+    ta.select();
+    document.execCommand('copy');
+    alert('JSON copiato! Ora incollalo nel file videos.json su GitHub.');
+  }
+
+  function esc(s) {
+    return String(s)
+      .replace(/&/g,'&amp;')
+      .replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;');
   }
 </script>
 </body>
