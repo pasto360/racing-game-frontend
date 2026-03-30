@@ -215,7 +215,7 @@
     #lightbox { position: fixed; inset: 0; background: rgba(0,0,0,0.97); z-index: 9999; display: none; flex-direction: column; align-items: center; justify-content: center; }
     #lightbox.open { display: flex; }
 
-    .lb-header { position: absolute; top: 0; left: 0; right: 0; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; background: linear-gradient(to bottom, rgba(0,0,0,0.7), transparent); }
+    .lb-header { position: absolute; top: 0; left: 0; right: 0; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; background: linear-gradient(to bottom, rgba(0,0,0,0.7), transparent); z-index: 10; }
     .lb-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; letter-spacing: 0.14em; color: var(--accent); }
     .lb-counter { font-size: 0.78rem; color: var(--muted); }
     .lb-close { background: transparent; border: 1px solid var(--border2); color: var(--muted); border-radius: 8px; padding: 7px 14px; font-size: 0.8rem; cursor: pointer; transition: all 0.2s; }
@@ -353,10 +353,9 @@
         <!-- Spiegazione struttura cartella -->
         <div class="info-box">
           <strong>📁 Struttura cartella su Altervista</strong>
-          La cartella deve contenere:<br>
-          <code>foto1.jpg</code>, <code>foto2.jpg</code>… → originali<br>
-          <code>thumb1.jpg</code>, <code>thumb2.jpg</code>… → miniature leggere<br><br>
-          La griglia carica le <strong>thumb</strong> (veloci), il lightbox carica le <strong>foto</strong> originali solo quando apri l'immagine.
+          La cartella deve contenere le foto rinominate in sequenza:<br>
+          <code>foto1.jpg</code>, <code>foto2.jpg</code>, <code>foto3.jpg</code>…<br><br>
+          Le stesse immagini vengono usate sia per le anteprime che per il lightbox.
         </div>
 
         <button class="btn-add-item" onclick="addItem('gallery')">+ AGGIUNGI GALLERIA</button>
@@ -424,7 +423,7 @@
 
   // lightbox state
   let lbOriginals = [];   // foto1.jpg, foto2.jpg, ...
-  let lbThumbs    = [];   // foto1.jpg, foto2.jpg, ...
+  let lbThumbs    = [];   // thumb1.jpg, thumb2.jpg, ...
   let lbIndex     = 0;
   let lbTitle     = '';
 
@@ -571,10 +570,10 @@
     const count   = parseInt(g.count) || 0;
     const preview = Math.min(count, 6);
 
-    // Anteprime → thumb1.jpg, thumb2.jpg... (file leggeri)
+    // Anteprime → foto1.jpg, foto2.jpg... (stesso file per anteprima e originale)
     const thumbs = Array.from({length: preview}, (_, i) =>
       `<div class="thumb-wrap" onclick="openLightbox(${idx}, ${i})">
-         <img src="${esc(folder)}thumb${i+1}.${esc(ext)}" alt="foto ${i+1}" loading="lazy" />
+         <img src="${esc(folder)}foto${i+1}.${esc(ext)}" alt="foto ${i+1}" loading="lazy" />
        </div>`
     ).join('');
 
@@ -688,7 +687,7 @@
     const count   = parseInt(item.count) || 0;
 
     lbOriginals = Array.from({length: count}, (_, i) => `${folder}foto${i+1}.${ext}`);
-    lbThumbs    = Array.from({length: count}, (_, i) => `${folder}thumb${i+1}.${ext}`);
+    lbThumbs    = Array.from({length: count}, (_, i) => `${folder}foto${i+1}.${ext}`);
     lbTitle     = item.title || 'Galleria';
     lbIndex     = photoIdx;
 
