@@ -289,10 +289,11 @@ const BetaTelemetry = {
         // Calcola telemetria ideale
         this.calculateIdealLap();
         
-        // Inizializza velocità utente con ideali
+        // Inizializza velocità utente CONSERVATIVE (85% del massimo)
         this.circuit.sectors.forEach(sector => {
             if (sector.type === 'corner') {
-                this.userSpeeds[sector.id] = this.idealTelemetry.speeds[sector.id];
+                const idealSpeed = this.idealTelemetry.speeds[sector.id];
+                this.userSpeeds[sector.id] = Math.round(idealSpeed * 0.85);
             }
         });
         
@@ -370,20 +371,21 @@ const BetaTelemetry = {
             <div style="background: rgba(255,255,255,0.05); border: 2px solid var(--accent-yellow); border-radius: 10px; padding: 20px; margin-bottom: 20px;">
                 <h3 style="color: var(--accent-yellow); margin-bottom: 15px;">🎯 IMPOSTA VELOCITÀ CURVE</h3>
                 <p style="color: var(--text-secondary); margin-bottom: 20px;">
-                    Clicca "Auto" per usare velocità ideale, oppure modifica manualmente.
+                    Imposta la velocità con cui vuoi affrontare ogni curva. Troppo lento = tempo perso. Troppo veloce = rischio uscita.
                 </p>
                 
                 <div style="display: grid; gap: 15px;">
                     ${corners.map(corner => {
                         const idealSpeed = this.idealTelemetry.speeds[corner.id];
-                        const userSpeed = this.userSpeeds[corner.id] || idealSpeed;
+                        const userSpeed = this.userSpeeds[corner.id] || Math.round(idealSpeed * 0.85); // Inizia conservativo
                         const maxSpeed = this.calculateMaxCornerSpeed(
                             corner.radius,
                             corner.gripLevel,
                             this.setup.downforce,
                             this.setup.tireCompound
                         );
-                        const minSpeed = Math.round(maxSpeed * 0.7);
+                        const minSpeed = Math.round(maxSpeed * 0.6);
+                        const safeSpeed = Math.round(maxSpeed * 1.1);
                         
                         return `
                             <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1);">
@@ -393,8 +395,9 @@ const BetaTelemetry = {
                                         <span style="color: var(--text-secondary); margin-left: 10px;">${corner.name}</span>
                                     </div>
                                     <div style="text-align: right;">
-                                        <div style="font-size: 1.2rem; color: white; font-weight: bold;">${userSpeed} km/h</div>
-                                        <small style="color: var(--text-secondary);">Ideale: ${idealSpeed} km/h</small>
+                                        <div style="font-size: 1.5rem; color: var(--accent-yellow); font-weight: bold;" id="display-speed-${corner.id}">
+                                            ${userSpeed} km/h
+                                        </div>
                                     </div>
                                 </div>
                                 
@@ -402,20 +405,16 @@ const BetaTelemetry = {
                                     <input type="range" 
                                            id="speed-${corner.id}" 
                                            min="${minSpeed}" 
-                                           max="${Math.round(maxSpeed * 1.15)}" 
+                                           max="${safeSpeed}" 
                                            value="${userSpeed}"
                                            oninput="BetaTelemetry.updateSpeed(${corner.id}, this.value)"
                                            style="flex: 1;">
-                                    <button onclick="BetaTelemetry.resetSpeed(${corner.id})" 
-                                            style="padding: 5px 15px; background: rgba(255,255,255,0.1); border: 1px solid var(--accent-cyan); border-radius: 5px; color: white; cursor: pointer;">
-                                        Auto
-                                    </button>
                                 </div>
                                 
                                 <div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 0.85rem;">
-                                    <span style="color: var(--accent-red);">Min: ${minSpeed}</span>
-                                    <span style="color: var(--accent-yellow);">Max: ${Math.round(maxSpeed)}</span>
-                                    <span style="color: var(--accent-green);">Sicuro: ${Math.round(maxSpeed * 1.1)}</span>
+                                    <span style="color: var(--accent-red);">Lento: ${minSpeed}</span>
+                                    <span style="color: var(--accent-yellow);">Max grip: ${Math.round(maxSpeed)}</span>
+                                    <span style="color: var(--accent-green);">Limite: ${safeSpeed}</span>
                                 </div>
                             </div>
                         `;
@@ -447,6 +446,19 @@ const BetaTelemetry = {
             `;
         }
         
+        // Calcola tempi settori (dividi le 10 curve in 3 settori)
+        const sector1Time = result.sectors.slice(0, 3).reduce((sum, s) => sum + s.time, 0); // Curve 1-3
+        const sector2Time = result.sectors.slice(3, 7).reduce((sum, s) => sum + s.time, 0); // Rettilineo + Curve 4-6
+        const sector3Time = result.sectors.slice(7).reduce((sum, s) => sum + s.time, 0);    // Curve 7-10
+        
+        const idealSector1 = this.idealTelemetry.sectors.slice(0, 3).reduce((sum, s) => sum + s.time, 0);
+        const idealSector2 = this.idealTelemetry.sectors.slice(3, 7).reduce((sum, s) => sum + s.time, 0);
+        const idealSector3 = this.idealTelemetry.sectors.slice(7).reduce((sum, s) => sum + s.time, 0);
+        
+        const delta1 = sector1Time - idealSector1;
+        const delta2 = sector2Time - idealSector2;
+        const delta3 = sector3Time - idealSector3;
+        
         return `
             <div style="background: rgba(0,255,136,0.1); border: 2px solid var(--accent-green); border-radius: 10px; padding: 20px;">
                 <h3 style="color: var(--accent-green); margin-bottom: 20px;">📊 RISULTATO QUALIFICA</h3>
@@ -454,14 +466,14 @@ const BetaTelemetry = {
                 <!-- TEMPO FINALE -->
                 <div style="background: rgba(0,0,0,0.3); padding: 20px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
                     <div style="color: var(--text-secondary); margin-bottom: 5px;">TEMPO GIRO</div>
-                    <div style="font-size: 2.5rem; font-family: 'Courier New', monospace; color: ${result.totalDelta < 0 ? 'var(--accent-green)' : 'var(--accent-yellow)'}; font-weight: bold;">
+                    <div style="font-size: 2.5rem; font-family: 'Courier New', monospace; color: ${result.totalDelta <= 0 ? 'var(--accent-green)' : 'var(--accent-yellow)'}; font-weight: bold;">
                         ${this.formatTime(result.totalTime)}
                     </div>
-                    <div style="font-size: 1.2rem; color: ${result.totalDelta < 0 ? 'var(--accent-green)' : 'var(--accent-red)'};">
+                    <div style="font-size: 1.2rem; color: ${result.totalDelta <= 0 ? 'var(--accent-green)' : 'var(--accent-red)'};">
                         ${this.formatDelta(result.totalDelta)}
                     </div>
                     <div style="color: var(--text-secondary); margin-top: 10px;">
-                        Ideale: ${this.formatTime(this.idealTelemetry.totalTime)}
+                        Tempo ideale possibile: ${this.formatTime(this.idealTelemetry.totalTime)}
                     </div>
                 </div>
                 
@@ -469,19 +481,13 @@ const BetaTelemetry = {
                 <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: 8px;">
                     <pre style="color: white; font-family: 'Courier New', monospace; margin: 0; overflow-x: auto;">
 ══════════════════════════════════════════════════════
-DETTAGLIO TELEMETRIA
+RISULTATO QUALIFICA
 ══════════════════════════════════════════════════════
-${result.sectors.map(s => {
-    if (s.type === 'corner') {
-        const speedDiff = s.userSpeed - s.idealSpeed;
-        const speedColor = Math.abs(speedDiff) < 5 ? '✓' : (speedDiff > 0 ? '⚠️' : '🔴');
-        return `Curva ${s.id.toString().padStart(2)}: ${s.userSpeed.toString().padStart(3)} km/h (ideale: ${s.idealSpeed.toString().padStart(3)}) ${speedColor} | ${this.formatDelta(s.delta)}`;
-    } else {
-        return `Rettilineo: AUTO | ${s.time.toFixed(3)}s`;
-    }
-}).join('\n')}
-══════════════════════════════════════════════════════
-TOTALE: ${this.formatTime(result.totalTime)} (${this.formatDelta(result.totalDelta)})
+Settore 1: ${this.formatTime(sector1Time).padEnd(10)} ${this.formatDelta(delta1).padStart(10)} ${delta1 <= 0 ? '✓' : '🔴'}
+Settore 2: ${this.formatTime(sector2Time).padEnd(10)} ${this.formatDelta(delta2).padStart(10)} ${delta2 <= 0 ? '✓' : '🔴'}
+Settore 3: ${this.formatTime(sector3Time).padEnd(10)} ${this.formatDelta(delta3).padStart(10)} ${delta3 <= 0 ? '✓' : '🔴'}
+──────────────────────────────────────────────────────
+TOTALE:    ${this.formatTime(result.totalTime).padEnd(10)} ${this.formatDelta(result.totalDelta).padStart(10)}
 ══════════════════════════════════════════════════════
                     </pre>
                 </div>
@@ -507,10 +513,11 @@ TOTALE: ${this.formatTime(result.totalTime)} (${this.formatDelta(result.totalDel
         // Ricalcola telemetria ideale
         this.calculateIdealLap();
         
-        // Reset velocità utente
+        // Reset velocità utente CONSERVATIVE (85% del massimo)
         this.circuit.sectors.forEach(sector => {
             if (sector.type === 'corner') {
-                this.userSpeeds[sector.id] = this.idealTelemetry.speeds[sector.id];
+                const idealSpeed = this.idealTelemetry.speeds[sector.id];
+                this.userSpeeds[sector.id] = Math.round(idealSpeed * 0.85);
             }
         });
         
@@ -521,25 +528,13 @@ TOTALE: ${this.formatTime(result.totalTime)} (${this.formatDelta(result.totalDel
     updateSpeed(cornerId, speed) {
         this.userSpeeds[cornerId] = parseInt(speed);
         
-        // Aggiorna solo il valore visualizzato (no re-render completo)
-        const display = document.querySelector(`#speed-${cornerId}`).parentElement.previousElementSibling.querySelector('.font-weight-bold');
+        // Aggiorna display in tempo reale
+        const display = document.getElementById(`display-speed-${cornerId}`);
         if (display) {
             display.textContent = `${speed} km/h`;
         }
     },
     
-    resetSpeed(cornerId) {
-        this.userSpeeds[cornerId] = this.idealTelemetry.speeds[cornerId];
-        
-        // Aggiorna slider
-        const slider = document.getElementById(`speed-${cornerId}`);
-        if (slider) {
-            slider.value = this.idealTelemetry.speeds[cornerId];
-        }
-        
-        // Re-render per aggiornare visualizzazione
-        this.render();
-    },
     
     runQualifying() {
         const result = this.validateLap();
