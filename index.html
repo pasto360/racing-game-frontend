@@ -1182,10 +1182,10 @@
     <!-- =====================================================
          FILE BETA ESTERNI
          - beta.css  → stili pagina beta
-         - beta-supabase.js → logica pagina beta Supabase (espone BetaModule)
+         - beta-telemetry.js → logica simulatore telemetrico qualifica (espone BetaTelemetry)
          ===================================================== -->
     <link rel="stylesheet" href="beta.css">
-    <script src="beta-supabase.js" defer></script>
+    <script src="beta-telemetry.js" defer></script>
 </head>
 <body>
     <script src="supabase-client.js"></script>
@@ -5669,24 +5669,23 @@ ${wins >= 4 ? '🏆 Ottima prestazione!' : wins >= 3 ? '👍 Buon lavoro!' : '�
                 const container = document.getElementById('betaContainer');
                 if (!container) return;
                 
-                // Verifica se modulo beta caricato
-                if (typeof BetaModule === 'undefined') {
+                // Verifica se modulo beta telemetry caricato
+                if (typeof BetaTelemetry === 'undefined') {
                     container.innerHTML = `
                         <div style="text-align:center; padding: 60px 20px; color: var(--text-secondary);">
-                            <div style="font-size: 4rem; margin-bottom: 20px;">🧪</div>
-                            <p>Caricamento modulo beta...</p>
+                            <div style="font-size: 4rem; margin-bottom: 20px;">🏎️</div>
+                            <p>Caricamento simulatore telemetrico...</p>
                         </div>
                     `;
                     return;
                 }
                 
-                // Inizializza il modulo beta (se non già fatto)
-                if (!BetaModule._initialized) {
-                    BetaModule.init();
-                    BetaModule._initialized = true;
+                // Inizializza il modulo beta telemetry (se non già fatto)
+                if (!BetaTelemetry._initialized) {
+                    BetaTelemetry.init();
                 } else {
                     // Se già inizializzato, solo render
-                    BetaModule.render();
+                    BetaTelemetry.render();
                 }
             },
             
