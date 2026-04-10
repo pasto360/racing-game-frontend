@@ -14,7 +14,6 @@
     min-height: 100vh;
   }
 
-  /* HEADER */
   header {
     background: #1a1a1a;
     color: #fff;
@@ -29,329 +28,280 @@
   }
   header h1 { font-size: 18px; font-weight: 600; letter-spacing: 0.5px; }
   header .subtitle { font-size: 13px; color: #888; margin-left: 12px; }
+  .header-right { display: flex; align-items: center; gap: 10px; }
 
-  /* MAIN LAYOUT */
+  .sync-badge {
+    font-size: 12px; padding: 4px 10px; border-radius: 20px;
+    display: flex; align-items: center; gap: 5px; font-weight: 500;
+  }
+  .sync-ok      { background: rgba(46,160,67,0.25);  color: #a3f0b0; }
+  .sync-saving  { background: rgba(255,200,0,0.2);   color: #ffd96a; }
+  .sync-error   { background: rgba(255,80,80,0.2);   color: #ff9a9a; }
+  .sync-loading { background: rgba(255,255,255,0.1); color: #aaa; }
+  .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  .sync-dot.pulsing { animation: pulse 1s infinite; }
+
   .container { max-width: 960px; margin: 0 auto; padding: 28px 20px; }
 
-  /* SECTION TITLES */
   .section-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 16px;
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;
   }
   .section-title {
-    font-size: 13px;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    color: #888;
+    font-size: 13px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: 1px; color: #888;
   }
 
-  /* CLASSIFICA */
   .standings-card {
-    background: #fff;
-    border-radius: 16px;
-    overflow: hidden;
-    border: 1px solid #e8e6e0;
-    margin-bottom: 32px;
+    background: #fff; border-radius: 16px; overflow: hidden;
+    border: 1px solid #e8e6e0; margin-bottom: 12px;
   }
   .standings-row {
-    display: grid;
-    grid-template-columns: 40px 1fr 80px;
-    align-items: center;
-    padding: 14px 20px;
-    border-bottom: 1px solid #f0ede6;
-    transition: background 0.15s;
+    display: grid; grid-template-columns: 40px 1fr 80px;
+    align-items: center; padding: 14px 20px;
+    border-bottom: 1px solid #f0ede6; transition: background 0.15s;
   }
   .standings-row:last-child { border-bottom: none; }
-  .standings-row:hover { background: #faf9f6; }
   .standings-row.leader { background: #fffbe6; }
-  .standings-row.leader:hover { background: #fff8d6; }
-  .pos {
-    font-size: 18px;
-    font-weight: 700;
-    color: #bbb;
-  }
-  .pos.first { color: #d4a017; }
+  .pos { font-size: 18px; font-weight: 700; color: #bbb; }
+  .pos.first  { color: #d4a017; }
   .pos.second { color: #888; }
   .driver-name { font-size: 16px; font-weight: 500; }
-  .driver-sub { font-size: 12px; color: #999; margin-top: 2px; }
-  .pts {
-    text-align: right;
-    font-size: 22px;
-    font-weight: 700;
-    color: #1a1a1a;
-  }
+  .driver-sub  { font-size: 12px; color: #999; margin-top: 2px; }
+  .pts { text-align: right; font-size: 22px; font-weight: 700; }
   .pts span { font-size: 12px; font-weight: 400; color: #999; }
 
-  /* GARE GRID */
   .races-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 14px;
-    margin-bottom: 32px;
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 14px; margin-bottom: 32px;
   }
-
   .race-card {
-    background: #fff;
-    border-radius: 14px;
-    border: 1px solid #e8e6e0;
-    overflow: hidden;
-    transition: box-shadow 0.2s;
+    background: #fff; border-radius: 14px; border: 1px solid #e8e6e0;
+    overflow: hidden; transition: box-shadow 0.2s;
   }
   .race-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.07); }
-
   .race-header {
-    padding: 14px 16px 12px;
-    border-bottom: 1px solid #f0ede6;
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 8px;
+    padding: 14px 16px 12px; border-bottom: 1px solid #f0ede6;
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;
   }
-  .race-num {
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    color: #bbb;
-    text-transform: uppercase;
-  }
-  .race-name {
-    font-size: 15px;
-    font-weight: 600;
-    margin-top: 2px;
-    line-height: 1.3;
-  }
+  .race-num  { font-size: 11px; font-weight: 700; letter-spacing: 1px; color: #bbb; text-transform: uppercase; }
+  .race-name { font-size: 15px; font-weight: 600; margin-top: 2px; line-height: 1.3; }
   .race-image {
-    width: 52px;
-    height: 36px;
-    border-radius: 6px;
-    object-fit: cover;
-    background: #f0ede6;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 18px;
+    width: 52px; height: 36px; border-radius: 6px; background: #f0ede6; flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center; font-size: 18px;
   }
   .race-image img { width: 100%; height: 100%; object-fit: cover; border-radius: 6px; }
-
   .race-body { padding: 12px 16px; }
-
-  .result-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 5px 0;
-  }
+  .result-row { display: flex; align-items: center; justify-content: space-between; padding: 5px 0; }
   .result-pos-badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 22px;
-    height: 22px;
-    border-radius: 50%;
-    font-size: 11px;
-    font-weight: 700;
-    margin-right: 8px;
-    flex-shrink: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 22px; height: 22px; border-radius: 50%;
+    font-size: 11px; font-weight: 700; margin-right: 8px; flex-shrink: 0;
   }
   .badge-1 { background: #fff3cd; color: #856404; }
   .badge-2 { background: #e9e9e9; color: #555; }
   .result-driver { font-size: 14px; font-weight: 500; }
-  .result-pts { font-size: 13px; color: #999; }
+  .result-pts      { font-size: 13px; color: #999; }
   .result-pts.gold { color: #d4a017; font-weight: 600; }
-
-  .no-result {
-    font-size: 13px;
-    color: #bbb;
-    text-align: center;
-    padding: 8px 0;
-  }
-
-  .race-footer {
-    padding: 10px 16px;
-    border-top: 1px solid #f0ede6;
-    display: flex;
-    gap: 8px;
-  }
+  .no-result { font-size: 13px; color: #bbb; text-align: center; padding: 8px 0; }
+  .race-footer { padding: 10px 16px; border-top: 1px solid #f0ede6; display: flex; gap: 8px; }
   .btn-small {
-    flex: 1;
-    padding: 7px 0;
-    border-radius: 8px;
-    font-size: 13px;
-    font-weight: 500;
-    border: none;
-    cursor: pointer;
-    transition: opacity 0.15s;
+    flex: 1; padding: 7px 0; border-radius: 8px; font-size: 13px; font-weight: 500;
+    border: none; cursor: pointer; transition: opacity 0.15s;
   }
   .btn-small:hover { opacity: 0.8; }
   .btn-result { background: #1a1a1a; color: #fff; }
-  .btn-edit { background: #f0ede6; color: #555; }
+  .btn-edit   { background: #f0ede6; color: #555; }
   .btn-delete { background: #fdecea; color: #c0392b; }
 
-  /* ADD RACE BUTTON */
   .add-race-btn {
-    width: 100%;
-    border: 2px dashed #d0cdc5;
-    background: transparent;
-    border-radius: 14px;
-    padding: 24px;
-    text-align: center;
-    cursor: pointer;
-    color: #aaa;
-    font-size: 14px;
-    font-weight: 500;
-    transition: all 0.2s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
+    width: 100%; border: 2px dashed #d0cdc5; background: transparent;
+    border-radius: 14px; padding: 24px; text-align: center; cursor: pointer;
+    color: #aaa; font-size: 14px; font-weight: 500; transition: all 0.2s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
   }
   .add-race-btn:hover { border-color: #999; color: #555; background: #fff; }
-  .add-icon { font-size: 20px; font-weight: 300; }
 
-  /* MODAL */
   .modal-overlay {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.5);
-    z-index: 200;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
+    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+    z-index: 200; align-items: center; justify-content: center; padding: 20px;
   }
   .modal-overlay.open { display: flex; }
   .modal {
-    background: #fff;
-    border-radius: 18px;
-    width: 100%;
-    max-width: 440px;
-    padding: 28px;
-    position: relative;
+    background: #fff; border-radius: 18px; width: 100%;
+    max-width: 440px; padding: 28px; position: relative;
   }
   .modal h2 { font-size: 18px; font-weight: 600; margin-bottom: 20px; }
   .modal-close {
-    position: absolute;
-    top: 16px; right: 16px;
-    width: 32px; height: 32px;
-    border-radius: 50%;
-    border: none;
-    background: #f0ede6;
-    cursor: pointer;
-    font-size: 18px;
-    display: flex; align-items: center; justify-content: center;
-    color: #555;
+    position: absolute; top: 16px; right: 16px; width: 32px; height: 32px;
+    border-radius: 50%; border: none; background: #f0ede6; cursor: pointer;
+    font-size: 18px; display: flex; align-items: center; justify-content: center; color: #555;
   }
   .modal-close:hover { background: #e0ddd6; }
 
   label { display: block; font-size: 13px; font-weight: 500; color: #555; margin-bottom: 5px; }
   .field { margin-bottom: 16px; }
   input[type="text"], select {
-    width: 100%;
-    padding: 10px 12px;
-    border: 1px solid #ddd;
-    border-radius: 10px;
-    font-size: 14px;
-    outline: none;
-    transition: border-color 0.15s;
-    background: #fff;
+    width: 100%; padding: 10px 12px; border: 1px solid #ddd; border-radius: 10px;
+    font-size: 14px; outline: none; transition: border-color 0.15s; background: #fff;
   }
   input[type="text"]:focus, select:focus { border-color: #1a1a1a; }
 
   .btn-primary {
-    width: 100%;
-    padding: 12px;
-    background: #1a1a1a;
-    color: #fff;
-    border: none;
-    border-radius: 10px;
-    font-size: 15px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: opacity 0.15s;
+    width: 100%; padding: 12px; background: #1a1a1a; color: #fff;
+    border: none; border-radius: 10px; font-size: 15px; font-weight: 600;
+    cursor: pointer; transition: opacity 0.15s;
   }
-  .btn-primary:hover { opacity: 0.85; }
+  .btn-primary:hover   { opacity: 0.85; }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
 
-  /* SETTINGS */
   .settings-section {
-    background: #fff;
-    border-radius: 16px;
-    border: 1px solid #e8e6e0;
-    padding: 20px;
-    margin-bottom: 24px;
+    background: #f8f7f4; border-radius: 12px; padding: 16px; margin-bottom: 16px;
   }
-  .settings-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-  }
+  .settings-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
-  /* STATUS BADGE */
   .status-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    font-size: 11px;
-    font-weight: 600;
-    padding: 3px 8px;
-    border-radius: 20px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 11px; font-weight: 600; padding: 3px 8px;
+    border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;
   }
-  .status-done { background: #e8f5e9; color: #2e7d32; }
+  .status-done    { background: #e8f5e9; color: #2e7d32; }
   .status-pending { background: #f3f4f6; color: #999; }
   .status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 
-  /* PROGRESS BAR */
-  .progress-bar {
-    height: 6px;
-    background: #f0ede6;
-    border-radius: 3px;
-    overflow: hidden;
-    margin-top: 8px;
+  .progress-bar { height: 6px; background: #f0ede6; border-radius: 3px; overflow: hidden; margin-top: 8px; }
+  .progress-fill { height: 100%; background: #1a1a1a; border-radius: 3px; transition: width 0.4s ease; }
+  .progress-label { font-size: 12px; color: #999; margin-top: 6px; text-align: right; }
+
+  /* SETUP SCREEN */
+  .setup-screen {
+    display: none; position: fixed; inset: 0; background: #f5f4f0;
+    z-index: 300; align-items: flex-start; justify-content: center;
+    padding: 40px 20px; overflow-y: auto;
   }
-  .progress-fill {
-    height: 100%;
-    background: #1a1a1a;
-    border-radius: 3px;
-    transition: width 0.4s ease;
+  .setup-screen.open { display: flex; }
+  .setup-box {
+    background: #fff; border-radius: 20px; padding: 36px; width: 100%;
+    max-width: 480px; border: 1px solid #e8e6e0;
   }
-  .progress-label {
-    font-size: 12px;
-    color: #999;
-    margin-top: 6px;
-    text-align: right;
+  .setup-box h2 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+  .setup-box .intro { font-size: 14px; color: #888; margin-bottom: 24px; line-height: 1.6; }
+  .setup-step { background: #f8f7f4; border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+  .step-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #aaa; margin-bottom: 8px; }
+  .step-text  { font-size: 14px; line-height: 1.5; margin-bottom: 10px; }
+  .hint { font-size: 12px; color: #aaa; margin-top: 6px; }
+  a.link { color: #1a1a1a; font-weight: 600; text-decoration: underline; }
+
+  /* LOADING */
+  .loading-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(245,244,240,0.9);
+    z-index: 400; align-items: center; justify-content: center; flex-direction: column; gap: 14px;
   }
+  .loading-overlay.open { display: flex; }
+  .spinner {
+    width: 36px; height: 36px; border: 3px solid #ddd;
+    border-top-color: #1a1a1a; border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
 
   @media (max-width: 500px) {
-    .races-grid { grid-template-columns: 1fr; }
+    .races-grid   { grid-template-columns: 1fr; }
     .settings-row { grid-template-columns: 1fr; }
   }
 </style>
 </head>
 <body>
 
+<!-- LOADING -->
+<div class="loading-overlay open" id="loading-overlay">
+  <div class="spinner"></div>
+  <span style="font-size:14px;color:#888;">Caricamento dati...</span>
+</div>
+
+<!-- SETUP (prima configurazione) -->
+<div class="setup-screen" id="setup-screen">
+  <div class="setup-box">
+    <h2>🏁 Prima configurazione</h2>
+    <p class="intro">
+      I dati vengono salvati online su <strong>JSONBin.io</strong> (gratuito, nessun database).
+      Bastano 2 minuti per configurarlo — poi tu e il tuo amico vedrete sempre tutto aggiornato da qualsiasi dispositivo.
+    </p>
+
+    <div class="setup-step">
+      <div class="step-label">Passo 1 — Crea account gratuito</div>
+      <div class="step-text">
+        Vai su <a class="link" href="https://jsonbin.io" target="_blank">jsonbin.io</a>,
+        registrati e vai su <strong>Account → API Keys</strong>. Copia la tua Master Key.
+      </div>
+    </div>
+
+    <div class="setup-step">
+      <div class="step-label">Passo 2 — Incolla la API Key</div>
+      <input type="text" id="setup-apikey" placeholder="$2a$10$AbCdEf..." />
+      <div class="hint">La trovi in jsonbin.io → Account → API Keys → Master Key</div>
+    </div>
+
+    <div class="setup-step">
+      <div class="step-label">Passo 3 — BIN ID (solo se hai già dati)</div>
+      <input type="text" id="setup-binid" placeholder="Lascia vuoto per crearne uno nuovo" />
+      <div class="hint">
+        Prima volta? Lascia vuoto — viene creato in automatico.<br>
+        Hai già un BIN? Incolla l'ID per ricaricare i tuoi dati.
+      </div>
+    </div>
+
+    <div style="background:#f8f7f4;border-radius:12px;padding:16px;margin-bottom:12px;">
+      <div class="step-label">Passo 4 — Nomi e campionato</div>
+      <div class="field" style="margin-top:10px;">
+        <label>Nome Campionato</label>
+        <input type="text" id="setup-championship" placeholder="Campionato F1 2025" />
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div class="field">
+          <label>Pilota 1</label>
+          <input type="text" id="setup-p1" placeholder="Il tuo nome" />
+        </div>
+        <div class="field">
+          <label>Pilota 2</label>
+          <input type="text" id="setup-p2" placeholder="Nome amico" />
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-primary" id="setup-btn" onclick="setupSave()">Salva e inizia →</button>
+    <div id="setup-error" style="color:#c0392b;font-size:13px;margin-top:10px;display:none;"></div>
+
+    <div style="margin-top:20px;padding:14px;background:#fffbe6;border-radius:10px;font-size:13px;color:#7a6000;line-height:1.5;">
+      <strong>💡 Da condividere con il tuo amico:</strong> dopo la configurazione, vai su ⚙ Impostazioni
+      e copia il <strong>BIN ID</strong>. Il tuo amico dovrà inserire la stessa API Key e lo stesso BIN ID
+      al primo accesso.
+    </div>
+  </div>
+</div>
+
+<!-- HEADER -->
 <header>
   <div style="display:flex;align-items:center;gap:4px;">
     <h1 id="championship-title">Campionato</h1>
     <span class="subtitle" id="season-label"></span>
   </div>
-  <button onclick="openSettings()" style="background:rgba(255,255,255,0.1);border:none;color:#fff;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;">⚙ Impostazioni</button>
+  <div class="header-right">
+    <div class="sync-badge sync-loading" id="sync-badge">
+      <span class="sync-dot pulsing"></span>
+      <span id="sync-label">...</span>
+    </div>
+    <button onclick="openSettings()" style="background:rgba(255,255,255,0.1);border:none;color:#fff;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;">⚙</button>
+  </div>
 </header>
 
 <div class="container">
-
   <!-- CLASSIFICA -->
   <div class="section-header">
     <span class="section-title">Classifica Generale</span>
     <span id="races-progress" style="font-size:12px;color:#999;"></span>
   </div>
   <div class="standings-card" id="standings-container"></div>
-
-  <!-- PROGRESS -->
   <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
   <div class="progress-label" id="progress-label"></div>
 
@@ -362,12 +312,11 @@
   </div>
   <div class="races-grid" id="races-grid"></div>
   <button class="add-race-btn" onclick="openAddRace()">
-    <span class="add-icon">+</span> Aggiungi Gara
+    <span style="font-size:20px;">+</span> Aggiungi Gara
   </button>
-
 </div>
 
-<!-- MODAL AGGIUNGI/MODIFICA GARA -->
+<!-- MODAL GARA -->
 <div class="modal-overlay" id="race-modal">
   <div class="modal">
     <button class="modal-close" onclick="closeModal('race-modal')">×</button>
@@ -377,7 +326,7 @@
       <input type="text" id="race-name-input" placeholder="Es. GP Monaco" />
     </div>
     <div class="field">
-      <label>Immagine circuito (nome file in /images/)</label>
+      <label>Immagine (nome file in /images/)</label>
       <input type="text" id="race-img-input" placeholder="Es. monaco.jpg" />
     </div>
     <button class="btn-primary" onclick="saveRace()">Salva Gara</button>
@@ -388,7 +337,7 @@
 <div class="modal-overlay" id="result-modal">
   <div class="modal">
     <button class="modal-close" onclick="closeModal('result-modal')">×</button>
-    <h2 id="result-modal-title">Inserisci Risultato</h2>
+    <h2 id="result-modal-title">Risultato</h2>
     <div class="field">
       <label>1° Posto</label>
       <select id="result-first"></select>
@@ -407,27 +356,39 @@
     <button class="modal-close" onclick="closeModal('settings-modal')">×</button>
     <h2>Impostazioni</h2>
     <div class="settings-section">
-      <div class="section-title" style="margin-bottom:14px;">Campionato</div>
+      <div class="section-title" style="margin-bottom:14px;font-size:12px;">Campionato</div>
       <div class="field">
         <label>Nome Campionato</label>
-        <input type="text" id="s-championship" placeholder="Campionato F1 2025" />
+        <input type="text" id="s-championship" />
       </div>
       <div class="field">
         <label>Anno / Stagione</label>
-        <input type="text" id="s-season" placeholder="2025" />
+        <input type="text" id="s-season" />
       </div>
     </div>
     <div class="settings-section">
-      <div class="section-title" style="margin-bottom:14px;">Piloti</div>
+      <div class="section-title" style="margin-bottom:14px;font-size:12px;">Piloti</div>
       <div class="settings-row">
         <div class="field">
           <label>Pilota 1</label>
-          <input type="text" id="s-p1" placeholder="Pilota 1" />
+          <input type="text" id="s-p1" />
         </div>
         <div class="field">
           <label>Pilota 2</label>
-          <input type="text" id="s-p2" placeholder="Pilota 2" />
+          <input type="text" id="s-p2" />
         </div>
+      </div>
+    </div>
+    <div class="settings-section">
+      <div class="section-title" style="margin-bottom:10px;font-size:12px;">Configurazione JSONBin</div>
+      <div class="field">
+        <label>API Key</label>
+        <input type="text" id="s-apikey" placeholder="$2a$10$..." />
+      </div>
+      <div class="field">
+        <label>BIN ID <span style="color:#aaa;font-weight:400;">(condividi questo con il tuo amico)</span></label>
+        <input type="text" id="s-binid" style="background:#f8f7f4;" readonly />
+        <div class="hint">Copia questo ID e passalo al tuo amico per condividere i dati</div>
       </div>
     </div>
     <button class="btn-primary" onclick="saveSettings()">Salva Impostazioni</button>
@@ -435,37 +396,155 @@
 </div>
 
 <script>
-// ── STATE ──────────────────────────────────────────
+const JSONBIN_BASE = 'https://api.jsonbin.io/v3';
+
+let cfg = { apiKey: '', binId: '' };
 let state = {
   championship: 'Campionato',
   season: '2025',
   players: ['Pilota 1', 'Pilota 2'],
   races: []
 };
-
-let editingRaceId = null;
+let editingRaceId  = null;
 let resultingRaceId = null;
+let saveTimeout    = null;
 
-// ── STORAGE ────────────────────────────────────────
-function save() {
-  localStorage.setItem('championship_data', JSON.stringify(state));
-}
-function load() {
-  const raw = localStorage.getItem('championship_data');
-  if (raw) {
-    try { state = JSON.parse(raw); } catch(e) {}
+// ── BOOT ──────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', async () => {
+  const saved = localStorage.getItem('champ_cfg');
+  if (saved) { try { cfg = JSON.parse(saved); } catch(e) {} }
+
+  if (!cfg.apiKey) {
+    hideLoading();
+    document.getElementById('setup-screen').classList.add('open');
+    return;
+  }
+  await loadFromCloud();
+});
+
+// ── JSONBIN ───────────────────────────────────────
+async function loadFromCloud() {
+  showLoading();
+  setSyncStatus('loading', 'Caricamento...');
+  try {
+    if (!cfg.binId) {
+      await createBin();
+    } else {
+      state = await readBin();
+    }
+    hideLoading();
+    render();
+    setSyncStatus('ok', 'Online');
+  } catch(e) {
+    hideLoading();
+    setSyncStatus('error', 'Errore rete');
+    render();
   }
 }
 
-// ── INIT ───────────────────────────────────────────
-load();
-render();
+async function createBin() {
+  const res = await fetch(`${JSONBIN_BASE}/b`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Master-Key': cfg.apiKey,
+      'X-Bin-Name': state.championship || 'Campionato',
+      'X-Bin-Private': 'false'
+    },
+    body: JSON.stringify(state)
+  });
+  if (!res.ok) throw new Error(res.status);
+  const json = await res.json();
+  cfg.binId = json.metadata.id;
+  localStorage.setItem('champ_cfg', JSON.stringify(cfg));
+  state = json.record;
+}
 
-// ── RENDER ─────────────────────────────────────────
+async function readBin() {
+  const res = await fetch(`${JSONBIN_BASE}/b/${cfg.binId}/latest`, {
+    headers: { 'X-Master-Key': cfg.apiKey }
+  });
+  if (!res.ok) throw new Error(res.status);
+  const json = await res.json();
+  return json.record;
+}
+
+async function writeBin() {
+  const res = await fetch(`${JSONBIN_BASE}/b/${cfg.binId}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Master-Key': cfg.apiKey
+    },
+    body: JSON.stringify(state)
+  });
+  if (!res.ok) throw new Error(res.status);
+}
+
+function scheduleSave() {
+  setSyncStatus('saving', 'Salvataggio...');
+  clearTimeout(saveTimeout);
+  saveTimeout = setTimeout(async () => {
+    try {
+      await writeBin();
+      setSyncStatus('ok', 'Salvato ✓');
+      setTimeout(() => setSyncStatus('ok', 'Online'), 2000);
+    } catch(e) {
+      setSyncStatus('error', 'Errore salvataggio');
+    }
+  }, 800);
+}
+
+// ── SETUP ─────────────────────────────────────────
+async function setupSave() {
+  const apiKey = document.getElementById('setup-apikey').value.trim();
+  const binId  = document.getElementById('setup-binid').value.trim();
+  const p1     = document.getElementById('setup-p1').value.trim();
+  const p2     = document.getElementById('setup-p2').value.trim();
+  const champ  = document.getElementById('setup-championship').value.trim();
+  const btn    = document.getElementById('setup-btn');
+  const errEl  = document.getElementById('setup-error');
+  errEl.style.display = 'none';
+
+  if (!apiKey)    { showSetupError('Inserisci la API Key di JSONBin'); return; }
+  if (!p1 || !p2) { showSetupError('Inserisci i nomi di entrambi i piloti'); return; }
+
+  btn.disabled = true;
+  btn.textContent = 'Connessione in corso...';
+
+  cfg = { apiKey, binId };
+  state.championship = champ || 'Campionato';
+  state.players = [p1, p2];
+
+  try {
+    if (binId) {
+      // BIN esistente: carica i dati da remoto
+      state = await readBin();
+    } else {
+      // Nuovo BIN: crea con i dati iniziali
+      await createBin();
+    }
+    localStorage.setItem('champ_cfg', JSON.stringify(cfg));
+    document.getElementById('setup-screen').classList.remove('open');
+    render();
+    setSyncStatus('ok', 'Online');
+  } catch(e) {
+    btn.disabled = false;
+    btn.textContent = 'Salva e inizia →';
+    showSetupError('API Key non valida o errore di rete. Verifica la chiave e riprova.');
+  }
+}
+
+function showSetupError(msg) {
+  const el = document.getElementById('setup-error');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+// ── RENDER ────────────────────────────────────────
 function render() {
-  document.getElementById('championship-title').textContent = state.championship;
+  document.getElementById('championship-title').textContent = state.championship || 'Campionato';
   document.getElementById('season-label').textContent = state.season ? '· ' + state.season : '';
-
   renderStandings();
   renderRaces();
 }
@@ -474,102 +553,64 @@ function calcStandings() {
   const pts = {};
   state.players.forEach(p => pts[p] = 0);
   state.races.forEach(r => {
-    if (r.result) {
-      if (r.result.first) pts[r.result.first] = (pts[r.result.first] || 0) + 1;
-    }
+    if (r.result && r.result.first) pts[r.result.first] = (pts[r.result.first] || 0) + 1;
   });
-  return state.players
-    .map(p => ({ name: p, pts: pts[p] || 0 }))
-    .sort((a, b) => b.pts - a.pts);
+  return state.players.map(p => ({ name: p, pts: pts[p] || 0 })).sort((a,b) => b.pts - a.pts);
 }
 
 function renderStandings() {
-  const standings = calcStandings();
-  const container = document.getElementById('standings-container');
-  const done = state.races.filter(r => r.result).length;
+  const s = calcStandings();
+  const done  = state.races.filter(r => r.result).length;
   const total = state.races.length;
-
-  document.getElementById('races-progress').textContent =
-    total > 0 ? done + '/' + total + ' gare completate' : '';
-
+  document.getElementById('races-progress').textContent = total > 0 ? done + '/' + total + ' gare completate' : '';
   const pct = total > 0 ? Math.round(done / total * 100) : 0;
   document.getElementById('progress-fill').style.width = pct + '%';
   document.getElementById('progress-label').textContent = total > 0 ? pct + '% del campionato completato' : '';
-
-  container.innerHTML = standings.map((s, i) => {
-    const posClass = i === 0 ? 'first' : i === 1 ? 'second' : '';
-    const rowClass = i === 0 ? 'leader' : '';
-    const wins = state.races.filter(r => r.result && r.result.first === s.name).length;
-    return `
-      <div class="standings-row ${rowClass}">
-        <div class="pos ${posClass}">${i + 1}</div>
-        <div>
-          <div class="driver-name">${s.name}</div>
-          <div class="driver-sub">${wins} vittori${wins !== 1 ? 'e' : 'a'}</div>
-        </div>
-        <div class="pts">${s.pts}<br><span>punti</span></div>
-      </div>`;
+  document.getElementById('standings-container').innerHTML = s.map((p, i) => {
+    const wins = state.races.filter(r => r.result && r.result.first === p.name).length;
+    return `<div class="standings-row ${i===0?'leader':''}">
+      <div class="pos ${i===0?'first':i===1?'second':''}">${i+1}</div>
+      <div>
+        <div class="driver-name">${p.name}</div>
+        <div class="driver-sub">${wins} vittori${wins!==1?'e':'a'}</div>
+      </div>
+      <div class="pts">${p.pts}<br><span>punti</span></div>
+    </div>`;
   }).join('');
 }
 
 function renderRaces() {
-  const grid = document.getElementById('races-grid');
   document.getElementById('races-count').textContent = state.races.length + ' gare';
-
-  grid.innerHTML = state.races.map((r, idx) => {
+  document.getElementById('races-grid').innerHTML = state.races.map((r, idx) => {
     const imgHtml = r.img
-      ? `<div class="race-image"><img src="images/${r.img}" alt="${r.name}" onerror="this.parentElement.innerHTML='🏁'"></div>`
+      ? `<div class="race-image"><img src="images/${r.img}" alt="" onerror="this.parentElement.innerHTML='🏁'"></div>`
       : `<div class="race-image">🏁</div>`;
-
-    let bodyHtml;
-    if (r.result) {
-      const p1 = r.result.first;
-      const p2 = r.result.second;
-      bodyHtml = `
-        <div class="result-row">
-          <div style="display:flex;align-items:center;">
-            <span class="result-pos-badge badge-1">1°</span>
-            <span class="result-driver">${p1}</span>
-          </div>
-          <span class="result-pts gold">+1 pt</span>
-        </div>
-        <div class="result-row">
-          <div style="display:flex;align-items:center;">
-            <span class="result-pos-badge badge-2">2°</span>
-            <span class="result-driver">${p2}</span>
-          </div>
-          <span class="result-pts">0 pt</span>
-        </div>`;
-    } else {
-      bodyHtml = `<div class="no-result">Risultato non ancora inserito</div>`;
-    }
-
-    const statusHtml = r.result
+    let body = r.result
+      ? `<div class="result-row"><div style="display:flex;align-items:center;"><span class="result-pos-badge badge-1">1°</span><span class="result-driver">${r.result.first}</span></div><span class="result-pts gold">+1 pt</span></div>
+         <div class="result-row"><div style="display:flex;align-items:center;"><span class="result-pos-badge badge-2">2°</span><span class="result-driver">${r.result.second}</span></div><span class="result-pts">0 pt</span></div>`
+      : `<div class="no-result">Risultato non ancora inserito</div>`;
+    const badge = r.result
       ? `<span class="status-badge status-done"><span class="status-dot"></span>Completata</span>`
       : `<span class="status-badge status-pending"><span class="status-dot"></span>In attesa</span>`;
-
-    return `
-      <div class="race-card">
-        <div class="race-header">
-          <div>
-            <div class="race-num">Gara ${idx + 1} · ${statusHtml}</div>
-            <div class="race-name">${r.name}</div>
-          </div>
-          ${imgHtml}
+    return `<div class="race-card">
+      <div class="race-header">
+        <div>
+          <div class="race-num">Gara ${idx+1} · ${badge}</div>
+          <div class="race-name">${r.name}</div>
         </div>
-        <div class="race-body">${bodyHtml}</div>
-        <div class="race-footer">
-          <button class="btn-small btn-result" onclick="openResult('${r.id}')">
-            ${r.result ? '✎ Modifica' : '+ Risultato'}
-          </button>
-          <button class="btn-small btn-edit" onclick="openEditRace('${r.id}')">✎</button>
-          <button class="btn-small btn-delete" onclick="deleteRace('${r.id}')">✕</button>
-        </div>
-      </div>`;
+        ${imgHtml}
+      </div>
+      <div class="race-body">${body}</div>
+      <div class="race-footer">
+        <button class="btn-small btn-result" onclick="openResult('${r.id}')">${r.result?'✎ Modifica':'+ Risultato'}</button>
+        <button class="btn-small btn-edit"   onclick="openEditRace('${r.id}')">✎ Gara</button>
+        <button class="btn-small btn-delete" onclick="deleteRace('${r.id}')">✕</button>
+      </div>
+    </div>`;
   }).join('');
 }
 
-// ── RACE CRUD ──────────────────────────────────────
+// ── RACE CRUD ─────────────────────────────────────
 function openAddRace() {
   editingRaceId = null;
   document.getElementById('race-modal-title').textContent = 'Nuova Gara';
@@ -577,124 +618,96 @@ function openAddRace() {
   document.getElementById('race-img-input').value = '';
   document.getElementById('race-modal').classList.add('open');
 }
-
 function openEditRace(id) {
-  const race = state.races.find(r => r.id === id);
-  if (!race) return;
+  const r = state.races.find(r => r.id === id); if (!r) return;
   editingRaceId = id;
   document.getElementById('race-modal-title').textContent = 'Modifica Gara';
-  document.getElementById('race-name-input').value = race.name;
-  document.getElementById('race-img-input').value = race.img || '';
+  document.getElementById('race-name-input').value = r.name;
+  document.getElementById('race-img-input').value  = r.img || '';
   document.getElementById('race-modal').classList.add('open');
 }
-
 function saveRace() {
   const name = document.getElementById('race-name-input').value.trim();
-  const img = document.getElementById('race-img-input').value.trim();
+  const img  = document.getElementById('race-img-input').value.trim();
   if (!name) { alert('Inserisci il nome della gara'); return; }
-
   if (editingRaceId) {
-    const race = state.races.find(r => r.id === editingRaceId);
-    if (race) { race.name = name; race.img = img; }
+    const r = state.races.find(r => r.id === editingRaceId);
+    if (r) { r.name = name; r.img = img; }
   } else {
     state.races.push({ id: 'r_' + Date.now(), name, img, result: null });
   }
-  save();
-  render();
-  closeModal('race-modal');
+  scheduleSave(); render(); closeModal('race-modal');
 }
-
 function deleteRace(id) {
   if (!confirm('Eliminare questa gara?')) return;
   state.races = state.races.filter(r => r.id !== id);
-  save();
-  render();
+  scheduleSave(); render();
 }
 
-// ── RESULTS ────────────────────────────────────────
+// ── RESULTS ───────────────────────────────────────
 function openResult(id) {
   resultingRaceId = id;
-  const race = state.races.find(r => r.id === id);
-  if (!race) return;
-  document.getElementById('result-modal-title').textContent = 'Risultato · ' + race.name;
-
-  const sel1 = document.getElementById('result-first');
-  const sel2 = document.getElementById('result-second');
-  sel1.innerHTML = state.players.map(p => `<option value="${p}">${p}</option>`).join('');
-  sel2.innerHTML = state.players.map(p => `<option value="${p}">${p}</option>`).join('');
-
-  if (race.result) {
-    sel1.value = race.result.first;
-    sel2.value = race.result.second;
-  } else {
-    sel1.value = state.players[0];
-    sel2.value = state.players[1] || state.players[0];
-  }
-
+  const r = state.races.find(r => r.id === id); if (!r) return;
+  document.getElementById('result-modal-title').textContent = 'Risultato · ' + r.name;
+  const s1 = document.getElementById('result-first');
+  const s2 = document.getElementById('result-second');
+  s1.innerHTML = s2.innerHTML = state.players.map(p => `<option value="${p}">${p}</option>`).join('');
+  if (r.result) { s1.value = r.result.first; s2.value = r.result.second; }
+  else { s1.value = state.players[0]; s2.value = state.players[1] || state.players[0]; }
   document.getElementById('result-modal').classList.add('open');
 }
-
 function saveResult() {
-  const first = document.getElementById('result-first').value;
+  const first  = document.getElementById('result-first').value;
   const second = document.getElementById('result-second').value;
-  if (first === second) { alert('Il 1° e il 2° posto non possono essere lo stesso pilota'); return; }
-
-  const race = state.races.find(r => r.id === resultingRaceId);
-  if (race) { race.result = { first, second }; }
-  save();
-  render();
-  closeModal('result-modal');
+  if (first === second) { alert('1° e 2° non possono essere lo stesso pilota'); return; }
+  const r = state.races.find(r => r.id === resultingRaceId);
+  if (r) r.result = { first, second };
+  scheduleSave(); render(); closeModal('result-modal');
 }
 
-// ── SETTINGS ───────────────────────────────────────
+// ── SETTINGS ──────────────────────────────────────
 function openSettings() {
   document.getElementById('s-championship').value = state.championship;
-  document.getElementById('s-season').value = state.season;
-  document.getElementById('s-p1').value = state.players[0] || '';
-  document.getElementById('s-p2').value = state.players[1] || '';
+  document.getElementById('s-season').value       = state.season;
+  document.getElementById('s-p1').value           = state.players[0] || '';
+  document.getElementById('s-p2').value           = state.players[1] || '';
+  document.getElementById('s-apikey').value       = cfg.apiKey;
+  document.getElementById('s-binid').value        = cfg.binId;
   document.getElementById('settings-modal').classList.add('open');
 }
-
 function saveSettings() {
-  const ch = document.getElementById('s-championship').value.trim();
-  const se = document.getElementById('s-season').value.trim();
-  const p1 = document.getElementById('s-p1').value.trim();
-  const p2 = document.getElementById('s-p2').value.trim();
+  const ch  = document.getElementById('s-championship').value.trim();
+  const se  = document.getElementById('s-season').value.trim();
+  const p1  = document.getElementById('s-p1').value.trim();
+  const p2  = document.getElementById('s-p2').value.trim();
+  const key = document.getElementById('s-apikey').value.trim();
   if (!ch || !p1 || !p2) { alert('Compila tutti i campi'); return; }
-
-  const oldP1 = state.players[0];
-  const oldP2 = state.players[1];
-
-  state.championship = ch;
-  state.season = se;
-  state.players = [p1, p2];
-
-  // Aggiorna nomi nei risultati
+  const old1 = state.players[0], old2 = state.players[1];
+  state.championship = ch; state.season = se; state.players = [p1, p2];
+  cfg.apiKey = key;
+  localStorage.setItem('champ_cfg', JSON.stringify(cfg));
   state.races.forEach(r => {
-    if (r.result) {
-      if (r.result.first === oldP1) r.result.first = p1;
-      else if (r.result.first === oldP2) r.result.first = p2;
-      if (r.result.second === oldP1) r.result.second = p1;
-      else if (r.result.second === oldP2) r.result.second = p2;
-    }
+    if (!r.result) return;
+    if (r.result.first  === old1) r.result.first  = p1; else if (r.result.first  === old2) r.result.first  = p2;
+    if (r.result.second === old1) r.result.second = p1; else if (r.result.second === old2) r.result.second = p2;
   });
-
-  save();
-  render();
-  closeModal('settings-modal');
+  scheduleSave(); render(); closeModal('settings-modal');
 }
 
-// ── UTILS ──────────────────────────────────────────
-function closeModal(id) {
-  document.getElementById(id).classList.remove('open');
+// ── UTILS ─────────────────────────────────────────
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function showLoading()   { document.getElementById('loading-overlay').classList.add('open'); }
+function hideLoading()   { document.getElementById('loading-overlay').classList.remove('open'); }
+function setSyncStatus(type, label) {
+  const badge = document.getElementById('sync-badge');
+  const dot   = badge.querySelector('.sync-dot');
+  badge.className = 'sync-badge sync-' + type;
+  dot.className   = 'sync-dot' + (type==='saving'||type==='loading' ? ' pulsing' : '');
+  document.getElementById('sync-label').textContent = label;
 }
-
-// Chiudi modal cliccando fuori
-document.querySelectorAll('.modal-overlay').forEach(overlay => {
-  overlay.addEventListener('click', function(e) {
-    if (e.target === this) this.classList.remove('open');
-  });
-});
+document.querySelectorAll('.modal-overlay').forEach(el =>
+  el.addEventListener('click', function(e) { if (e.target===this) this.classList.remove('open'); })
+);
 </script>
 </body>
 </html>
