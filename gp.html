@@ -284,7 +284,8 @@ const INITIAL_STATE = {
     { id: 'r_5', name: 'Suzuka',         img: 'suzuka.png',      result: null },
     { id: 'r_6', name: 'A1 Ring',        img: 'A1ring.png',      result: null },
     { id: 'r_7', name: 'Interlagos',     img: 'interlagos.png',  result: null },
-    { id: 'r_8', name: 'Lago Maggiore',  img: 'lagomaggiore.png',result: null }
+    { id: 'r_8', name: 'Lago Maggiore',      img: 'lagomaggiore.png', result: null },
+    { id: 'r_9', name: '100 Giri di Tsukuba', img: 'tsukuba.png',      result: null }
   ]
 };
 
@@ -298,6 +299,11 @@ let saveTimeout = null;
 window.addEventListener('DOMContentLoaded', async () => {
   try {
     state = await readBin();
+    // Migrazione: aggiungi Tsukuba se non presente
+    if (!state.races.find(r => r.id === 'r_9')) {
+      state.races.push({ id: 'r_9', name: '100 Giri di Tsukuba', img: 'tsukuba.png', result: null });
+      await writeBin();
+    }
     render();
     setSyncStatus('ok', 'Online');
   } catch(e) {
