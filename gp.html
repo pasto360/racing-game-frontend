@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Campionato 2025</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #f5f4f0;
+    color: #1a1a1a;
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  header {
+    background: #1a1a1a;
+    color: #fff;
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 60px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  header h1 { font-size: 18px; font-weight: 600; letter-spacing: 0.5px; }
+  header .subtitle { font-size: 13px; color: #888; margin-left: 12px; }
+
+  /* MAIN LAYOUT */
+  .container { max-width: 960px; margin: 0 auto; padding: 28px 20px; }
+
+  /* SECTION TITLES */
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .section-title {
+    font-size: 13px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: #888;
+  }
+
+  /* CLASSIFICA */
+  .standings-card {
+    background: #fff;
+    border-radius: 16px;
+    overflow: hidden;
+    border: 1px solid #e8e6e0;
+    margin-bottom: 32px;
+  }
+  .standings-row {
+    display: grid;
+    grid-template-columns: 40px 1fr 80px;
+    align-items: center;
+    padding: 14px 20px;
+    border-bottom: 1px solid #f0ede6;
+    transition: background 0.15s;
+  }
+  .standings-row:last-child { border-bottom: none; }
+  .standings-row:hover { background: #faf9f6; }
+  .standings-row.leader { background: #fffbe6; }
+  .standings-row.leader:hover { background: #fff8d6; }
+  .pos {
+    font-size: 18px;
+    font-weight: 700;
+    color: #bbb;
+  }
+  .pos.first { color: #d4a017; }
+  .pos.second { color: #888; }
+  .driver-name { font-size: 16px; font-weight: 500; }
+  .driver-sub { font-size: 12px; color: #999; margin-top: 2px; }
+  .pts {
+    text-align: right;
+    font-size: 22px;
+    font-weight: 700;
+    color: #1a1a1a;
+  }
+  .pts span { font-size: 12px; font-weight: 400; color: #999; }
+
+  /* GARE GRID */
+  .races-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 14px;
+    margin-bottom: 32px;
+  }
+
+  .race-card {
+    background: #fff;
+    border-radius: 14px;
+    border: 1px solid #e8e6e0;
+    overflow: hidden;
+    transition: box-shadow 0.2s;
+  }
+  .race-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.07); }
+
+  .race-header {
+    padding: 14px 16px 12px;
+    border-bottom: 1px solid #f0ede6;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  .race-num {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    color: #bbb;
+    text-transform: uppercase;
+  }
+  .race-name {
+    font-size: 15px;
+    font-weight: 600;
+    margin-top: 2px;
+    line-height: 1.3;
+  }
+  .race-image {
+    width: 52px;
+    height: 36px;
+    border-radius: 6px;
+    object-fit: cover;
+    background: #f0ede6;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+  }
+  .race-image img { width: 100%; height: 100%; object-fit: cover; border-radius: 6px; }
+
+  .race-body { padding: 12px 16px; }
+
+  .result-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 5px 0;
+  }
+  .result-pos-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    font-size: 11px;
+    font-weight: 700;
+    margin-right: 8px;
+    flex-shrink: 0;
+  }
+  .badge-1 { background: #fff3cd; color: #856404; }
+  .badge-2 { background: #e9e9e9; color: #555; }
+  .result-driver { font-size: 14px; font-weight: 500; }
+  .result-pts { font-size: 13px; color: #999; }
+  .result-pts.gold { color: #d4a017; font-weight: 600; }
+
+  .no-result {
+    font-size: 13px;
+    color: #bbb;
+    text-align: center;
+    padding: 8px 0;
+  }
+
+  .race-footer {
+    padding: 10px 16px;
+    border-top: 1px solid #f0ede6;
+    display: flex;
+    gap: 8px;
+  }
+  .btn-small {
+    flex: 1;
+    padding: 7px 0;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .btn-small:hover { opacity: 0.8; }
+  .btn-result { background: #1a1a1a; color: #fff; }
+  .btn-edit { background: #f0ede6; color: #555; }
+  .btn-delete { background: #fdecea; color: #c0392b; }
+
+  /* ADD RACE BUTTON */
+  .add-race-btn {
+    width: 100%;
+    border: 2px dashed #d0cdc5;
+    background: transparent;
+    border-radius: 14px;
+    padding: 24px;
+    text-align: center;
+    cursor: pointer;
+    color: #aaa;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .add-race-btn:hover { border-color: #999; color: #555; background: #fff; }
+  .add-icon { font-size: 20px; font-weight: 300; }
+
+  /* MODAL */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: #fff;
+    border-radius: 18px;
+    width: 100%;
+    max-width: 440px;
+    padding: 28px;
+    position: relative;
+  }
+  .modal h2 { font-size: 18px; font-weight: 600; margin-bottom: 20px; }
+  .modal-close {
+    position: absolute;
+    top: 16px; right: 16px;
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: #f0ede6;
+    cursor: pointer;
+    font-size: 18px;
+    display: flex; align-items: center; justify-content: center;
+    color: #555;
+  }
+  .modal-close:hover { background: #e0ddd6; }
+
+  label { display: block; font-size: 13px; font-weight: 500; color: #555; margin-bottom: 5px; }
+  .field { margin-bottom: 16px; }
+  input[type="text"], select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.15s;
+    background: #fff;
+  }
+  input[type="text"]:focus, select:focus { border-color: #1a1a1a; }
+
+  .btn-primary {
+    width: 100%;
+    padding: 12px;
+    background: #1a1a1a;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .btn-primary:hover { opacity: 0.85; }
+
+  /* SETTINGS */
+  .settings-section {
+    background: #fff;
+    border-radius: 16px;
+    border: 1px solid #e8e6e0;
+    padding: 20px;
+    margin-bottom: 24px;
+  }
+  .settings-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  /* STATUS BADGE */
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .status-done { background: #e8f5e9; color: #2e7d32; }
+  .status-pending { background: #f3f4f6; color: #999; }
+  .status-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+
+  /* PROGRESS BAR */
+  .progress-bar {
+    height: 6px;
+    background: #f0ede6;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 8px;
+  }
+  .progress-fill {
+    height: 100%;
+    background: #1a1a1a;
+    border-radius: 3px;
+    transition: width 0.4s ease;
+  }
+  .progress-label {
+    font-size: 12px;
+    color: #999;
+    margin-top: 6px;
+    text-align: right;
+  }
+
+  @media (max-width: 500px) {
+    .races-grid { grid-template-columns: 1fr; }
+    .settings-row { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div style="display:flex;align-items:center;gap:4px;">
+    <h1 id="championship-title">Campionato</h1>
+    <span class="subtitle" id="season-label"></span>
+  </div>
+  <button onclick="openSettings()" style="background:rgba(255,255,255,0.1);border:none;color:#fff;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;">⚙ Impostazioni</button>
+</header>
+
+<div class="container">
+
+  <!-- CLASSIFICA -->
+  <div class="section-header">
+    <span class="section-title">Classifica Generale</span>
+    <span id="races-progress" style="font-size:12px;color:#999;"></span>
+  </div>
+  <div class="standings-card" id="standings-container"></div>
+
+  <!-- PROGRESS -->
+  <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+  <div class="progress-label" id="progress-label"></div>
+
+  <!-- GARE -->
+  <div class="section-header" style="margin-top:28px;">
+    <span class="section-title">Gare</span>
+    <span id="races-count" style="font-size:12px;color:#999;"></span>
+  </div>
+  <div class="races-grid" id="races-grid"></div>
+  <button class="add-race-btn" onclick="openAddRace()">
+    <span class="add-icon">+</span> Aggiungi Gara
+  </button>
+
+</div>
+
+<!-- MODAL AGGIUNGI/MODIFICA GARA -->
+<div class="modal-overlay" id="race-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('race-modal')">×</button>
+    <h2 id="race-modal-title">Nuova Gara</h2>
+    <div class="field">
+      <label>Nome della Gara</label>
+      <input type="text" id="race-name-input" placeholder="Es. GP Monaco" />
+    </div>
+    <div class="field">
+      <label>Immagine circuito (nome file in /images/)</label>
+      <input type="text" id="race-img-input" placeholder="Es. monaco.jpg" />
+    </div>
+    <button class="btn-primary" onclick="saveRace()">Salva Gara</button>
+  </div>
+</div>
+
+<!-- MODAL RISULTATO -->
+<div class="modal-overlay" id="result-modal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('result-modal')">×</button>
+    <h2 id="result-modal-title">Inserisci Risultato</h2>
+    <div class="field">
+      <label>1° Posto</label>
+      <select id="result-first"></select>
+    </div>
+    <div class="field">
+      <label>2° Posto</label>
+      <select id="result-second"></select>
+    </div>
+    <button class="btn-primary" onclick="saveResult()">Salva Risultato</button>
+  </div>
+</div>
+
+<!-- MODAL IMPOSTAZIONI -->
+<div class="modal-overlay" id="settings-modal">
+  <div class="modal" style="max-width:500px;">
+    <button class="modal-close" onclick="closeModal('settings-modal')">×</button>
+    <h2>Impostazioni</h2>
+    <div class="settings-section">
+      <div class="section-title" style="margin-bottom:14px;">Campionato</div>
+      <div class="field">
+        <label>Nome Campionato</label>
+        <input type="text" id="s-championship" placeholder="Campionato F1 2025" />
+      </div>
+      <div class="field">
+        <label>Anno / Stagione</label>
+        <input type="text" id="s-season" placeholder="2025" />
+      </div>
+    </div>
+    <div class="settings-section">
+      <div class="section-title" style="margin-bottom:14px;">Piloti</div>
+      <div class="settings-row">
+        <div class="field">
+          <label>Pilota 1</label>
+          <input type="text" id="s-p1" placeholder="Pilota 1" />
+        </div>
+        <div class="field">
+          <label>Pilota 2</label>
+          <input type="text" id="s-p2" placeholder="Pilota 2" />
+        </div>
+      </div>
+    </div>
+    <button class="btn-primary" onclick="saveSettings()">Salva Impostazioni</button>
+  </div>
+</div>
+
+<script>
+// ── STATE ──────────────────────────────────────────
+let state = {
+  championship: 'Campionato',
+  season: '2025',
+  players: ['Pilota 1', 'Pilota 2'],
+  races: []
+};
+
+let editingRaceId = null;
+let resultingRaceId = null;
+
+// ── STORAGE ────────────────────────────────────────
+function save() {
+  localStorage.setItem('championship_data', JSON.stringify(state));
+}
+function load() {
+  const raw = localStorage.getItem('championship_data');
+  if (raw) {
+    try { state = JSON.parse(raw); } catch(e) {}
+  }
+}
+
+// ── INIT ───────────────────────────────────────────
+load();
+render();
+
+// ── RENDER ─────────────────────────────────────────
+function render() {
+  document.getElementById('championship-title').textContent = state.championship;
+  document.getElementById('season-label').textContent = state.season ? '· ' + state.season : '';
+
+  renderStandings();
+  renderRaces();
+}
+
+function calcStandings() {
+  const pts = {};
+  state.players.forEach(p => pts[p] = 0);
+  state.races.forEach(r => {
+    if (r.result) {
+      if (r.result.first) pts[r.result.first] = (pts[r.result.first] || 0) + 1;
+    }
+  });
+  return state.players
+    .map(p => ({ name: p, pts: pts[p] || 0 }))
+    .sort((a, b) => b.pts - a.pts);
+}
+
+function renderStandings() {
+  const standings = calcStandings();
+  const container = document.getElementById('standings-container');
+  const done = state.races.filter(r => r.result).length;
+  const total = state.races.length;
+
+  document.getElementById('races-progress').textContent =
+    total > 0 ? done + '/' + total + ' gare completate' : '';
+
+  const pct = total > 0 ? Math.round(done / total * 100) : 0;
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-label').textContent = total > 0 ? pct + '% del campionato completato' : '';
+
+  container.innerHTML = standings.map((s, i) => {
+    const posClass = i === 0 ? 'first' : i === 1 ? 'second' : '';
+    const rowClass = i === 0 ? 'leader' : '';
+    const wins = state.races.filter(r => r.result && r.result.first === s.name).length;
+    return `
+      <div class="standings-row ${rowClass}">
+        <div class="pos ${posClass}">${i + 1}</div>
+        <div>
+          <div class="driver-name">${s.name}</div>
+          <div class="driver-sub">${wins} vittori${wins !== 1 ? 'e' : 'a'}</div>
+        </div>
+        <div class="pts">${s.pts}<br><span>punti</span></div>
+      </div>`;
+  }).join('');
+}
+
+function renderRaces() {
+  const grid = document.getElementById('races-grid');
+  document.getElementById('races-count').textContent = state.races.length + ' gare';
+
+  grid.innerHTML = state.races.map((r, idx) => {
+    const imgHtml = r.img
+      ? `<div class="race-image"><img src="images/${r.img}" alt="${r.name}" onerror="this.parentElement.innerHTML='🏁'"></div>`
+      : `<div class="race-image">🏁</div>`;
+
+    let bodyHtml;
+    if (r.result) {
+      const p1 = r.result.first;
+      const p2 = r.result.second;
+      bodyHtml = `
+        <div class="result-row">
+          <div style="display:flex;align-items:center;">
+            <span class="result-pos-badge badge-1">1°</span>
+            <span class="result-driver">${p1}</span>
+          </div>
+          <span class="result-pts gold">+1 pt</span>
+        </div>
+        <div class="result-row">
+          <div style="display:flex;align-items:center;">
+            <span class="result-pos-badge badge-2">2°</span>
+            <span class="result-driver">${p2}</span>
+          </div>
+          <span class="result-pts">0 pt</span>
+        </div>`;
+    } else {
+      bodyHtml = `<div class="no-result">Risultato non ancora inserito</div>`;
+    }
+
+    const statusHtml = r.result
+      ? `<span class="status-badge status-done"><span class="status-dot"></span>Completata</span>`
+      : `<span class="status-badge status-pending"><span class="status-dot"></span>In attesa</span>`;
+
+    return `
+      <div class="race-card">
+        <div class="race-header">
+          <div>
+            <div class="race-num">Gara ${idx + 1} · ${statusHtml}</div>
+            <div class="race-name">${r.name}</div>
+          </div>
+          ${imgHtml}
+        </div>
+        <div class="race-body">${bodyHtml}</div>
+        <div class="race-footer">
+          <button class="btn-small btn-result" onclick="openResult('${r.id}')">
+            ${r.result ? '✎ Modifica' : '+ Risultato'}
+          </button>
+          <button class="btn-small btn-edit" onclick="openEditRace('${r.id}')">✎</button>
+          <button class="btn-small btn-delete" onclick="deleteRace('${r.id}')">✕</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ── RACE CRUD ──────────────────────────────────────
+function openAddRace() {
+  editingRaceId = null;
+  document.getElementById('race-modal-title').textContent = 'Nuova Gara';
+  document.getElementById('race-name-input').value = '';
+  document.getElementById('race-img-input').value = '';
+  document.getElementById('race-modal').classList.add('open');
+}
+
+function openEditRace(id) {
+  const race = state.races.find(r => r.id === id);
+  if (!race) return;
+  editingRaceId = id;
+  document.getElementById('race-modal-title').textContent = 'Modifica Gara';
+  document.getElementById('race-name-input').value = race.name;
+  document.getElementById('race-img-input').value = race.img || '';
+  document.getElementById('race-modal').classList.add('open');
+}
+
+function saveRace() {
+  const name = document.getElementById('race-name-input').value.trim();
+  const img = document.getElementById('race-img-input').value.trim();
+  if (!name) { alert('Inserisci il nome della gara'); return; }
+
+  if (editingRaceId) {
+    const race = state.races.find(r => r.id === editingRaceId);
+    if (race) { race.name = name; race.img = img; }
+  } else {
+    state.races.push({ id: 'r_' + Date.now(), name, img, result: null });
+  }
+  save();
+  render();
+  closeModal('race-modal');
+}
+
+function deleteRace(id) {
+  if (!confirm('Eliminare questa gara?')) return;
+  state.races = state.races.filter(r => r.id !== id);
+  save();
+  render();
+}
+
+// ── RESULTS ────────────────────────────────────────
+function openResult(id) {
+  resultingRaceId = id;
+  const race = state.races.find(r => r.id === id);
+  if (!race) return;
+  document.getElementById('result-modal-title').textContent = 'Risultato · ' + race.name;
+
+  const sel1 = document.getElementById('result-first');
+  const sel2 = document.getElementById('result-second');
+  sel1.innerHTML = state.players.map(p => `<option value="${p}">${p}</option>`).join('');
+  sel2.innerHTML = state.players.map(p => `<option value="${p}">${p}</option>`).join('');
+
+  if (race.result) {
+    sel1.value = race.result.first;
+    sel2.value = race.result.second;
+  } else {
+    sel1.value = state.players[0];
+    sel2.value = state.players[1] || state.players[0];
+  }
+
+  document.getElementById('result-modal').classList.add('open');
+}
+
+function saveResult() {
+  const first = document.getElementById('result-first').value;
+  const second = document.getElementById('result-second').value;
+  if (first === second) { alert('Il 1° e il 2° posto non possono essere lo stesso pilota'); return; }
+
+  const race = state.races.find(r => r.id === resultingRaceId);
+  if (race) { race.result = { first, second }; }
+  save();
+  render();
+  closeModal('result-modal');
+}
+
+// ── SETTINGS ───────────────────────────────────────
+function openSettings() {
+  document.getElementById('s-championship').value = state.championship;
+  document.getElementById('s-season').value = state.season;
+  document.getElementById('s-p1').value = state.players[0] || '';
+  document.getElementById('s-p2').value = state.players[1] || '';
+  document.getElementById('settings-modal').classList.add('open');
+}
+
+function saveSettings() {
+  const ch = document.getElementById('s-championship').value.trim();
+  const se = document.getElementById('s-season').value.trim();
+  const p1 = document.getElementById('s-p1').value.trim();
+  const p2 = document.getElementById('s-p2').value.trim();
+  if (!ch || !p1 || !p2) { alert('Compila tutti i campi'); return; }
+
+  const oldP1 = state.players[0];
+  const oldP2 = state.players[1];
+
+  state.championship = ch;
+  state.season = se;
+  state.players = [p1, p2];
+
+  // Aggiorna nomi nei risultati
+  state.races.forEach(r => {
+    if (r.result) {
+      if (r.result.first === oldP1) r.result.first = p1;
+      else if (r.result.first === oldP2) r.result.first = p2;
+      if (r.result.second === oldP1) r.result.second = p1;
+      else if (r.result.second === oldP2) r.result.second = p2;
+    }
+  });
+
+  save();
+  render();
+  closeModal('settings-modal');
+}
+
+// ── UTILS ──────────────────────────────────────────
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+// Chiudi modal cliccando fuori
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', function(e) {
+    if (e.target === this) this.classList.remove('open');
+  });
+});
+</script>
+</body>
+</html>
