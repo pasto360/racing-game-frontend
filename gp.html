@@ -290,48 +290,25 @@ const INITIAL_STATE = {
 
 // ── STATE ─────────────────────────────────────────
 let state = JSON.parse(JSON.stringify(INITIAL_STATE));
-let binId = localStorage.getItem('champ_bin_id') || '';
+const BIN_ID = '69d94980856a6821891db7ff';
 let resultingRaceId = null;
 let saveTimeout = null;
 
 // ── BOOT ──────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', async () => {
   try {
-    if (!binId) {
-      await createBin();
-    } else {
-      state = await readBin();
-    }
+    state = await readBin();
     render();
     setSyncStatus('ok', 'Online');
   } catch(e) {
     setSyncStatus('error', 'Errore rete');
-    render(); // mostra dati iniziali comunque
+    render();
   }
   hideLoading();
 });
 
-// ── JSONBIN ───────────────────────────────────────
-async function createBin() {
-  const res = await fetch(`${BASE_URL}/b`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Master-Key': API_KEY,
-      'X-Bin-Name': '10gare2026',
-      'X-Bin-Private': 'false'
-    },
-    body: JSON.stringify(state)
-  });
-  if (!res.ok) throw new Error('create ' + res.status);
-  const json = await res.json();
-  binId = json.metadata.id;
-  localStorage.setItem('champ_bin_id', binId);
-  state = json.record;
-}
-
 async function readBin() {
-  const res = await fetch(`${BASE_URL}/b/${binId}/latest`, {
+  const res = await fetch(`${BASE_URL}/b/${BIN_ID}/latest`, {
     headers: { 'X-Master-Key': API_KEY }
   });
   if (!res.ok) throw new Error('read ' + res.status);
@@ -340,7 +317,7 @@ async function readBin() {
 }
 
 async function writeBin() {
-  const res = await fetch(`${BASE_URL}/b/${binId}`, {
+  const res = await fetch(`${BASE_URL}/b/${BIN_ID}`, {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
