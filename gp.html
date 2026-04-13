@@ -15,16 +15,10 @@
   }
 
   header {
-    background: #1a1a1a;
-    color: #fff;
-    padding: 0 24px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    height: 60px;
-    position: sticky;
-    top: 0;
-    z-index: 100;
+    background: #1a1a1a; color: #fff;
+    padding: 0 24px; display: flex; align-items: center;
+    justify-content: space-between; height: 60px;
+    position: sticky; top: 0; z-index: 100;
   }
   .header-left { display: flex; align-items: baseline; gap: 8px; }
   header h1 { font-size: 18px; font-weight: 600; letter-spacing: 0.5px; }
@@ -77,6 +71,23 @@
   .progress-fill { height: 100%; background: #1a1a1a; border-radius: 3px; transition: width 0.5s ease; }
   .progress-label { font-size: 12px; color: #aaa; margin-top: 6px; text-align: right; }
 
+  /* GRAFICO */
+  .chart-card {
+    background: #fff; border-radius: 16px; border: 1px solid #e8e6e0;
+    padding: 20px 24px 16px; margin-bottom: 32px;
+  }
+  .chart-legend {
+    display: flex; gap: 20px; margin-bottom: 16px; flex-wrap: wrap;
+  }
+  .legend-item {
+    display: flex; align-items: center; gap: 7px;
+    font-size: 13px; font-weight: 500; color: #555;
+  }
+  .legend-dot {
+    width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0;
+  }
+  #chart-canvas { width: 100%; display: block; }
+
   /* GARE GRID */
   .races-grid {
     display: grid;
@@ -84,23 +95,42 @@
     gap: 16px;
     margin-bottom: 12px;
   }
+
+  /* DRAG & DROP */
   .race-card {
     background: #fff; border-radius: 16px; border: 1px solid #e8e6e0;
-    overflow: hidden; transition: box-shadow 0.2s;
+    overflow: hidden; transition: box-shadow 0.2s, opacity 0.2s, transform 0.15s;
+    cursor: grab;
+    user-select: none;
   }
   .race-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+  .race-card.dragging {
+    opacity: 0.45; transform: scale(0.97); cursor: grabbing;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+  }
+  .race-card.drag-over {
+    border: 2px dashed #1a1a1a;
+    background: #f8f7f4;
+  }
+  .drag-handle {
+    position: absolute; top: 10px; right: 10px;
+    width: 28px; height: 28px; border-radius: 8px;
+    background: rgba(0,0,0,0.07); display: flex; align-items: center;
+    justify-content: center; cursor: grab; z-index: 2;
+    color: #999; font-size: 14px; line-height: 1;
+  }
+  .drag-hint {
+    font-size: 11px; color: #bbb; text-align: center;
+    padding: 8px 0 4px; letter-spacing: 0.3px;
+  }
 
-  /* Immagine più grande */
   .race-img-wrap {
-    width: 100%;
-    height: 130px;
-    background: #e8e6e0;
-    overflow: hidden;
-    position: relative;
+    width: 100%; height: 130px; background: #e8e6e0;
+    overflow: hidden; position: relative;
   }
   .race-img-wrap img {
     width: 100%; height: 100%; object-fit: cover;
-    display: block; transition: transform 0.3s ease;
+    display: block; transition: transform 0.3s ease; pointer-events: none;
   }
   .race-card:hover .race-img-wrap img { transform: scale(1.03); }
   .race-img-placeholder {
@@ -109,10 +139,9 @@
     font-size: 40px; background: #f0ede6;
   }
 
-  .race-content { padding: 14px 16px; }
+  .race-content { padding: 14px 16px; position: relative; }
   .race-meta {
-    display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 6px;
+    display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;
   }
   .race-num-label { font-size: 11px; font-weight: 700; letter-spacing: 1px; color: #bbb; text-transform: uppercase; }
   .race-name { font-size: 16px; font-weight: 700; margin-bottom: 10px; }
@@ -140,7 +169,6 @@
   .btn-result:hover { opacity: 0.82; }
   .btn-result.has-result { background: #f0ede6; color: #555; }
 
-  /* STATUS BADGE */
   .status-badge {
     display: inline-flex; align-items: center; gap: 4px;
     font-size: 10px; font-weight: 700; padding: 3px 7px;
@@ -176,7 +204,6 @@
     font-size: 15px; outline: none; transition: border-color 0.15s; background: #fff; cursor: pointer;
   }
   select:focus { border-color: #1a1a1a; }
-
   .btn-primary {
     width: 100%; padding: 13px; background: #1a1a1a; color: #fff;
     border: none; border-radius: 10px; font-size: 15px; font-weight: 700;
@@ -231,6 +258,8 @@
 </header>
 
 <div class="container">
+
+  <!-- CLASSIFICA -->
   <div class="section-header">
     <span class="section-title">Classifica</span>
     <span id="races-progress" style="font-size:12px;color:#aaa;"></span>
@@ -239,11 +268,24 @@
   <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
   <div class="progress-label" id="progress-label"></div>
 
+  <!-- GRAFICO -->
   <div class="section-header" style="margin-top:32px;">
+    <span class="section-title">Andamento Punti</span>
+    <span style="font-size:12px;color:#aaa;">in base all'ordine delle gare</span>
+  </div>
+  <div class="chart-card">
+    <div class="chart-legend" id="chart-legend"></div>
+    <canvas id="chart-canvas" height="220"></canvas>
+  </div>
+
+  <!-- GARE -->
+  <div class="section-header">
     <span class="section-title">Gare</span>
     <span id="races-count" style="font-size:12px;color:#aaa;"></span>
   </div>
+  <div class="drag-hint">⠿ Trascina le card per cambiare l'ordine dei circuiti</div>
   <div class="races-grid" id="races-grid"></div>
+
 </div>
 
 <!-- MODAL RISULTATO -->
@@ -266,40 +308,129 @@
 
 <div class="toast" id="toast"></div>
 
+<!-- Chart.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
 <script>
-// ── CONFIG HARDCODED ───────────────────────────────
+// ── CONFIG ────────────────────────────────────────
 const API_KEY  = '$2a$10$FowpfhX4oEw6F57VyJMu7.OBOOVQllDEllfm6Nm9tXjtwWKGZwTb6';
+const BIN_ID   = '69d94980856a6821891db7ff';
 const BASE_URL = 'https://api.jsonbin.io/v3';
 
-// Dati iniziali (usati solo se il BIN non esiste ancora)
+const PLAYER_COLORS = ['#e63946', '#1d7eda'];
+
 const INITIAL_STATE = {
   championship: '10 Gare',
   season: '2026',
   players: ['Stefano', 'Marco'],
   races: [
-    { id: 'r_1', name: 'Le Mans',       img: 'lemans.png',      result: null },
-    { id: 'r_2', name: 'Monza',          img: 'monza.png',       result: null },
-    { id: 'r_3', name: 'Nürburgring',    img: 'nurburgring.png', result: null },
-    { id: 'r_4', name: 'Spa',            img: 'spa.png',         result: null },
-    { id: 'r_5', name: 'Suzuka',         img: 'suzuka.png',      result: null },
-    { id: 'r_6', name: 'A1 Ring',        img: 'A1ring.png',      result: null },
-    { id: 'r_7', name: 'Interlagos',     img: 'interlagos.png',  result: null },
-    { id: 'r_8', name: 'Lago Maggiore',      img: 'lagomaggiore.png', result: null },
+    { id: 'r_1', name: 'Le Mans',            img: 'lemans.png',       result: null },
+    { id: 'r_2', name: 'Monza',               img: 'monza.png',        result: null },
+    { id: 'r_3', name: 'Nürburgring',         img: 'nurburgring.png',  result: null },
+    { id: 'r_4', name: 'Spa',                 img: 'spa.png',          result: null },
+    { id: 'r_5', name: 'Suzuka',              img: 'suzuka.png',       result: null },
+    { id: 'r_6', name: 'A1 Ring',             img: 'A1ring.png',       result: null },
+    { id: 'r_7', name: 'Interlagos',          img: 'interlagos.png',   result: null },
+    { id: 'r_8', name: 'Lago Maggiore',       img: 'lagomaggiore.png', result: null },
     { id: 'r_9', name: '100 Giri di Tsukuba', img: 'tsukuba.png',      result: null }
   ]
 };
 
 // ── STATE ─────────────────────────────────────────
 let state = JSON.parse(JSON.stringify(INITIAL_STATE));
-const BIN_ID = '69d94980856a6821891db7ff';
 let resultingRaceId = null;
 let saveTimeout = null;
+let chartInstance = null;
+
+// ── DRAG & DROP ───────────────────────────────────
+let dragSrcId = null;
+
+function onDragStart(e, id) {
+  dragSrcId = id;
+  e.dataTransfer.effectAllowed = 'move';
+  setTimeout(() => e.target.closest('.race-card').classList.add('dragging'), 0);
+}
+function onDragEnd(e) {
+  document.querySelectorAll('.race-card').forEach(c => c.classList.remove('dragging', 'drag-over'));
+}
+function onDragOver(e, id) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  document.querySelectorAll('.race-card').forEach(c => c.classList.remove('drag-over'));
+  if (id !== dragSrcId) {
+    const card = document.querySelector(`[data-id="${id}"]`);
+    if (card) card.classList.add('drag-over');
+  }
+}
+function onDrop(e, targetId) {
+  e.preventDefault();
+  if (!dragSrcId || dragSrcId === targetId) return;
+  const srcIdx = state.races.findIndex(r => r.id === dragSrcId);
+  const tgtIdx = state.races.findIndex(r => r.id === targetId);
+  if (srcIdx === -1 || tgtIdx === -1) return;
+  const moved = state.races.splice(srcIdx, 1)[0];
+  state.races.splice(tgtIdx, 0, moved);
+  scheduleSave();
+  render();
+  showToast('Ordine aggiornato');
+}
+
+// Touch drag support (mobile)
+let touchDragId = null;
+let touchClone  = null;
+
+function onTouchStart(e, id) {
+  touchDragId = id;
+  const card = e.currentTarget;
+  const rect = card.getBoundingClientRect();
+  touchClone = card.cloneNode(true);
+  touchClone.style.cssText = `position:fixed;top:${rect.top}px;left:${rect.left}px;
+    width:${rect.width}px;opacity:0.7;pointer-events:none;z-index:999;
+    border-radius:16px;box-shadow:0 8px 30px rgba(0,0,0,0.2);`;
+  document.body.appendChild(touchClone);
+  card.style.opacity = '0.3';
+}
+function onTouchMove(e) {
+  if (!touchClone) return;
+  e.preventDefault();
+  const t = e.touches[0];
+  touchClone.style.left = (t.clientX - touchClone.offsetWidth / 2) + 'px';
+  touchClone.style.top  = (t.clientY - touchClone.offsetHeight / 2) + 'px';
+  document.querySelectorAll('.race-card').forEach(c => c.classList.remove('drag-over'));
+  touchClone.style.display = 'none';
+  const el = document.elementFromPoint(t.clientX, t.clientY);
+  touchClone.style.display = '';
+  const target = el && el.closest('.race-card');
+  if (target && target.dataset.id !== touchDragId) target.classList.add('drag-over');
+}
+function onTouchEnd(e) {
+  if (!touchDragId) return;
+  const t = e.changedTouches[0];
+  if (touchClone) { touchClone.remove(); touchClone = null; }
+  document.querySelectorAll('.race-card').forEach(c => {
+    c.style.opacity = '';
+    c.classList.remove('drag-over', 'dragging');
+  });
+  const el = document.elementFromPoint(t.clientX, t.clientY);
+  const target = el && el.closest('.race-card');
+  if (target && target.dataset.id && target.dataset.id !== touchDragId) {
+    const srcIdx = state.races.findIndex(r => r.id === touchDragId);
+    const tgtIdx = state.races.findIndex(r => r.id === target.dataset.id);
+    if (srcIdx !== -1 && tgtIdx !== -1) {
+      const moved = state.races.splice(srcIdx, 1)[0];
+      state.races.splice(tgtIdx, 0, moved);
+      scheduleSave();
+      render();
+      showToast('Ordine aggiornato');
+    }
+  }
+  touchDragId = null;
+}
 
 // ── BOOT ──────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', async () => {
   try {
     state = await readBin();
-    // Migrazione: aggiungi Tsukuba se non presente
     if (!state.races.find(r => r.id === 'r_9')) {
       state.races.push({ id: 'r_9', name: '100 Giri di Tsukuba', img: 'tsukuba.png', result: null });
       await writeBin();
@@ -313,27 +444,22 @@ window.addEventListener('DOMContentLoaded', async () => {
   hideLoading();
 });
 
+// ── JSONBIN ───────────────────────────────────────
 async function readBin() {
   const res = await fetch(`${BASE_URL}/b/${BIN_ID}/latest`, {
     headers: { 'X-Master-Key': API_KEY }
   });
   if (!res.ok) throw new Error('read ' + res.status);
-  const json = await res.json();
-  return json.record;
+  return (await res.json()).record;
 }
-
 async function writeBin() {
   const res = await fetch(`${BASE_URL}/b/${BIN_ID}`, {
     method: 'PUT',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Master-Key': API_KEY
-    },
+    headers: { 'Content-Type': 'application/json', 'X-Master-Key': API_KEY },
     body: JSON.stringify(state)
   });
   if (!res.ok) throw new Error('write ' + res.status);
 }
-
 function scheduleSave() {
   setSyncStatus('saving', 'Salvataggio...');
   clearTimeout(saveTimeout);
@@ -342,9 +468,7 @@ function scheduleSave() {
       await writeBin();
       setSyncStatus('ok', 'Salvato ✓');
       setTimeout(() => setSyncStatus('ok', 'Online'), 2000);
-    } catch(e) {
-      setSyncStatus('error', 'Errore salvataggio');
-    }
+    } catch(e) { setSyncStatus('error', 'Errore salvataggio'); }
   }, 600);
 }
 
@@ -353,6 +477,7 @@ function render() {
   document.getElementById('hdr-title').textContent  = state.championship;
   document.getElementById('hdr-season').textContent = state.season;
   renderStandings();
+  renderChart();
   renderRaces();
 }
 
@@ -370,11 +495,9 @@ function renderStandings() {
   const done  = state.races.filter(r => r.result).length;
   const total = state.races.length;
   const pct   = total > 0 ? Math.round(done / total * 100) : 0;
-
   document.getElementById('races-progress').textContent = done + '/' + total + ' gare completate';
   document.getElementById('progress-fill').style.width  = pct + '%';
   document.getElementById('progress-label').textContent = pct + '% del campionato completato';
-
   document.getElementById('standings-container').innerHTML = s.map((p, i) => {
     const wins = state.races.filter(r => r.result && r.result.first === p.name).length;
     const tie  = s.length > 1 && s[0].pts === s[1].pts;
@@ -389,9 +512,114 @@ function renderStandings() {
   }).join('');
 }
 
+// ── GRAFICO ───────────────────────────────────────
+function renderChart() {
+  const races   = state.races;
+  const players = state.players;
+
+  // Calcola punti cumulativi gara per gara
+  const series = {};
+  players.forEach(p => series[p] = []);
+
+  const running = {};
+  players.forEach(p => running[p] = 0);
+
+  races.forEach(r => {
+    if (r.result && r.result.first) running[r.result.first]++;
+    players.forEach(p => series[p].push(running[p]));
+  });
+
+  // Label asse X: nomi corti circuiti
+  const labels = races.map((r, i) => {
+    const name = r.name.length > 10 ? r.name.substring(0, 9) + '…' : r.name;
+    return name;
+  });
+
+  // Aggiorna legenda
+  document.getElementById('chart-legend').innerHTML = players.map((p, i) =>
+    `<div class="legend-item">
+      <div class="legend-dot" style="background:${PLAYER_COLORS[i % PLAYER_COLORS.length]}"></div>
+      ${p}
+    </div>`
+  ).join('');
+
+  const datasets = players.map((p, i) => ({
+    label: p,
+    data: series[p],
+    borderColor: PLAYER_COLORS[i % PLAYER_COLORS.length],
+    backgroundColor: PLAYER_COLORS[i % PLAYER_COLORS.length] + '18',
+    borderWidth: 2.5,
+    pointRadius: 5,
+    pointHoverRadius: 7,
+    pointBackgroundColor: PLAYER_COLORS[i % PLAYER_COLORS.length],
+    pointBorderColor: '#fff',
+    pointBorderWidth: 2,
+    tension: 0.35,
+    fill: false
+  }));
+
+  const maxPts = Math.max(1, ...players.map(p => running[p]));
+
+  if (chartInstance) {
+    chartInstance.data.labels   = labels;
+    chartInstance.data.datasets = datasets;
+    chartInstance.options.scales.y.max = maxPts + 1;
+    chartInstance.update('active');
+    return;
+  }
+
+  const ctx = document.getElementById('chart-canvas').getContext('2d');
+  chartInstance = new Chart(ctx, {
+    type: 'line',
+    data: { labels, datasets },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#1a1a1a',
+          titleColor: '#fff',
+          bodyColor: '#ccc',
+          padding: 10,
+          cornerRadius: 10,
+          callbacks: {
+            label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y} punt${ctx.parsed.y !== 1 ? 'i' : 'o'}`
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: '#f0ede6' },
+          ticks: {
+            color: '#aaa', font: { size: 11 },
+            maxRotation: 35, minRotation: 20
+          }
+        },
+        y: {
+          min: 0,
+          max: maxPts + 1,
+          ticks: {
+            color: '#aaa', font: { size: 12 },
+            stepSize: 1,
+            callback: v => Number.isInteger(v) ? v : ''
+          },
+          grid: { color: '#f0ede6' }
+        }
+      }
+    }
+  });
+
+  // Altezza canvas dinamica
+  document.getElementById('chart-canvas').style.height = '220px';
+}
+
+// ── GARE ──────────────────────────────────────────
 function renderRaces() {
   document.getElementById('races-count').textContent = state.races.length + ' circuiti';
-  document.getElementById('races-grid').innerHTML = state.races.map((r, idx) => {
+  const grid = document.getElementById('races-grid');
+  grid.innerHTML = state.races.map((r, idx) => {
 
     const imgBlock = `<div class="race-img-wrap">
       <img src="images/${r.img}" alt="${r.name}"
@@ -428,9 +656,18 @@ function renderRaces() {
     const btnClass = r.result ? 'btn-result has-result' : 'btn-result';
     const btnLabel = r.result ? '✎ Modifica risultato' : '+ Inserisci risultato';
 
-    return `<div class="race-card">
+    return `<div class="race-card" data-id="${r.id}"
+        draggable="true"
+        ondragstart="onDragStart(event,'${r.id}')"
+        ondragend="onDragEnd(event)"
+        ondragover="onDragOver(event,'${r.id}')"
+        ondrop="onDrop(event,'${r.id}')"
+        ontouchstart="onTouchStart(event,'${r.id}')"
+        ontouchmove="onTouchMove(event)"
+        ontouchend="onTouchEnd(event)">
       ${imgBlock}
       <div class="race-content">
+        <div class="drag-handle" title="Trascina per riordinare">⠿</div>
         <div class="race-meta">
           <span class="race-num-label">Gara ${idx+1}</span>
           ${badge}
@@ -450,32 +687,20 @@ function openResult(id) {
   resultingRaceId = id;
   const r = state.races.find(r => r.id === id);
   if (!r) return;
-
   document.getElementById('result-modal-title').textContent = r.name;
   document.getElementById('result-modal-sub').textContent   = 'Gara ' + (state.races.indexOf(r)+1) + ' · Chi ha vinto?';
-
   const s1 = document.getElementById('result-first');
   const s2 = document.getElementById('result-second');
   s1.innerHTML = s2.innerHTML = state.players.map(p => `<option value="${p}">${p}</option>`).join('');
-
-  if (r.result) {
-    s1.value = r.result.first;
-    s2.value = r.result.second;
-  } else {
-    s1.value = state.players[0];
-    s2.value = state.players[1];
-  }
-
+  if (r.result) { s1.value = r.result.first; s2.value = r.result.second; }
+  else          { s1.value = state.players[0]; s2.value = state.players[1]; }
   document.getElementById('result-modal').classList.add('open');
 }
 
 function saveResult() {
   const first  = document.getElementById('result-first').value;
   const second = document.getElementById('result-second').value;
-  if (first === second) {
-    showToast('1° e 2° non possono essere lo stesso pilota');
-    return;
-  }
+  if (first === second) { showToast('1° e 2° non possono essere lo stesso pilota'); return; }
   const r = state.races.find(r => r.id === resultingRaceId);
   if (r) r.result = { first, second };
   scheduleSave();
@@ -485,11 +710,9 @@ function saveResult() {
 }
 
 // ── UTILS ─────────────────────────────────────────
-function closeModal() {
-  document.getElementById('result-modal').classList.remove('open');
-}
-function showLoading()  { document.getElementById('loading-overlay').classList.add('open'); }
-function hideLoading()  { document.getElementById('loading-overlay').classList.remove('open'); }
+function closeModal() { document.getElementById('result-modal').classList.remove('open'); }
+function showLoading() { document.getElementById('loading-overlay').classList.add('open'); }
+function hideLoading() { document.getElementById('loading-overlay').classList.remove('open'); }
 
 function setSyncStatus(type, label) {
   const badge = document.getElementById('sync-badge');
