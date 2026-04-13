@@ -76,6 +76,9 @@
     background: #fff; border-radius: 16px; border: 1px solid #e8e6e0;
     padding: 20px 24px 16px; margin-bottom: 32px;
   }
+  .chart-wrap {
+    position: relative; height: 400px; max-height: 400px;
+  }
   .chart-legend {
     display: flex; gap: 20px; margin-bottom: 16px; flex-wrap: wrap;
   }
@@ -275,7 +278,9 @@
   </div>
   <div class="chart-card">
     <div class="chart-legend" id="chart-legend"></div>
-    <canvas id="chart-canvas" height="220"></canvas>
+    <div class="chart-wrap">
+      <canvas id="chart-canvas"></canvas>
+    </div>
   </div>
 
   <!-- GARE -->
@@ -611,8 +616,7 @@ function renderChart() {
     }
   });
 
-  // Altezza canvas dinamica
-  document.getElementById('chart-canvas').style.height = '220px';
+  // Altezza gestita dal wrapper CSS
 }
 
 // ── GARE ──────────────────────────────────────────
