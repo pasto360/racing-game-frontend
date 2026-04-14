@@ -5,303 +5,410 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>10 Gare 2026</title>
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-    background: #f5f4f0; color: #1a1a1a; min-height: 100vh;
-  }
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #f5f4f0; color: #1a1a1a; min-height: 100vh;
+  padding-bottom: 80px; /* space for mobile tab bar */
+}
 
-  /* HEADER */
-  header {
-    background: #1a1a1a; color: #fff;
-    padding: 0 20px; display: flex; align-items: center;
-    justify-content: space-between; height: 60px;
-    position: sticky; top: 0; z-index: 100;
-  }
-  .header-left { display: flex; align-items: baseline; gap: 8px; }
-  header h1 { font-size: 18px; font-weight: 600; }
-  header .subtitle { font-size: 13px; color: #888; }
-  .header-right { display: flex; align-items: center; gap: 8px; }
+/* ── HEADER ─────────────────────────────────────── */
+header {
+  background: #1a1a1a; color: #fff;
+  padding: 0 16px; display: flex; align-items: center;
+  justify-content: space-between; height: 56px;
+  position: sticky; top: 0; z-index: 100;
+}
+.header-left { display: flex; align-items: baseline; gap: 7px; }
+header h1 { font-size: 17px; font-weight: 700; }
+header .subtitle { font-size: 12px; color: #777; }
+.header-right { display: flex; align-items: center; gap: 8px; }
 
-  .sync-badge {
-    font-size: 12px; padding: 4px 10px; border-radius: 20px;
-    display: flex; align-items: center; gap: 5px; font-weight: 500;
-  }
-  .sync-ok      { background: rgba(46,160,67,0.25);  color: #a3f0b0; }
-  .sync-saving  { background: rgba(255,200,0,0.2);   color: #ffd96a; }
-  .sync-error   { background: rgba(255,80,80,0.2);   color: #ff9a9a; }
-  .sync-loading { background: rgba(255,255,255,0.1); color: #aaa; }
-  .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
-  .sync-dot.pulsing { animation: pulse 1s infinite; }
+.sync-badge {
+  font-size: 11px; padding: 3px 9px; border-radius: 20px;
+  display: flex; align-items: center; gap: 5px; font-weight: 500;
+}
+.sync-ok      { background: rgba(46,160,67,0.25);  color: #a3f0b0; }
+.sync-saving  { background: rgba(255,200,0,0.2);   color: #ffd96a; }
+.sync-error   { background: rgba(255,80,80,0.2);   color: #ff9a9a; }
+.sync-loading { background: rgba(255,255,255,0.1); color: #aaa; }
+.sync-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+@keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.3} }
+.sync-dot.pulsing { animation: pulse 1s infinite; }
 
-  .btn-manage {
-    background: rgba(255,255,255,0.12); border: none; color: #fff;
-    padding: 7px 13px; border-radius: 8px; font-size: 13px; font-weight: 500;
-    cursor: pointer; white-space: nowrap;
-  }
-  .btn-manage:hover { background: rgba(255,255,255,0.2); }
+.btn-manage {
+  background: rgba(255,255,255,0.12); border: none; color: #fff;
+  padding: 6px 12px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer;
+}
+.btn-manage:active { background: rgba(255,255,255,0.25); }
 
-  /* MAIN */
-  .container { max-width: 1000px; margin: 0 auto; padding: 24px 16px; }
+/* ── MOBILE TAB BAR ─────────────────────────────── */
+.tab-bar {
+  display: none;
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 90;
+  background: #fff; border-top: 1px solid #e8e6e0;
+  height: 64px; padding-bottom: env(safe-area-inset-bottom, 0);
+}
+.tab-bar-inner {
+  display: flex; height: 64px;
+}
+.tab-btn {
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 4px; background: none; border: none; cursor: pointer;
+  font-size: 10px; font-weight: 600; color: #aaa; text-transform: uppercase; letter-spacing: 0.5px;
+  transition: color 0.15s;
+}
+.tab-btn svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 2; }
+.tab-btn.active { color: #1a1a1a; }
+@media (max-width: 767px) { .tab-bar { display: block; } }
 
-  .section-header {
-    display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;
-  }
-  .section-title {
-    font-size: 13px; font-weight: 600; text-transform: uppercase;
-    letter-spacing: 1px; color: #888;
-  }
+/* ── PAGE SECTIONS ──────────────────────────────── */
+.page { display: none; }
+.page.active { display: block; }
 
-  /* CLASSIFICA */
-  .standings-card {
-    background: #fff; border-radius: 16px; overflow: hidden;
-    border: 1px solid #e8e6e0; margin-bottom: 12px;
-  }
-  .standings-row {
-    display: grid; grid-template-columns: 48px 1fr 100px;
-    align-items: center; padding: 14px 20px;
-    border-bottom: 1px solid #f0ede6;
-  }
-  .standings-row:last-child { border-bottom: none; }
-  .standings-row.leader { background: #fffbe6; }
-  .pos { font-size: 20px; font-weight: 700; color: #ccc; }
-  .pos.first  { color: #d4a017; }
-  .pos.second { color: #999; }
-  .driver-name { font-size: 17px; font-weight: 600; }
-  .driver-sub  { font-size: 12px; color: #999; margin-top: 2px; }
-  .pts { text-align: right; font-size: 24px; font-weight: 700; }
-  .pts span { font-size: 12px; font-weight: 400; color: #999; }
+/* Desktop: show all at once in a layout */
+@media (min-width: 768px) {
+  body { padding-bottom: 0; }
+  .page { display: block !important; }
+  .tab-bar { display: none !important; }
+}
 
-  .progress-bar { height: 5px; background: #e8e6e0; border-radius: 3px; overflow: hidden; margin-top: 10px; }
-  .progress-fill { height: 100%; background: #1a1a1a; border-radius: 3px; transition: width 0.5s ease; }
-  .progress-label { font-size: 12px; color: #aaa; margin-top: 5px; text-align: right; }
+/* ── LAYOUT DESKTOP ─────────────────────────────── */
+.main-layout {
+  max-width: 1100px; margin: 0 auto; padding: 24px 16px;
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  grid-template-rows: auto auto;
+  gap: 24px;
+  align-items: start;
+}
+.col-races  { grid-column: 1; grid-row: 1; }
+.col-right  { grid-column: 2; grid-row: 1 / 3; }
+.col-chart  { grid-column: 1; grid-row: 2; }
 
-  /* GRAFICO */
-  .chart-card {
-    background: #fff; border-radius: 16px; border: 1px solid #e8e6e0;
-    padding: 18px 20px 14px; margin-bottom: 28px;
+@media (max-width: 767px) {
+  .main-layout {
+    display: block; padding: 16px;
   }
-  .chart-legend { display: flex; gap: 18px; margin-bottom: 14px; flex-wrap: wrap; }
-  .legend-item { display: flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 500; color: #555; }
-  .legend-dot  { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
-  .chart-wrap  { position: relative; height: 240px; }
-  #chart-canvas { width: 100%; display: block; }
+  .col-races, .col-right, .col-chart { margin-bottom: 0; }
+}
 
-  /* GARE GRID */
-  .races-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 14px; margin-bottom: 12px;
-  }
-  .race-card {
-    background: #fff; border-radius: 16px; border: 1px solid #e8e6e0;
-    overflow: hidden; transition: box-shadow 0.2s;
-  }
-  .race-card:hover { box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
-  .race-img-wrap {
-    width: 100%; height: 130px; background: #e8e6e0; overflow: hidden;
-  }
-  .race-img-wrap img {
-    width: 100%; height: 100%; object-fit: cover; display: block;
-    transition: transform 0.3s; pointer-events: none;
-  }
-  .race-card:hover .race-img-wrap img { transform: scale(1.03); }
-  .race-img-placeholder {
-    width: 100%; height: 100%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 40px; background: #f0ede6;
-  }
-  .race-content { padding: 12px 14px; }
-  .race-meta { display: flex; align-items: center; justify-content: space-between; margin-bottom: 5px; }
-  .race-num-label { font-size: 11px; font-weight: 700; letter-spacing: 1px; color: #bbb; text-transform: uppercase; }
-  .race-name { font-size: 15px; font-weight: 700; margin-bottom: 8px; }
-  .result-block { padding: 8px 0 0; border-top: 1px solid #f0ede6; }
-  .result-row { display: flex; align-items: center; justify-content: space-between; padding: 3px 0; }
-  .result-pos-badge {
-    display: inline-flex; align-items: center; justify-content: center;
-    width: 22px; height: 22px; border-radius: 50%;
-    font-size: 11px; font-weight: 700; margin-right: 7px; flex-shrink: 0;
-  }
-  .badge-1 { background: #fff3cd; color: #856404; }
-  .badge-2 { background: #ebebeb; color: #555; }
-  .result-driver { font-size: 14px; font-weight: 500; }
-  .result-pts      { font-size: 12px; color: #bbb; }
-  .result-pts.gold { color: #d4a017; font-weight: 700; }
-  .no-result { font-size: 13px; color: #ccc; padding: 6px 0; text-align: center; }
-  .race-footer { padding: 10px 14px; border-top: 1px solid #f0ede6; }
-  .btn-result {
-    width: 100%; padding: 9px; border-radius: 10px; font-size: 14px; font-weight: 600;
-    border: none; cursor: pointer; transition: opacity 0.15s; background: #1a1a1a; color: #fff;
-  }
-  .btn-result:hover { opacity: 0.82; }
-  .btn-result.has-result { background: #f0ede6; color: #555; }
+/* ── SECTION HEADERS ────────────────────────────── */
+.section-header {
+  display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;
+}
+.section-title {
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 1.2px; color: #999;
+}
 
-  .status-badge {
-    display: inline-flex; align-items: center; gap: 4px;
-    font-size: 10px; font-weight: 700; padding: 3px 7px;
-    border-radius: 20px; text-transform: uppercase; letter-spacing: 0.5px;
-  }
-  .status-done    { background: #e8f5e9; color: #2e7d32; }
-  .status-pending { background: #f3f4f6; color: #aaa; }
-  .status-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+/* ── GARE GRID (2 colonne fisse) ────────────────── */
+.races-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+@media (max-width: 400px) {
+  .races-grid { grid-template-columns: 1fr; }
+}
 
-  /* MODAL base */
-  .modal-overlay {
-    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55);
-    z-index: 200; align-items: flex-end; justify-content: center;
-    padding: 0;
-  }
-  .modal-overlay.open { display: flex; }
-  .modal {
-    background: #fff; border-radius: 20px 20px 0 0; width: 100%;
-    max-width: 500px; padding: 24px 24px 36px; position: relative;
-    max-height: 92vh; overflow-y: auto;
-  }
-  @media (min-width: 520px) {
-    .modal-overlay { align-items: center; padding: 20px; }
-    .modal { border-radius: 18px; max-width: 440px; }
-  }
-  .modal-drag-bar {
-    width: 40px; height: 4px; background: #ddd; border-radius: 2px;
-    margin: 0 auto 20px;
-  }
-  @media (min-width: 520px) { .modal-drag-bar { display: none; } }
-  .modal h2 { font-size: 18px; font-weight: 700; margin-bottom: 5px; }
-  .modal .modal-sub { font-size: 13px; color: #aaa; margin-bottom: 20px; }
-  .modal-close {
-    position: absolute; top: 16px; right: 16px; width: 32px; height: 32px;
-    border-radius: 50%; border: none; background: #f0ede6; cursor: pointer;
-    font-size: 18px; display: flex; align-items: center; justify-content: center; color: #555;
-  }
-  label { display: block; font-size: 13px; font-weight: 600; color: #555; margin-bottom: 5px; }
-  .field { margin-bottom: 14px; }
-  input[type="text"], select {
-    width: 100%; padding: 11px 12px; border: 1px solid #ddd; border-radius: 10px;
-    font-size: 15px; outline: none; background: #fff; cursor: pointer;
-    transition: border-color 0.15s;
-  }
-  input[type="text"]:focus, select:focus { border-color: #1a1a1a; }
-  .btn-primary {
-    width: 100%; padding: 13px; background: #1a1a1a; color: #fff;
-    border: none; border-radius: 10px; font-size: 15px; font-weight: 700;
-    cursor: pointer; transition: opacity 0.15s; margin-top: 4px;
-  }
-  .btn-primary:hover { opacity: 0.85; }
+.race-card {
+  background: #fff; border-radius: 14px; border: 1px solid #e8e6e0;
+  overflow: hidden; transition: box-shadow 0.2s;
+}
+.race-card:active { box-shadow: 0 2px 12px rgba(0,0,0,0.1); }
+.race-img-wrap { width: 100%; height: 100px; background: #e8e6e0; overflow: hidden; }
+.race-img-wrap img { width:100%; height:100%; object-fit:cover; display:block; pointer-events:none; }
+.race-img-placeholder {
+  width:100%;height:100%; display:flex; align-items:center;
+  justify-content:center; font-size:32px; background:#f0ede6;
+}
+.race-content { padding: 10px 11px; }
+.race-meta { display:flex; align-items:center; justify-content:space-between; margin-bottom:4px; }
+.race-num-label { font-size:10px; font-weight:700; letter-spacing:1px; color:#ccc; text-transform:uppercase; }
+.race-name { font-size:13px; font-weight:700; margin-bottom:7px; line-height:1.3; }
+.result-block { padding:7px 0 0; border-top:1px solid #f0ede6; }
+.result-row { display:flex; align-items:center; justify-content:space-between; padding:2px 0; }
+.result-pos-badge {
+  display:inline-flex; align-items:center; justify-content:center;
+  width:20px; height:20px; border-radius:50%;
+  font-size:10px; font-weight:700; margin-right:6px; flex-shrink:0;
+}
+.badge-1 { background:#fff3cd; color:#856404; }
+.badge-2 { background:#ebebeb; color:#555; }
+.result-driver { font-size:12px; font-weight:500; }
+.result-pts      { font-size:11px; color:#bbb; }
+.result-pts.gold { color:#d4a017; font-weight:700; }
+.no-result { font-size:11px; color:#ccc; padding:5px 0; text-align:center; }
+.race-footer { padding:8px 11px; border-top:1px solid #f0ede6; }
+.btn-result {
+  width:100%; padding:8px; border-radius:9px; font-size:12px; font-weight:600;
+  border:none; cursor:pointer; background:#1a1a1a; color:#fff; transition:opacity 0.15s;
+}
+.btn-result:active { opacity:0.75; }
+.btn-result.has-result { background:#f0ede6; color:#555; }
 
-  /* IMAGE PICKER */
-  .img-picker-grid {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px;
-  }
-  .img-picker-item {
-    border: 2px solid #e8e6e0; border-radius: 10px; overflow: hidden;
-    cursor: pointer; transition: border-color 0.15s; position: relative;
-  }
-  .img-picker-item.selected { border-color: #1a1a1a; }
-  .img-picker-item img { width: 100%; height: 60px; object-fit: cover; display: block; }
-  .img-picker-item .img-label {
-    font-size: 10px; font-weight: 600; text-align: center;
-    padding: 4px 2px; color: #555; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  }
-  .img-picker-item.selected .img-label { color: #1a1a1a; }
-  .img-picker-check {
-    display: none; position: absolute; top: 4px; right: 4px;
-    width: 18px; height: 18px; border-radius: 50%;
-    background: #1a1a1a; color: #fff; font-size: 11px;
-    align-items: center; justify-content: center;
-  }
-  .img-picker-item.selected .img-picker-check { display: flex; }
+.status-badge {
+  display:inline-flex; align-items:center; gap:3px;
+  font-size:9px; font-weight:700; padding:2px 6px;
+  border-radius:20px; text-transform:uppercase; letter-spacing:0.5px;
+}
+.status-done    { background:#e8f5e9; color:#2e7d32; }
+.status-pending { background:#f3f4f6; color:#aaa; }
+.status-dot { width:4px; height:4px; border-radius:50%; background:currentColor; }
 
-  /* PANNELLO GESTIONE — slide-up panel */
-  .manage-panel {
-    display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55);
-    z-index: 300; align-items: flex-end; justify-content: center;
-  }
-  .manage-panel.open { display: flex; }
-  .manage-inner {
-    background: #fff; border-radius: 20px 20px 0 0;
-    width: 100%; max-width: 520px;
-    max-height: 88vh; display: flex; flex-direction: column;
-  }
-  .manage-header {
-    padding: 16px 20px 12px; border-bottom: 1px solid #f0ede6;
-    display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
-  }
-  .manage-header h2 { font-size: 17px; font-weight: 700; }
-  .manage-drag-bar {
-    width: 40px; height: 4px; background: #ddd; border-radius: 2px;
-    margin: 12px auto 0; flex-shrink: 0;
-  }
-  .manage-body { overflow-y: auto; flex: 1; padding: 12px 16px 20px; }
-  .manage-hint { font-size: 12px; color: #aaa; margin-bottom: 12px; text-align: center; }
+/* ── CLASSIFICA (colonna destra) ────────────────── */
+.standings-card {
+  background:#fff; border-radius:14px; overflow:hidden;
+  border:1px solid #e8e6e0; margin-bottom:10px;
+}
+.standings-row {
+  display:grid; grid-template-columns:38px 1fr 64px;
+  align-items:center; padding:12px 16px;
+  border-bottom:1px solid #f0ede6;
+}
+.standings-row:last-child { border-bottom:none; }
+.standings-row.leader { background:#fffbe6; }
+.pos { font-size:18px; font-weight:700; color:#ccc; }
+.pos.first  { color:#d4a017; }
+.pos.second { color:#999; }
+.pos.third  { color:#cd7f32; }
+.driver-name { font-size:15px; font-weight:600; }
+.driver-sub  { font-size:11px; color:#aaa; margin-top:2px; }
+.pts { text-align:right; font-size:20px; font-weight:700; }
+.pts span { font-size:11px; font-weight:400; color:#aaa; }
 
-  /* SORTABLE LIST nel pannello gestione */
-  .sort-list { list-style: none; }
-  .sort-item {
-    display: flex; align-items: center; gap: 12px;
-    background: #fff; border: 1px solid #e8e6e0; border-radius: 12px;
-    padding: 10px 12px; margin-bottom: 8px;
-    touch-action: none;
-    user-select: none;
-  }
-  .sort-item.dragging-sort { opacity: 0.4; }
-  .sort-item.drag-over-sort { border: 2px dashed #1a1a1a; background: #f8f7f4; }
-  .sort-handle {
-    font-size: 18px; color: #ccc; cursor: grab; flex-shrink: 0;
-    padding: 4px 2px; touch-action: none;
-  }
-  .sort-thumb {
-    width: 44px; height: 32px; border-radius: 6px; object-fit: cover;
-    background: #f0ede6; flex-shrink: 0; overflow: hidden;
-  }
-  .sort-thumb img { width: 100%; height: 100%; object-fit: cover; }
-  .sort-thumb-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 16px; }
-  .sort-name { flex: 1; font-size: 14px; font-weight: 500; }
-  .sort-num  { font-size: 12px; font-weight: 700; color: #bbb; min-width: 24px; text-align: right; }
+.progress-bar { height:4px; background:#e8e6e0; border-radius:2px; overflow:hidden; margin-top:8px; }
+.progress-fill { height:100%; background:#1a1a1a; border-radius:2px; transition:width 0.5s; }
+.progress-label { font-size:11px; color:#bbb; margin-top:5px; text-align:right; }
 
-  .manage-add-btn {
-    width: 100%; padding: 12px; border: 2px dashed #d0cdc5; background: transparent;
-    border-radius: 12px; font-size: 14px; font-weight: 600; color: #aaa;
-    cursor: pointer; display: flex; align-items: center; justify-content: center;
-    gap: 8px; margin-top: 4px; transition: all 0.2s;
-  }
-  .manage-add-btn:hover { border-color: #999; color: #555; background: #faf9f6; }
+/* ── PREMI BOX ───────────────────────────────────── */
+.prizes-card {
+  background:#fff; border-radius:14px; border:1px solid #e8e6e0;
+  overflow:hidden; margin-top:16px;
+}
+.prize-row {
+  display:flex; align-items:center; gap:10px;
+  padding:11px 16px; border-bottom:1px solid #f0ede6;
+}
+.prize-row:last-child { border-bottom:none; }
+.prize-icon { font-size:20px; flex-shrink:0; }
+.prize-info { flex:1; min-width:0; }
+.prize-pos  { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; color:#aaa; }
+.prize-text { font-size:13px; font-weight:500; color:#1a1a1a; margin-top:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.prize-empty { font-size:12px; color:#ccc; font-style:italic; }
 
-  /* LOADING */
-  .loading-overlay {
-    display: none; position: fixed; inset: 0; background: rgba(245,244,240,0.92);
-    z-index: 400; align-items: center; justify-content: center; flex-direction: column; gap: 14px;
-  }
-  .loading-overlay.open { display: flex; }
-  .spinner {
-    width: 38px; height: 38px; border: 3px solid #ddd;
-    border-top-color: #1a1a1a; border-radius: 50%;
-    animation: spin 0.7s linear infinite;
-  }
-  @keyframes spin { to { transform: rotate(360deg); } }
+/* ── GRAFICO ─────────────────────────────────────── */
+.chart-card {
+  background:#fff; border-radius:14px; border:1px solid #e8e6e0;
+  padding:16px 18px 12px;
+}
+.chart-legend { display:flex; gap:16px; margin-bottom:12px; flex-wrap:wrap; }
+.legend-item { display:flex; align-items:center; gap:6px; font-size:12px; font-weight:500; color:#555; }
+.legend-dot  { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+.chart-wrap  { position:relative; height:220px; }
 
-  /* TOAST */
-  .toast {
-    position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(20px);
-    background: #1a1a1a; color: #fff; padding: 10px 20px; border-radius: 30px;
-    font-size: 14px; font-weight: 500; opacity: 0; transition: all 0.3s ease; z-index: 600;
-    white-space: nowrap; pointer-events: none;
-  }
-  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+/* ── MOBILE PAGE PADDING ────────────────────────── */
+.mob-page { padding: 16px; }
 
-  @media (max-width: 500px) {
-    .races-grid { grid-template-columns: 1fr; }
-  }
+/* ── MODAL ───────────────────────────────────────── */
+.modal-overlay {
+  display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55);
+  z-index:200; align-items:flex-end; justify-content:center;
+}
+.modal-overlay.open { display:flex; }
+.modal {
+  background:#fff; border-radius:20px 20px 0 0; width:100%;
+  max-width:500px; padding:20px 20px 36px; position:relative;
+  max-height:92vh; overflow-y:auto;
+}
+@media (min-width:520px) {
+  .modal-overlay { align-items:center; padding:20px; }
+  .modal { border-radius:18px; max-width:440px; }
+}
+.drag-bar {
+  width:36px; height:4px; background:#ddd; border-radius:2px; margin:0 auto 18px;
+}
+@media (min-width:520px) { .drag-bar { display:none; } }
+.modal h2 { font-size:17px; font-weight:700; margin-bottom:4px; }
+.modal-sub { font-size:12px; color:#aaa; margin-bottom:18px; }
+.modal-close {
+  position:absolute; top:14px; right:14px; width:30px; height:30px;
+  border-radius:50%; border:none; background:#f0ede6; cursor:pointer;
+  font-size:17px; display:flex; align-items:center; justify-content:center; color:#555;
+}
+label { display:block; font-size:12px; font-weight:600; color:#666; margin-bottom:5px; }
+.field { margin-bottom:14px; }
+input[type="text"], select {
+  width:100%; padding:11px 12px; border:1px solid #ddd; border-radius:10px;
+  font-size:15px; outline:none; background:#fff; transition:border-color 0.15s;
+}
+input[type="text"]:focus, select:focus { border-color:#1a1a1a; }
+.btn-primary {
+  width:100%; padding:13px; background:#1a1a1a; color:#fff;
+  border:none; border-radius:10px; font-size:15px; font-weight:700;
+  cursor:pointer; margin-top:4px;
+}
+.btn-primary:active { opacity:0.8; }
+
+/* IMAGE PICKER */
+.img-picker-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:7px; margin-top:8px; }
+.img-picker-item {
+  border:2px solid #e8e6e0; border-radius:9px; overflow:hidden;
+  cursor:pointer; position:relative;
+}
+.img-picker-item.selected { border-color:#1a1a1a; }
+.img-picker-item img { width:100%; height:55px; object-fit:cover; display:block; }
+.img-picker-item .img-label {
+  font-size:10px; font-weight:600; text-align:center;
+  padding:3px 2px; color:#666; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.img-picker-check {
+  display:none; position:absolute; top:3px; right:3px;
+  width:16px; height:16px; border-radius:50%;
+  background:#1a1a1a; color:#fff; font-size:10px;
+  align-items:center; justify-content:center;
+}
+.img-picker-item.selected .img-picker-check { display:flex; }
+
+/* ── MANAGE PANEL ───────────────────────────────── */
+.manage-panel {
+  display:none; position:fixed; inset:0; background:rgba(0,0,0,0.55);
+  z-index:300; align-items:flex-end; justify-content:center;
+}
+.manage-panel.open { display:flex; }
+.manage-inner {
+  background:#fff; border-radius:20px 20px 0 0;
+  width:100%; max-width:560px; max-height:92vh;
+  display:flex; flex-direction:column;
+}
+.manage-drag-bar {
+  width:36px; height:4px; background:#ddd; border-radius:2px;
+  margin:12px auto 0; flex-shrink:0;
+}
+.manage-header {
+  padding:14px 18px 0; display:flex; align-items:center;
+  justify-content:space-between; flex-shrink:0;
+}
+.manage-header h2 { font-size:17px; font-weight:700; }
+
+/* TABS inside manage panel */
+.manage-tabs {
+  display:flex; gap:0; padding:14px 18px 0; flex-shrink:0;
+  border-bottom:1px solid #f0ede6;
+}
+.manage-tab {
+  flex:1; padding:9px 4px; text-align:center; font-size:12px; font-weight:600;
+  color:#aaa; border:none; background:none; cursor:pointer;
+  border-bottom:2px solid transparent; margin-bottom:-1px;
+  transition:color 0.15s;
+}
+.manage-tab.active { color:#1a1a1a; border-bottom-color:#1a1a1a; }
+
+.manage-body { overflow-y:auto; flex:1; padding:14px 16px 24px; }
+.manage-hint { font-size:11px; color:#bbb; margin-bottom:10px; text-align:center; }
+
+/* sort list */
+.sort-list { list-style:none; }
+.sort-item {
+  display:flex; align-items:center; gap:10px;
+  background:#fff; border:1px solid #e8e6e0; border-radius:11px;
+  padding:9px 11px; margin-bottom:7px;
+  touch-action:none; user-select:none;
+}
+.sort-item.dragging-sort  { opacity:0.4; }
+.sort-item.drag-over-sort { border:2px dashed #1a1a1a; background:#f8f7f4; }
+.sort-handle {
+  font-size:18px; color:#ccc; cursor:grab; flex-shrink:0; padding:2px;
+  touch-action:none; line-height:1;
+}
+.sort-thumb {
+  width:40px; height:28px; border-radius:5px;
+  background:#f0ede6; flex-shrink:0; overflow:hidden;
+}
+.sort-thumb img { width:100%; height:100%; object-fit:cover; }
+.sort-thumb-ph { width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:14px; }
+.sort-name { flex:1; font-size:13px; font-weight:500; min-width:0; }
+.sort-num  { font-size:11px; font-weight:700; color:#ccc; min-width:20px; text-align:right; }
+.sort-del  {
+  width:26px; height:26px; border-radius:50%; border:none; background:#fdecea;
+  color:#c0392b; font-size:16px; cursor:pointer; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+}
+
+/* player list items */
+.player-item {
+  display:flex; align-items:center; gap:10px;
+  background:#fff; border:1px solid #e8e6e0; border-radius:11px;
+  padding:9px 11px; margin-bottom:7px;
+}
+.player-color-dot {
+  width:12px; height:12px; border-radius:50%; flex-shrink:0;
+}
+.player-name-input {
+  flex:1; border:none; outline:none; font-size:14px; font-weight:500;
+  background:transparent; padding:0;
+}
+.player-del {
+  width:26px; height:26px; border-radius:50%; border:none; background:#fdecea;
+  color:#c0392b; font-size:16px; cursor:pointer; flex-shrink:0;
+  display:flex; align-items:center; justify-content:center;
+}
+
+/* prize inputs */
+.prize-input-row {
+  display:flex; align-items:center; gap:10px;
+  background:#fff; border:1px solid #e8e6e0; border-radius:11px;
+  padding:9px 11px; margin-bottom:7px;
+}
+.prize-input-icon { font-size:20px; flex-shrink:0; }
+.prize-input-field {
+  flex:1; border:none; outline:none; font-size:14px; font-weight:500;
+  background:transparent; padding:0; color:#1a1a1a;
+}
+.prize-input-field::placeholder { color:#ccc; }
+
+.manage-add-btn {
+  width:100%; padding:11px; border:2px dashed #d0cdc5; background:transparent;
+  border-radius:11px; font-size:13px; font-weight:600; color:#aaa;
+  cursor:pointer; display:flex; align-items:center; justify-content:center;
+  gap:8px; margin-top:4px; transition:all 0.2s;
+}
+.manage-add-btn:active { background:#faf9f6; }
+
+/* ── LOADING ─────────────────────────────────────── */
+.loading-overlay {
+  display:none; position:fixed; inset:0; background:rgba(245,244,240,0.93);
+  z-index:400; align-items:center; justify-content:center; flex-direction:column; gap:14px;
+}
+.loading-overlay.open { display:flex; }
+.spinner {
+  width:36px; height:36px; border:3px solid #ddd;
+  border-top-color:#1a1a1a; border-radius:50%;
+  animation:spin 0.7s linear infinite;
+}
+@keyframes spin { to { transform:rotate(360deg); } }
+
+/* ── TOAST ───────────────────────────────────────── */
+.toast {
+  position:fixed; bottom:76px; left:50%; transform:translateX(-50%) translateY(10px);
+  background:#1a1a1a; color:#fff; padding:9px 18px; border-radius:30px;
+  font-size:13px; font-weight:500; opacity:0; transition:all 0.3s; z-index:600;
+  white-space:nowrap; pointer-events:none;
+}
+@media (min-width:768px) { .toast { bottom:28px; } }
+.toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
 </style>
 </head>
 <body>
 
 <div class="loading-overlay open" id="loading-overlay">
   <div class="spinner"></div>
-  <span style="font-size:14px;color:#888;">Caricamento campionato...</span>
+  <span style="font-size:14px;color:#888;">Caricamento...</span>
 </div>
 
+<!-- HEADER -->
 <header>
   <div class="header-left">
     <h1 id="hdr-title">10 Gare</h1>
@@ -316,70 +423,89 @@
   </div>
 </header>
 
-<div class="container">
-
-  <!-- CLASSIFICA -->
-  <div class="section-header">
-    <span class="section-title">Classifica</span>
-    <span id="races-progress" style="font-size:12px;color:#aaa;"></span>
+<!-- MOBILE TAB BAR -->
+<nav class="tab-bar">
+  <div class="tab-bar-inner">
+    <button class="tab-btn active" id="tab-races-btn" onclick="switchTab('races')">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      Gare
+    </button>
+    <button class="tab-btn" id="tab-standings-btn" onclick="switchTab('standings')">
+      <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      Classifica
+    </button>
   </div>
-  <div class="standings-card" id="standings-container"></div>
-  <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
-  <div class="progress-label" id="progress-label"></div>
+</nav>
 
-  <!-- GRAFICO -->
-  <div class="section-header" style="margin-top:28px;">
-    <span class="section-title">Andamento Punti</span>
+<!-- ═══ DESKTOP LAYOUT + MOBILE PAGES ═══ -->
+<div class="main-layout">
+
+  <!-- COL GARE (desktop left, mobile tab) -->
+  <div class="col-races page active" id="page-races">
+    <div class="section-header">
+      <span class="section-title">Gare</span>
+      <span id="races-count" style="font-size:11px;color:#bbb;"></span>
+    </div>
+    <div class="races-grid" id="races-grid"></div>
   </div>
-  <div class="chart-card">
-    <div class="chart-legend" id="chart-legend"></div>
-    <div class="chart-wrap">
-      <canvas id="chart-canvas"></canvas>
+
+  <!-- COL DESTRA — classifica + premi (desktop right, mobile tab) -->
+  <div class="col-right page" id="page-standings">
+    <div class="section-header">
+      <span class="section-title">Classifica</span>
+      <span id="races-progress" style="font-size:11px;color:#bbb;"></span>
+    </div>
+    <div class="standings-card" id="standings-container"></div>
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+    <div class="progress-label" id="progress-label"></div>
+
+    <!-- PREMI -->
+    <div class="section-header" style="margin-top:20px;">
+      <span class="section-title">Premi</span>
+    </div>
+    <div class="prizes-card" id="prizes-container"></div>
+  </div>
+
+  <!-- GRAFICO (desktop bottom-left, mobile in standings tab) -->
+  <div class="col-chart" id="chart-section">
+    <div class="section-header">
+      <span class="section-title">Andamento Punti</span>
+    </div>
+    <div class="chart-card">
+      <div class="chart-legend" id="chart-legend"></div>
+      <div class="chart-wrap">
+        <canvas id="chart-canvas"></canvas>
+      </div>
     </div>
   </div>
 
-  <!-- GARE -->
-  <div class="section-header">
-    <span class="section-title">Gare</span>
-    <span id="races-count" style="font-size:12px;color:#aaa;"></span>
-  </div>
-  <div class="races-grid" id="races-grid"></div>
-
 </div>
 
-<!-- ═══ PANNELLO GESTIONE ═══ -->
+<!-- ═══ MANAGE PANEL ═══ -->
 <div class="manage-panel" id="manage-panel">
   <div class="manage-inner">
     <div class="manage-drag-bar"></div>
     <div class="manage-header">
-      <h2>Gestisci Gare</h2>
-      <button style="background:none;border:none;font-size:22px;cursor:pointer;color:#888;padding:0 4px;" onclick="closeManagePanel()">×</button>
+      <h2>Gestisci</h2>
+      <button style="background:none;border:none;font-size:22px;cursor:pointer;color:#888;" onclick="closeManagePanel()">×</button>
     </div>
-    <div class="manage-body">
-      <p class="manage-hint">Tieni premuto ≡ e trascina per riordinare</p>
-      <ul class="sort-list" id="sort-list"></ul>
-      <button class="manage-add-btn" onclick="openAddRaceModal()">
-        <span style="font-size:20px;line-height:1;">+</span> Aggiungi circuito
-      </button>
+    <div class="manage-tabs">
+      <button class="manage-tab active" onclick="switchManageTab('players')">👤 Utenti</button>
+      <button class="manage-tab" onclick="switchManageTab('races')">🏁 Circuiti</button>
+      <button class="manage-tab" onclick="switchManageTab('prizes')">🏆 Premi</button>
     </div>
+    <div class="manage-body" id="manage-body"></div>
   </div>
 </div>
 
 <!-- ═══ MODAL RISULTATO ═══ -->
 <div class="modal-overlay" id="result-modal">
   <div class="modal">
-    <div class="modal-drag-bar"></div>
+    <div class="drag-bar"></div>
     <button class="modal-close" onclick="closeModal('result-modal')">×</button>
     <h2 id="result-modal-title">Risultato</h2>
     <p class="modal-sub" id="result-modal-sub"></p>
-    <div class="field">
-      <label>🥇 1° Posto</label>
-      <select id="result-first"></select>
-    </div>
-    <div class="field">
-      <label>🥈 2° Posto</label>
-      <select id="result-second"></select>
-    </div>
+    <div id="result-selects"></div>
     <button class="btn-primary" onclick="saveResult()">Salva Risultato</button>
   </div>
 </div>
@@ -387,7 +513,7 @@
 <!-- ═══ MODAL AGGIUNGI GARA ═══ -->
 <div class="modal-overlay" id="add-race-modal">
   <div class="modal">
-    <div class="modal-drag-bar"></div>
+    <div class="drag-bar"></div>
     <button class="modal-close" onclick="closeModal('add-race-modal')">×</button>
     <h2>Nuovo Circuito</h2>
     <p class="modal-sub">Inserisci il nome e scegli l'immagine</p>
@@ -398,8 +524,8 @@
     <div class="field">
       <label>Immagine</label>
       <div class="img-picker-grid" id="img-picker-grid"></div>
-      <input type="text" id="add-race-img-manual" placeholder="Oppure scrivi il nome file: es. barcellona.png"
-             style="margin-top:10px;" oninput="onManualImgInput()" />
+      <input type="text" id="add-race-img-manual" placeholder="Scrivi nome file: es. barcellona.png"
+             style="margin-top:9px;" oninput="onManualImgInput()" />
     </div>
     <button class="btn-primary" onclick="saveNewRace()">Aggiungi Circuito</button>
   </div>
@@ -413,27 +539,33 @@
 const API_KEY  = '$2a$10$FowpfhX4oEw6F57VyJMu7.OBOOVQllDEllfm6Nm9tXjtwWKGZwTb6';
 const BIN_ID   = '69d94980856a6821891db7ff';
 const BASE_URL = 'https://api.jsonbin.io/v3';
-const PLAYER_COLORS = ['#e63946', '#1d7eda'];
 
-// Lista immagini presenti in /images/ — aggiorna se aggiungi file
+const PLAYER_COLORS = [
+  '#e63946','#1d7eda','#2dc653','#f4a261','#9b5de5',
+  '#00b4d8','#ff6b6b','#06d6a0','#ffd166','#ef476f',
+  '#118ab2','#073b4c','#8338ec','#3a86ff','#fb5607',
+  '#ffbe0b','#44cf6c','#f72585','#4cc9f0','#7209b7'
+];
+
 const KNOWN_IMAGES = [
   'lemans.png','monza.png','nurburgring.png','spa.png',
   'suzuka.png','A1ring.png','interlagos.png','lagomaggiore.png','tsukuba.png'
 ];
 
 const INITIAL_STATE = {
-  championship: '10 Gare', season: '2026',
-  players: ['Stefano', 'Marco'],
-  races: [
-    { id:'r_1', name:'Le Mans',            img:'lemans.png',       result:null },
-    { id:'r_2', name:'Monza',              img:'monza.png',        result:null },
-    { id:'r_3', name:'Nürburgring',        img:'nurburgring.png',  result:null },
-    { id:'r_4', name:'Spa',               img:'spa.png',          result:null },
-    { id:'r_5', name:'Suzuka',            img:'suzuka.png',       result:null },
-    { id:'r_6', name:'A1 Ring',           img:'A1ring.png',       result:null },
-    { id:'r_7', name:'Interlagos',        img:'interlagos.png',   result:null },
-    { id:'r_8', name:'Lago Maggiore',     img:'lagomaggiore.png', result:null },
-    { id:'r_9', name:'100 Giri di Tsukuba', img:'tsukuba.png',    result:null }
+  championship:'10 Gare', season:'2026',
+  players:['Stefano','Marco'],
+  prizes:['','',''],
+  races:[
+    {id:'r_1',name:'Le Mans',            img:'lemans.png',       result:null},
+    {id:'r_2',name:'Monza',              img:'monza.png',        result:null},
+    {id:'r_3',name:'Nürburgring',        img:'nurburgring.png',  result:null},
+    {id:'r_4',name:'Spa',                img:'spa.png',          result:null},
+    {id:'r_5',name:'Suzuka',             img:'suzuka.png',       result:null},
+    {id:'r_6',name:'A1 Ring',            img:'A1ring.png',       result:null},
+    {id:'r_7',name:'Interlagos',         img:'interlagos.png',   result:null},
+    {id:'r_8',name:'Lago Maggiore',      img:'lagomaggiore.png', result:null},
+    {id:'r_9',name:'100 Giri di Tsukuba',img:'tsukuba.png',      result:null}
   ]
 };
 
@@ -442,48 +574,72 @@ let resultingRaceId = null;
 let saveTimeout = null;
 let chartInstance = null;
 let selectedImg = '';
+let currentManageTab = 'players';
 
 // ── BOOT ──────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', async () => {
   try {
     state = await readBin();
-    if (!state.races.find(r => r.id === 'r_9')) {
-      state.races.push({ id:'r_9', name:'100 Giri di Tsukuba', img:'tsukuba.png', result:null });
-      await writeBin();
-    }
+    if (!state.prizes) state.prizes = ['','',''];
+    if (!state.races.find(r=>r.id==='r_9'))
+      state.races.push({id:'r_9',name:'100 Giri di Tsukuba',img:'tsukuba.png',result:null});
     render();
-    setSyncStatus('ok', 'Online');
+    setSyncStatus('ok','Online');
   } catch(e) {
-    setSyncStatus('error', 'Errore rete');
-    render();
+    setSyncStatus('error','Errore rete'); render();
   }
   hideLoading();
+  // On mobile move chart inside standings tab
+  repositionChart();
+  window.addEventListener('resize', repositionChart);
 });
+
+function repositionChart() {
+  const isMobile = window.innerWidth < 768;
+  const chart = document.getElementById('chart-section');
+  const standingsPage = document.getElementById('page-standings');
+  const colChart = document.querySelector('.col-chart');
+  if (isMobile) {
+    // Move chart after prizes inside standings page
+    standingsPage.appendChild(chart);
+  } else {
+    // Put back in grid as col-chart
+    document.querySelector('.main-layout').appendChild(chart);
+  }
+}
 
 // ── JSONBIN ───────────────────────────────────────
 async function readBin() {
-  const res = await fetch(`${BASE_URL}/b/${BIN_ID}/latest`, { headers:{'X-Master-Key':API_KEY} });
-  if (!res.ok) throw new Error('read ' + res.status);
+  const res = await fetch(`${BASE_URL}/b/${BIN_ID}/latest`,{headers:{'X-Master-Key':API_KEY}});
+  if (!res.ok) throw new Error('read '+res.status);
   return (await res.json()).record;
 }
 async function writeBin() {
-  const res = await fetch(`${BASE_URL}/b/${BIN_ID}`, {
+  const res = await fetch(`${BASE_URL}/b/${BIN_ID}`,{
     method:'PUT',
     headers:{'Content-Type':'application/json','X-Master-Key':API_KEY},
-    body: JSON.stringify(state)
+    body:JSON.stringify(state)
   });
-  if (!res.ok) throw new Error('write ' + res.status);
+  if (!res.ok) throw new Error('write '+res.status);
 }
 function scheduleSave() {
-  setSyncStatus('saving', 'Salvataggio...');
+  setSyncStatus('saving','Salvataggio...');
   clearTimeout(saveTimeout);
   saveTimeout = setTimeout(async () => {
     try {
       await writeBin();
-      setSyncStatus('ok', 'Salvato ✓');
-      setTimeout(() => setSyncStatus('ok', 'Online'), 2000);
-    } catch(e) { setSyncStatus('error', 'Errore salvataggio'); }
-  }, 600);
+      setSyncStatus('ok','Salvato ✓');
+      setTimeout(()=>setSyncStatus('ok','Online'),2000);
+    } catch(e){ setSyncStatus('error','Errore salvataggio'); }
+  }, 700);
+}
+
+// ── TABS MOBILE ───────────────────────────────────
+function switchTab(tab) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+tab).classList.add('active');
+  document.getElementById('tab-'+tab+'-btn').classList.add('active');
 }
 
 // ── RENDER ────────────────────────────────────────
@@ -491,137 +647,117 @@ function render() {
   document.getElementById('hdr-title').textContent  = state.championship;
   document.getElementById('hdr-season').textContent = state.season;
   renderStandings();
+  renderPrizes();
   renderChart();
   renderRaces();
 }
 
 function calcStandings() {
   const pts = {};
-  state.players.forEach(p => pts[p] = 0);
-  state.races.forEach(r => {
-    if (r.result && r.result.first) pts[r.result.first] = (pts[r.result.first]||0) + 1;
+  state.players.forEach(p=>pts[p]=0);
+  state.races.forEach(r=>{
+    if(r.result&&r.result.first) pts[r.result.first]=(pts[r.result.first]||0)+1;
   });
-  return state.players.map(p => ({name:p, pts:pts[p]||0})).sort((a,b)=>b.pts-a.pts);
+  return state.players.map(p=>({name:p,pts:pts[p]||0})).sort((a,b)=>b.pts-a.pts);
 }
 
 function renderStandings() {
-  const s = calcStandings();
+  const s    = calcStandings();
   const done = state.races.filter(r=>r.result).length;
-  const total = state.races.length;
-  const pct = total > 0 ? Math.round(done/total*100) : 0;
-  document.getElementById('races-progress').textContent = done+'/'+total+' gare completate';
+  const total= state.races.length;
+  const pct  = total>0?Math.round(done/total*100):0;
+  document.getElementById('races-progress').textContent = done+'/'+total+' completate';
   document.getElementById('progress-fill').style.width  = pct+'%';
-  document.getElementById('progress-label').textContent = pct+'% del campionato completato';
-  document.getElementById('standings-container').innerHTML = s.map((p,i) => {
+  document.getElementById('progress-label').textContent = pct+'% completato';
+  const posIcons = ['🏆','2','3'];
+  const posCls   = ['first','second','third'];
+  document.getElementById('standings-container').innerHTML = s.map((p,i)=>{
     const wins = state.races.filter(r=>r.result&&r.result.first===p.name).length;
-    const tie  = s.length>1 && s[0].pts===s[1].pts;
+    const tie  = s.length>1&&s[0].pts===s[1].pts;
+    const color= PLAYER_COLORS[state.players.indexOf(p.name)%PLAYER_COLORS.length];
     return `<div class="standings-row ${i===0&&!tie?'leader':''}">
-      <div class="pos ${i===0?'first':i===1?'second':''}">${i===0?'🏆':i+1}</div>
+      <div class="pos ${posCls[i]||''}">${i===0?'🏆':i+1}</div>
       <div>
-        <div class="driver-name">${p.name}</div>
+        <div class="driver-name" style="color:${color}">${p.name}</div>
         <div class="driver-sub">${wins} vittori${wins!==1?'e':'a'}</div>
       </div>
-      <div class="pts">${p.pts}<br><span>punt${p.pts!==1?'i':'o'}</span></div>
+      <div class="pts">${p.pts}<br><span>pt</span></div>
     </div>`;
   }).join('');
+}
+
+function renderPrizes() {
+  const prizes = state.prizes || ['','',''];
+  const icons  = ['🥇','🥈','🥉'];
+  const labels = ['1° Posto','2° Posto','3° Posto'];
+  document.getElementById('prizes-container').innerHTML = prizes.map((prize,i)=>`
+    <div class="prize-row">
+      <span class="prize-icon">${icons[i]}</span>
+      <div class="prize-info">
+        <div class="prize-pos">${labels[i]}</div>
+        <div class="${prize?'prize-text':'prize-empty'}">${prize||'Premio non assegnato'}</div>
+      </div>
+    </div>`).join('');
 }
 
 // ── GRAFICO ───────────────────────────────────────
 function renderChart() {
   const races   = state.races;
   const players = state.players;
-
-  const labels = ['Start'];
-  const series = {};
-  players.forEach(p => series[p] = [0]);
-
+  const labels  = ['Start'];
+  const series  = {};
+  players.forEach(p=>series[p]=[0]);
   const running = {};
-  players.forEach(p => running[p] = 0);
-
-  // Trova indice ultima gara con risultato
+  players.forEach(p=>running[p]=0);
   let lastDoneIdx = -1;
-  races.forEach((r, i) => { if (r.result) lastDoneIdx = i; });
-
-  races.forEach((r, i) => {
-    const short = r.name.length > 11 ? r.name.substring(0,10)+'…' : r.name;
+  races.forEach((r,i)=>{if(r.result)lastDoneIdx=i;});
+  races.forEach((r,i)=>{
+    const short = r.name.length>11?r.name.substring(0,10)+'…':r.name;
     labels.push(short);
-    if (r.result && r.result.first) running[r.result.first]++;
-    players.forEach(p => {
-      // Dopo l'ultima gara disputata metti null — la linea si interrompe
-      series[p].push(i <= lastDoneIdx ? running[p] : null);
-    });
+    if(r.result&&r.result.first) running[r.result.first]++;
+    players.forEach(p=>series[p].push(i<=lastDoneIdx?running[p]:null));
   });
-
-  // Legenda
-  document.getElementById('chart-legend').innerHTML = players.map((p,i) =>
-    `<div class="legend-item">
-      <div class="legend-dot" style="background:${PLAYER_COLORS[i%PLAYER_COLORS.length]}"></div>
-      ${p}
-    </div>`
-  ).join('');
-
-  const maxPts = Math.max(1, ...players.map(p => running[p]));
-
-  const datasets = players.map((p,i) => ({
-    label: p,
-    data: series[p],
-    borderColor: PLAYER_COLORS[i%PLAYER_COLORS.length],
-    backgroundColor: 'transparent',
-    borderWidth: 2.5,
-    pointRadius: (ctx) => ctx.dataIndex === 0 ? 0 : 5,
-    pointHoverRadius: 7,
-    pointBackgroundColor: PLAYER_COLORS[i%PLAYER_COLORS.length],
-    pointBorderColor: '#fff',
-    pointBorderWidth: 2,
-    tension: 0,       // linee rette
-    fill: false,
-    stepped: false,
-    spanGaps: false
+  document.getElementById('chart-legend').innerHTML = players.map((p,i)=>`
+    <div class="legend-item">
+      <div class="legend-dot" style="background:${PLAYER_COLORS[i%PLAYER_COLORS.length]}"></div>${p}
+    </div>`).join('');
+  const maxPts = Math.max(1,...players.map(p=>running[p]));
+  const datasets = players.map((p,i)=>({
+    label:p, data:series[p],
+    borderColor:PLAYER_COLORS[i%PLAYER_COLORS.length],
+    backgroundColor:'transparent',
+    borderWidth:2.5,
+    pointRadius:(ctx)=>ctx.dataIndex===0?0:4,
+    pointHoverRadius:6,
+    pointBackgroundColor:PLAYER_COLORS[i%PLAYER_COLORS.length],
+    pointBorderColor:'#fff', pointBorderWidth:2,
+    tension:0, fill:false, spanGaps:false
   }));
-
-  if (chartInstance) {
-    chartInstance.data.labels   = labels;
-    chartInstance.data.datasets = datasets;
-    chartInstance.options.scales.y.max = maxPts + 1;
-    chartInstance.update('active');
-    return;
+  if(chartInstance){
+    chartInstance.data.labels  =labels;
+    chartInstance.data.datasets=datasets;
+    chartInstance.options.scales.y.max=maxPts+1;
+    chartInstance.update('active'); return;
   }
-
-  const ctx = document.getElementById('chart-canvas').getContext('2d');
-  chartInstance = new Chart(ctx, {
-    type: 'line',
-    data: { labels, datasets },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      interaction: { mode:'index', intersect:false },
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          backgroundColor: '#1a1a1a',
-          titleColor: '#fff',
-          bodyColor: '#ccc',
-          padding: 10,
-          cornerRadius: 10,
-          filter: (item) => item.dataIndex > 0,
-          callbacks: {
-            label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y} punt${ctx.parsed.y!==1?'i':'o'}`
-          }
+  chartInstance = new Chart(document.getElementById('chart-canvas').getContext('2d'),{
+    type:'line', data:{labels,datasets},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          backgroundColor:'#1a1a1a',titleColor:'#fff',bodyColor:'#ccc',
+          padding:10,cornerRadius:10,
+          filter:(item)=>item.dataIndex>0,
+          callbacks:{label:ctx=>` ${ctx.dataset.label}: ${ctx.parsed.y} pt`}
         }
       },
-      scales: {
-        x: {
-          grid: { color:'#f0ede6' },
-          ticks: { color:'#aaa', font:{size:11}, maxRotation:35, minRotation:20 }
-        },
-        y: {
-          min: 0, max: maxPts + 1,
-          ticks: {
-            color:'#aaa', font:{size:12}, stepSize:1,
-            callback: v => Number.isInteger(v) ? v : ''
-          },
-          grid: { color:'#f0ede6' }
-        }
+      scales:{
+        x:{grid:{color:'#f0ede6'},ticks:{color:'#aaa',font:{size:10},maxRotation:35,minRotation:20}},
+        y:{min:0,max:maxPts+1,
+          ticks:{color:'#aaa',font:{size:11},stepSize:1,callback:v=>Number.isInteger(v)?v:''},
+          grid:{color:'#f0ede6'}}
       }
     }
   });
@@ -630,62 +766,52 @@ function renderChart() {
 // ── GARE ──────────────────────────────────────────
 function renderRaces() {
   document.getElementById('races-count').textContent = state.races.length+' circuiti';
-  document.getElementById('races-grid').innerHTML = state.races.map((r,idx) => {
-    const imgBlock = `<div class="race-img-wrap">
-      <img src="images/${r.img}" alt="${r.name}"
-           onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-      <div class="race-img-placeholder" style="display:none">🏁</div>
-    </div>`;
+  document.getElementById('races-grid').innerHTML = state.races.map((r,idx)=>{
+    const imgBlock=`<div class="race-img-wrap">
+      <img src="images/${r.img}" alt="${r.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+      <div class="race-img-placeholder" style="display:none">🏁</div></div>`;
     let resultBlock;
-    if (r.result) {
-      resultBlock = `<div class="result-block">
-        <div class="result-row">
-          <div style="display:flex;align-items:center;">
-            <span class="result-pos-badge badge-1">1°</span>
-            <span class="result-driver">${r.result.first}</span>
-          </div>
-          <span class="result-pts gold">+1 pt</span>
-        </div>
-        <div class="result-row">
-          <div style="display:flex;align-items:center;">
-            <span class="result-pos-badge badge-2">2°</span>
-            <span class="result-driver">${r.result.second}</span>
-          </div>
-          <span class="result-pts">0 pt</span>
-        </div>
+    if(r.result){
+      resultBlock=`<div class="result-block">
+        <div class="result-row"><div style="display:flex;align-items:center;">
+          <span class="result-pos-badge badge-1">1°</span>
+          <span class="result-driver">${r.result.first}</span></div>
+          <span class="result-pts gold">+1</span></div>
+        <div class="result-row"><div style="display:flex;align-items:center;">
+          <span class="result-pos-badge badge-2">2°</span>
+          <span class="result-driver">${r.result.second}</span></div>
+          <span class="result-pts">0</span></div>
+        ${state.players.length>2?state.players.filter(p=>p!==r.result.first&&p!==r.result.second).map(p=>`
+        <div class="result-row"><div style="display:flex;align-items:center;">
+          <span class="result-pos-badge badge-2" style="background:#f0ede6">—</span>
+          <span class="result-driver">${p}</span></div>
+          <span class="result-pts">0</span></div>`).join(''):''}
       </div>`;
     } else {
-      resultBlock = `<div class="result-block"><div class="no-result">Risultato non inserito</div></div>`;
+      resultBlock=`<div class="result-block"><div class="no-result">Risultato non inserito</div></div>`;
     }
-    const badge = r.result
-      ? `<span class="status-badge status-done"><span class="status-dot"></span>Completata</span>`
-      : `<span class="status-badge status-pending"><span class="status-dot"></span>In attesa</span>`;
-    const btnClass = r.result ? 'btn-result has-result' : 'btn-result';
-    const btnLabel = r.result ? '✎ Modifica risultato' : '+ Inserisci risultato';
-    const replayBadge = r.replayUrl
-      ? `<a href="${r.replayUrl}" target="_blank" rel="noopener"
-           style="display:inline-flex;align-items:center;gap:5px;margin-top:8px;
-                  font-size:11px;font-weight:700;color:#e63946;text-decoration:none;
-                  text-transform:uppercase;letter-spacing:0.5px;">
-           <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
-             <path d="M8 5v14l11-7z"/>
-           </svg>
-           Replay
-         </a>`
-      : '';
+    const badge=r.result
+      ?`<span class="status-badge status-done"><span class="status-dot"></span>OK</span>`
+      :`<span class="status-badge status-pending"><span class="status-dot"></span>—</span>`;
+    const replayBadge=r.replayUrl
+      ?`<a href="${r.replayUrl}" target="_blank" rel="noopener"
+          style="display:inline-flex;align-items:center;gap:4px;margin-top:7px;
+                 font-size:10px;font-weight:700;color:#e63946;text-decoration:none;
+                 text-transform:uppercase;letter-spacing:0.5px;">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>Replay</a>`:'';
     return `<div class="race-card">
       ${imgBlock}
       <div class="race-content">
         <div class="race-meta">
-          <span class="race-num-label">Gara ${idx+1}</span>
-          ${badge}
+          <span class="race-num-label">#${idx+1}</span>${badge}
         </div>
         <div class="race-name">${r.name}</div>
-        ${resultBlock}
-        ${replayBadge}
+        ${resultBlock}${replayBadge}
       </div>
       <div class="race-footer">
-        <button class="${btnClass}" onclick="openResult('${r.id}')">${btnLabel}</button>
+        <button class="btn-result ${r.result?'has-result':''}" onclick="openResult('${r.id}')">
+          ${r.result?'✎ Modifica':'+ Risultato'}
+        </button>
       </div>
     </div>`;
   }).join('');
@@ -694,206 +820,302 @@ function renderRaces() {
 // ── RISULTATO ─────────────────────────────────────
 function openResult(id) {
   resultingRaceId = id;
-  const r = state.races.find(r=>r.id===id); if (!r) return;
+  const r = state.races.find(r=>r.id===id); if(!r) return;
   document.getElementById('result-modal-title').textContent = r.name;
   document.getElementById('result-modal-sub').textContent   = 'Gara '+(state.races.indexOf(r)+1)+' · Chi ha vinto?';
-  const s1 = document.getElementById('result-first');
-  const s2 = document.getElementById('result-second');
-  s1.innerHTML = s2.innerHTML = state.players.map(p=>`<option value="${p}">${p}</option>`).join('');
-  if (r.result) { s1.value=r.result.first; s2.value=r.result.second; }
-  else          { s1.value=state.players[0]; s2.value=state.players[1]; }
+  // Build dynamic selects based on number of players
+  const selects = document.getElementById('result-selects');
+  const positions = ['🥇 1° Posto','🥈 2° Posto'];
+  // If > 2 players, show selects for 1st and 2nd only (rest get 0)
+  selects.innerHTML = positions.map((label,i)=>{
+    const key = i===0?'first':'second';
+    const opts = state.players.map(p=>`<option value="${p}">${p}</option>`).join('');
+    return `<div class="field"><label>${label}</label>
+      <select id="result-pos-${i}">${opts}</select></div>`;
+  }).join('');
+  if(r.result){
+    document.getElementById('result-pos-0').value=r.result.first;
+    document.getElementById('result-pos-1').value=r.result.second;
+  } else {
+    document.getElementById('result-pos-0').value=state.players[0]||'';
+    document.getElementById('result-pos-1').value=state.players[1]||state.players[0]||'';
+  }
   openModal('result-modal');
 }
 function saveResult() {
-  const first  = document.getElementById('result-first').value;
-  const second = document.getElementById('result-second').value;
-  if (first===second) { showToast('1° e 2° non possono essere lo stesso pilota'); return; }
-  const r = state.races.find(r=>r.id===resultingRaceId);
-  if (r) r.result = {first, second};
+  const first  = document.getElementById('result-pos-0').value;
+  const second = document.getElementById('result-pos-1').value;
+  if(first===second){showToast('1° e 2° non possono essere lo stesso');return;}
+  const r=state.races.find(r=>r.id===resultingRaceId);
+  if(r) r.result={first,second};
   scheduleSave(); render(); closeModal('result-modal'); showToast('Risultato salvato!');
 }
 
-// ── PANNELLO GESTIONE ─────────────────────────────
+// ── MANAGE PANEL ──────────────────────────────────
 function openManagePanel() {
-  renderSortList();
+  currentManageTab = 'players';
+  renderManageBody();
+  updateManageTabs();
   document.getElementById('manage-panel').classList.add('open');
 }
 function closeManagePanel() {
   document.getElementById('manage-panel').classList.remove('open');
 }
-
-function renderSortList() {
-  const list = document.getElementById('sort-list');
-  list.innerHTML = state.races.map((r, idx) => {
-    const thumbInner = `<img src="images/${r.img}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-      <div class="sort-thumb-placeholder" style="display:none">🏁</div>`;
-    return `<li class="sort-item" data-id="${r.id}"
-        draggable="true"
-        ondragstart="sortDragStart(event,'${r.id}')"
-        ondragend="sortDragEnd(event)"
-        ondragover="sortDragOver(event,'${r.id}')"
-        ondrop="sortDrop(event,'${r.id}')">
-      <span class="sort-handle"
-        ontouchstart="sortTouchStart(event,'${r.id}')"
-        ontouchmove="sortTouchMove(event)"
-        ontouchend="sortTouchEnd(event)">≡</span>
-      <div class="sort-thumb">${thumbInner}</div>
-      <div style="flex:1;min-width:0;">
-        <div class="sort-name">${r.name}</div>
-        <input type="text" class="sort-replay-input"
-          placeholder="Link YouTube replay..."
-          value="${r.replayUrl||''}"
-          data-id="${r.id}"
-          onchange="saveReplayLink('${r.id}',this.value)"
-          onclick="event.stopPropagation()"
-          style="margin-top:5px;font-size:12px;padding:5px 8px;border:1px solid #e0ddd6;border-radius:7px;width:100%;outline:none;color:#555;background:#faf9f6;" />
-      </div>
-      <span class="sort-num">${idx+1}</span>
-    </li>`;
-  }).join('');
+function switchManageTab(tab) {
+  currentManageTab = tab;
+  updateManageTabs();
+  renderManageBody();
 }
-
-// Drag desktop per sort list
-let sortDragSrcId = null;
-function sortDragStart(e, id) {
-  sortDragSrcId = id;
-  e.dataTransfer.effectAllowed = 'move';
-  setTimeout(() => e.target.closest('.sort-item').classList.add('dragging-sort'), 0);
-}
-function sortDragEnd(e) {
-  document.querySelectorAll('.sort-item').forEach(el => el.classList.remove('dragging-sort','drag-over-sort'));
-}
-function sortDragOver(e, id) {
-  e.preventDefault();
-  document.querySelectorAll('.sort-item').forEach(el => el.classList.remove('drag-over-sort'));
-  if (id !== sortDragSrcId) {
-    const el = document.querySelector(`.sort-item[data-id="${id}"]`);
-    if (el) el.classList.add('drag-over-sort');
-  }
-}
-function sortDrop(e, targetId) {
-  e.preventDefault();
-  if (!sortDragSrcId || sortDragSrcId===targetId) return;
-  doReorder(sortDragSrcId, targetId);
-}
-
-// Touch per sort list (solo l'handle ≡)
-let sortTouchId   = null;
-let sortTouchClone = null;
-function sortTouchStart(e, id) {
-  e.stopPropagation();
-  sortTouchId = id;
-  const item = e.target.closest('.sort-item');
-  const rect = item.getBoundingClientRect();
-  sortTouchClone = item.cloneNode(true);
-  sortTouchClone.style.cssText = `position:fixed;top:${rect.top}px;left:${rect.left}px;
-    width:${rect.width}px;opacity:0.75;pointer-events:none;z-index:999;
-    border-radius:12px;box-shadow:0 6px 24px rgba(0,0,0,0.18);`;
-  document.body.appendChild(sortTouchClone);
-  item.style.opacity = '0.3';
-}
-function sortTouchMove(e) {
-  if (!sortTouchClone) return;
-  e.preventDefault();
-  const t = e.touches[0];
-  sortTouchClone.style.left = (t.clientX - sortTouchClone.offsetWidth/2)+'px';
-  sortTouchClone.style.top  = (t.clientY - sortTouchClone.offsetHeight/2)+'px';
-  document.querySelectorAll('.sort-item').forEach(el => el.classList.remove('drag-over-sort'));
-  sortTouchClone.style.display = 'none';
-  const el = document.elementFromPoint(t.clientX, t.clientY);
-  sortTouchClone.style.display = '';
-  const target = el && el.closest('.sort-item');
-  if (target && target.dataset.id !== sortTouchId) target.classList.add('drag-over-sort');
-}
-function sortTouchEnd(e) {
-  if (!sortTouchId) return;
-  const t = e.changedTouches[0];
-  if (sortTouchClone) { sortTouchClone.remove(); sortTouchClone = null; }
-  document.querySelectorAll('.sort-item').forEach(el => {
-    el.style.opacity = ''; el.classList.remove('drag-over-sort','dragging-sort');
+function updateManageTabs() {
+  document.querySelectorAll('.manage-tab').forEach((btn,i)=>{
+    const tabs=['players','races','prizes'];
+    btn.classList.toggle('active', tabs[i]===currentManageTab);
   });
-  sortTouchClone && sortTouchClone.style && (sortTouchClone.style.display='none');
-  const el2 = document.elementFromPoint(t.clientX, t.clientY);
-  const target = el2 && el2.closest('.sort-item');
-  if (target && target.dataset.id && target.dataset.id !== sortTouchId) {
-    doReorder(sortTouchId, target.dataset.id);
+}
+function renderManageBody() {
+  if(currentManageTab==='players') renderManagePlayers();
+  else if(currentManageTab==='races') renderManageRaces();
+  else renderManagePrizes();
+}
+
+// ── GESTIONE UTENTI ───────────────────────────────
+function renderManagePlayers() {
+  const body = document.getElementById('manage-body');
+  const max20 = state.players.length>=20;
+  body.innerHTML = `
+    <p class="manage-hint">Max 20 utenti · ${state.players.length}/20</p>
+    <div id="players-list">
+      ${state.players.map((p,i)=>`
+        <div class="player-item">
+          <div class="player-color-dot" style="background:${PLAYER_COLORS[i%PLAYER_COLORS.length]}"></div>
+          <input class="player-name-input" type="text" value="${p}"
+            onblur="renamePlayer(${i},this.value)"
+            onkeydown="if(event.key==='Enter')this.blur()" />
+          <button class="player-del" onclick="deletePlayer(${i})" title="Rimuovi">×</button>
+        </div>`).join('')}
+    </div>
+    <button class="manage-add-btn" ${max20?'disabled style="opacity:0.4"':''} onclick="addPlayer()">
+      <span style="font-size:18px">+</span> Aggiungi utente
+    </button>`;
+}
+function renamePlayer(idx, newName) {
+  newName = newName.trim();
+  if(!newName) { renderManagePlayers(); return; }
+  const old = state.players[idx];
+  state.players[idx] = newName;
+  // Update results
+  state.races.forEach(r=>{
+    if(!r.result) return;
+    if(r.result.first===old)  r.result.first=newName;
+    if(r.result.second===old) r.result.second=newName;
+  });
+  scheduleSave(); render(); renderManagePlayers();
+}
+function deletePlayer(idx) {
+  if(state.players.length<=1){showToast('Ci vuole almeno 1 utente');return;}
+  const name = state.players[idx];
+  state.players.splice(idx,1);
+  // Remove results where this player appears
+  state.races.forEach(r=>{
+    if(r.result&&(r.result.first===name||r.result.second===name)) r.result=null;
+  });
+  scheduleSave(); render(); renderManagePlayers();
+  showToast('Utente rimosso');
+}
+function addPlayer() {
+  if(state.players.length>=20){showToast('Massimo 20 utenti');return;}
+  state.players.push('Nuovo utente');
+  scheduleSave(); render(); renderManagePlayers();
+  // Focus new input
+  setTimeout(()=>{
+    const inputs=document.querySelectorAll('.player-name-input');
+    const last=inputs[inputs.length-1];
+    if(last){last.focus();last.select();}
+  },50);
+}
+
+// ── GESTIONE CIRCUITI ─────────────────────────────
+function renderManageRaces() {
+  const body = document.getElementById('manage-body');
+  const max20 = state.races.length>=20;
+  body.innerHTML = `
+    <p class="manage-hint">Tieni ≡ e trascina · Max 20 gare · ${state.races.length}/20</p>
+    <ul class="sort-list" id="sort-list">
+      ${state.races.map((r,idx)=>{
+        const th=`<img src="images/${r.img}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+          <div class="sort-thumb-ph" style="display:none">🏁</div>`;
+        return `<li class="sort-item" data-id="${r.id}"
+          draggable="true"
+          ondragstart="sortDragStart(event,'${r.id}')"
+          ondragend="sortDragEnd(event)"
+          ondragover="sortDragOver(event,'${r.id}')"
+          ondrop="sortDrop(event,'${r.id}')">
+          <span class="sort-handle"
+            ontouchstart="sortTouchStart(event,'${r.id}')"
+            ontouchmove="sortTouchMove(event)"
+            ontouchend="sortTouchEnd(event)">≡</span>
+          <div class="sort-thumb">${th}</div>
+          <div style="flex:1;min-width:0;">
+            <div class="sort-name">${r.name}</div>
+            <input type="text"
+              placeholder="Link YouTube replay..."
+              value="${r.replayUrl||''}"
+              onchange="saveReplayLink('${r.id}',this.value)"
+              onclick="event.stopPropagation()"
+              style="margin-top:4px;font-size:11px;padding:4px 7px;border:1px solid #e0ddd6;
+                     border-radius:6px;width:100%;outline:none;color:#666;background:#faf9f6;" />
+          </div>
+          <span class="sort-num">${idx+1}</span>
+          <button class="sort-del" onclick="deleteRace('${r.id}')">×</button>
+        </li>`;
+      }).join('')}
+    </ul>
+    <button class="manage-add-btn" ${max20?'disabled style="opacity:0.4"':''} onclick="openAddRaceModal()">
+      <span style="font-size:18px">+</span> Aggiungi circuito
+    </button>`;
+}
+function deleteRace(id) {
+  state.races = state.races.filter(r=>r.id!==id);
+  scheduleSave(); render(); renderManageRaces();
+  showToast('Circuito rimosso');
+}
+function saveReplayLink(id,url) {
+  const r=state.races.find(r=>r.id===id); if(!r) return;
+  r.replayUrl=url.trim(); scheduleSave(); render();
+}
+
+// ── GESTIONE PREMI ────────────────────────────────
+function renderManagePrizes() {
+  if(!state.prizes) state.prizes=['','',''];
+  const icons =['🥇','🥈','🥉'];
+  const labels=['Premio 1° Posto','Premio 2° Posto','Premio 3° Posto'];
+  document.getElementById('manage-body').innerHTML = `
+    <p class="manage-hint">Scrivi cosa vince chi arriva sul podio</p>
+    ${state.prizes.map((prize,i)=>`
+      <div class="prize-input-row">
+        <span class="prize-input-icon">${icons[i]}</span>
+        <input class="prize-input-field" type="text"
+          placeholder="${labels[i]}..."
+          value="${prize||''}"
+          onblur="savePrize(${i},this.value)"
+          onkeydown="if(event.key==='Enter')this.blur()" />
+      </div>`).join('')}`;
+}
+function savePrize(idx,val) {
+  if(!state.prizes) state.prizes=['','',''];
+  state.prizes[idx]=val.trim();
+  scheduleSave(); renderPrizes();
+}
+
+// ── SORT LIST DRAG (desktop) ──────────────────────
+let sortDragSrcId=null;
+function sortDragStart(e,id){
+  sortDragSrcId=id; e.dataTransfer.effectAllowed='move';
+  setTimeout(()=>e.target.closest('.sort-item').classList.add('dragging-sort'),0);
+}
+function sortDragEnd(e){
+  document.querySelectorAll('.sort-item').forEach(el=>el.classList.remove('dragging-sort','drag-over-sort'));
+}
+function sortDragOver(e,id){
+  e.preventDefault();
+  document.querySelectorAll('.sort-item').forEach(el=>el.classList.remove('drag-over-sort'));
+  if(id!==sortDragSrcId){
+    const el=document.querySelector(`.sort-item[data-id="${id}"]`);
+    if(el) el.classList.add('drag-over-sort');
   }
-  sortTouchId = null;
+}
+function sortDrop(e,targetId){
+  e.preventDefault();
+  if(!sortDragSrcId||sortDragSrcId===targetId) return;
+  doReorder(sortDragSrcId,targetId);
 }
 
-function saveReplayLink(id, url) {
-  const r = state.races.find(r => r.id === id);
-  if (!r) return;
-  r.replayUrl = url.trim();
-  scheduleSave();
-  render();
+// SORT LIST TOUCH (mobile)
+let sortTouchId=null, sortTouchClone=null;
+function sortTouchStart(e,id){
+  e.stopPropagation(); sortTouchId=id;
+  const item=e.target.closest('.sort-item');
+  const rect=item.getBoundingClientRect();
+  sortTouchClone=item.cloneNode(true);
+  sortTouchClone.style.cssText=`position:fixed;top:${rect.top}px;left:${rect.left}px;
+    width:${rect.width}px;opacity:0.75;pointer-events:none;z-index:999;
+    border-radius:11px;box-shadow:0 6px 24px rgba(0,0,0,0.18);`;
+  document.body.appendChild(sortTouchClone);
+  item.style.opacity='0.3';
 }
-
-function doReorder(srcId, tgtId) {
-  const si = state.races.findIndex(r=>r.id===srcId);
-  const ti = state.races.findIndex(r=>r.id===tgtId);
-  if (si===-1||ti===-1) return;
-  const moved = state.races.splice(si,1)[0];
+function sortTouchMove(e){
+  if(!sortTouchClone) return; e.preventDefault();
+  const t=e.touches[0];
+  sortTouchClone.style.left=(t.clientX-sortTouchClone.offsetWidth/2)+'px';
+  sortTouchClone.style.top =(t.clientY-sortTouchClone.offsetHeight/2)+'px';
+  document.querySelectorAll('.sort-item').forEach(el=>el.classList.remove('drag-over-sort'));
+  sortTouchClone.style.display='none';
+  const el=document.elementFromPoint(t.clientX,t.clientY);
+  sortTouchClone.style.display='';
+  const target=el&&el.closest('.sort-item');
+  if(target&&target.dataset.id!==sortTouchId) target.classList.add('drag-over-sort');
+}
+function sortTouchEnd(e){
+  if(!sortTouchId) return;
+  const t=e.changedTouches[0];
+  if(sortTouchClone){sortTouchClone.remove();sortTouchClone=null;}
+  document.querySelectorAll('.sort-item').forEach(el=>{
+    el.style.opacity=''; el.classList.remove('drag-over-sort','dragging-sort');
+  });
+  const el=document.elementFromPoint(t.clientX,t.clientY);
+  const target=el&&el.closest('.sort-item');
+  if(target&&target.dataset.id&&target.dataset.id!==sortTouchId)
+    doReorder(sortTouchId,target.dataset.id);
+  sortTouchId=null;
+}
+function doReorder(srcId,tgtId){
+  const si=state.races.findIndex(r=>r.id===srcId);
+  const ti=state.races.findIndex(r=>r.id===tgtId);
+  if(si===-1||ti===-1) return;
+  const moved=state.races.splice(si,1)[0];
   state.races.splice(ti,0,moved);
-  scheduleSave();
-  render();
-  renderSortList();
+  scheduleSave(); render(); renderManageRaces();
   showToast('Ordine aggiornato');
 }
 
-// ── AGGIUNGI GARA ─────────────────────────────────
-function openAddRaceModal() {
-  document.getElementById('add-race-name').value = '';
-  document.getElementById('add-race-img-manual').value = '';
-  selectedImg = '';
-  buildImgPicker();
+// ── AGGIUNGI CIRCUITO ─────────────────────────────
+function openAddRaceModal(){
+  document.getElementById('add-race-name').value='';
+  document.getElementById('add-race-img-manual').value='';
+  selectedImg=''; buildImgPicker();
   closeManagePanel();
-  setTimeout(() => openModal('add-race-modal'), 180);
+  setTimeout(()=>openModal('add-race-modal'),180);
 }
-
-function buildImgPicker() {
-  // Raccoglie le immagini note + quelle già usate nelle gare
-  const imgs = new Set(KNOWN_IMAGES);
-  state.races.forEach(r => { if (r.img) imgs.add(r.img); });
-  const grid = document.getElementById('img-picker-grid');
-  grid.innerHTML = [...imgs].map(img => {
-    const label = img.replace(/\.(png|jpg|jpeg|webp)$/i,'');
+function buildImgPicker(){
+  const imgs=new Set(KNOWN_IMAGES);
+  state.races.forEach(r=>{if(r.img)imgs.add(r.img);});
+  document.getElementById('img-picker-grid').innerHTML=[...imgs].map(img=>{
+    const label=img.replace(/\.(png|jpg|jpeg|webp)$/i,'');
     return `<div class="img-picker-item" data-img="${img}" onclick="selectImg('${img}')">
       <img src="images/${img}" alt="${label}" onerror="this.style.display='none'">
       <div class="img-label">${label}</div>
-      <div class="img-picker-check">✓</div>
-    </div>`;
+      <div class="img-picker-check">✓</div></div>`;
   }).join('');
 }
-
-function selectImg(img) {
-  selectedImg = img;
-  document.getElementById('add-race-img-manual').value = img;
-  document.querySelectorAll('.img-picker-item').forEach(el => {
-    el.classList.toggle('selected', el.dataset.img === img);
-  });
+function selectImg(img){
+  selectedImg=img;
+  document.getElementById('add-race-img-manual').value=img;
+  document.querySelectorAll('.img-picker-item').forEach(el=>el.classList.toggle('selected',el.dataset.img===img));
 }
-
-function onManualImgInput() {
-  const val = document.getElementById('add-race-img-manual').value.trim();
-  selectedImg = val;
-  document.querySelectorAll('.img-picker-item').forEach(el => {
-    el.classList.toggle('selected', el.dataset.img === val);
-  });
+function onManualImgInput(){
+  const val=document.getElementById('add-race-img-manual').value.trim();
+  selectedImg=val;
+  document.querySelectorAll('.img-picker-item').forEach(el=>el.classList.toggle('selected',el.dataset.img===val));
 }
-
-function saveNewRace() {
-  const name = document.getElementById('add-race-name').value.trim();
-  const img  = document.getElementById('add-race-img-manual').value.trim() || selectedImg;
-  if (!name) { showToast('Inserisci il nome del circuito'); return; }
-  if (!img)  { showToast('Scegli o inserisci un\'immagine'); return; }
-  const id = 'r_' + Date.now();
-  state.races.push({ id, name, img, result: null });
-  // Aggiorna lista immagini note
-  if (!KNOWN_IMAGES.includes(img)) KNOWN_IMAGES.push(img);
-  scheduleSave();
-  render();
-  closeModal('add-race-modal');
+function saveNewRace(){
+  const name=document.getElementById('add-race-name').value.trim();
+  const img =document.getElementById('add-race-img-manual').value.trim()||selectedImg;
+  if(!name){showToast('Inserisci il nome');return;}
+  if(!img) {showToast("Scegli un'immagine");return;}
+  if(state.races.length>=20){showToast('Massimo 20 gare');return;}
+  state.races.push({id:'r_'+Date.now(),name,img,result:null});
+  if(!KNOWN_IMAGES.includes(img)) KNOWN_IMAGES.push(img);
+  scheduleSave(); render(); closeModal('add-race-modal');
   showToast('Circuito aggiunto!');
 }
 
@@ -902,31 +1124,24 @@ function openModal(id)  { document.getElementById(id).classList.add('open'); }
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
 function showLoading()  { document.getElementById('loading-overlay').classList.add('open'); }
 function hideLoading()  { document.getElementById('loading-overlay').classList.remove('open'); }
-
-function setSyncStatus(type, label) {
-  const badge = document.getElementById('sync-badge');
-  const dot   = badge.querySelector('.sync-dot');
-  badge.className = 'sync-badge sync-'+type;
-  dot.className   = 'sync-dot'+(type==='saving'||type==='loading'?' pulsing':'');
-  document.getElementById('sync-label').textContent = label;
+function setSyncStatus(type,label){
+  const badge=document.getElementById('sync-badge');
+  badge.className='sync-badge sync-'+type;
+  badge.querySelector('.sync-dot').className='sync-dot'+(type==='saving'||type==='loading'?' pulsing':'');
+  document.getElementById('sync-label').textContent=label;
 }
-
 let toastTimeout;
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
   clearTimeout(toastTimeout);
-  toastTimeout = setTimeout(()=>t.classList.remove('show'), 2500);
+  toastTimeout=setTimeout(()=>t.classList.remove('show'),2500);
 }
-
-// Chiudi modal/panel toccando lo sfondo
-['result-modal','add-race-modal'].forEach(id => {
-  document.getElementById(id).addEventListener('click', function(e) {
-    if (e.target===this) closeModal(id);
-  });
+['result-modal','add-race-modal'].forEach(id=>{
+  document.getElementById(id).addEventListener('click',function(e){if(e.target===this)closeModal(id);});
 });
-document.getElementById('manage-panel').addEventListener('click', function(e) {
-  if (e.target===this) closeManagePanel();
+document.getElementById('manage-panel').addEventListener('click',function(e){
+  if(e.target===this)closeManagePanel();
 });
 </script>
 </body>
