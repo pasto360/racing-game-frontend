@@ -662,6 +662,17 @@ function renderRaces() {
       : `<span class="status-badge status-pending"><span class="status-dot"></span>In attesa</span>`;
     const btnClass = r.result ? 'btn-result has-result' : 'btn-result';
     const btnLabel = r.result ? '✎ Modifica risultato' : '+ Inserisci risultato';
+    const replayBadge = r.replayUrl
+      ? `<a href="${r.replayUrl}" target="_blank" rel="noopener"
+           style="display:inline-flex;align-items:center;gap:5px;margin-top:8px;
+                  font-size:11px;font-weight:700;color:#e63946;text-decoration:none;
+                  text-transform:uppercase;letter-spacing:0.5px;">
+           <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+             <path d="M8 5v14l11-7z"/>
+           </svg>
+           Replay
+         </a>`
+      : '';
     return `<div class="race-card">
       ${imgBlock}
       <div class="race-content">
@@ -671,6 +682,7 @@ function renderRaces() {
         </div>
         <div class="race-name">${r.name}</div>
         ${resultBlock}
+        ${replayBadge}
       </div>
       <div class="race-footer">
         <button class="${btnClass}" onclick="openResult('${r.id}')">${btnLabel}</button>
@@ -726,7 +738,16 @@ function renderSortList() {
         ontouchmove="sortTouchMove(event)"
         ontouchend="sortTouchEnd(event)">≡</span>
       <div class="sort-thumb">${thumbInner}</div>
-      <span class="sort-name">${r.name}</span>
+      <div style="flex:1;min-width:0;">
+        <div class="sort-name">${r.name}</div>
+        <input type="text" class="sort-replay-input"
+          placeholder="Link YouTube replay..."
+          value="${r.replayUrl||''}"
+          data-id="${r.id}"
+          onchange="saveReplayLink('${r.id}',this.value)"
+          onclick="event.stopPropagation()"
+          style="margin-top:5px;font-size:12px;padding:5px 8px;border:1px solid #e0ddd6;border-radius:7px;width:100%;outline:none;color:#555;background:#faf9f6;" />
+      </div>
       <span class="sort-num">${idx+1}</span>
     </li>`;
   }).join('');
@@ -798,6 +819,14 @@ function sortTouchEnd(e) {
     doReorder(sortTouchId, target.dataset.id);
   }
   sortTouchId = null;
+}
+
+function saveReplayLink(id, url) {
+  const r = state.races.find(r => r.id === id);
+  if (!r) return;
+  r.replayUrl = url.trim();
+  scheduleSave();
+  render();
 }
 
 function doReorder(srcId, tgtId) {
