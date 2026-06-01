@@ -532,7 +532,7 @@ const IdleManager = {
   balance: €${this.balance.toFixed(2)}
   user_id: ${userId}`);
             
-            const { error, data } = await supabase
+            const { error } = await supabase
                 .from('idle_progress')
                 .update({
                     balance: this.balance,
@@ -550,11 +550,25 @@ const IdleManager = {
                 .eq('user_id', userId);
             
             if (error) {
-                console.error('❌ ERRORE SAVE SUPABASE:', error);
+                console.error('❌ ERRORE UPDATE:', error);
                 throw error;
             }
             
-            console.log('✅ IDLE salvato su Supabase - lastUpdate AGGIORNATO');
+            // 🔴 VERIFICA: Leggi cosa è stato salvato davvero
+            const { data: savedData, error: readError } = await supabase
+                .from('idle_progress')
+                .select('last_update, balance')
+                .eq('user_id', userId)
+                .single();
+            
+            if (readError) {
+                console.error('❌ ERRORE VERIFICA READ:', readError);
+            } else {
+                console.log(`✅ VERIFICA SALVATO SU DB:
+  DB lastUpdate: ${savedData.last_update}
+  DB balance: €${savedData.balance}
+  MATCH: ${savedData.last_update === this.lastUpdate.toISOString() ? '✅ SI' : '❌ NO!'}`);
+            }
             
         } catch (error) {
             console.error('❌ Errore salvataggio IDLE:', error);
