@@ -167,6 +167,9 @@ const IdleManager = {
                 
                 // Calcola offline progress
                 await this.calculateOfflineProgress();
+                
+                // 💾 IMPORTANTE: Salva subito dopo offline per evitare doppi conteggi
+                await this.save();
             } else {
                 // Nuovo utente - crea record
                 await this.createNewProgress(userId);
@@ -223,6 +226,9 @@ const IdleManager = {
         if (balancePerSec > 0) {
             const offlineGain = balancePerSec * actualSeconds;
             this.balance += offlineGain;
+            
+            // 🔴 CRITICO: Aggiorna lastUpdate SUBITO per evitare doppi conteggi al reload
+            this.lastUpdate = now;
             
             // Mostra popup
             this.showOfflinePopup(offlineSeconds, offlineGain);
