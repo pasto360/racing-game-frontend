@@ -149,8 +149,8 @@ const IdleManager = {
             if (data) {
                 // Carica dati esistenti
                 this.balance = parseFloat(data.balance);
-                this.lastUpdate = new Date(data.last_update);
-                // carUnlocked è determinato dai livelli, non da un flag
+                // 🔴 USA client_last_update anziché last_update (che è controllato dal DB)
+                this.lastUpdate = new Date(data.client_last_update || data.last_update);
                 
                 this.levels = {
                     pilot: data.pilot_level,
@@ -197,12 +197,15 @@ const IdleManager = {
     
     // Crea nuovo progresso
     async createNewProgress(userId) {
+        const now = new Date().toISOString();
+        
         const { error } = await supabase
             .from('idle_progress')
             .insert({
                 user_id: userId,
                 balance: this.STARTING_BALANCE,
-                last_update: new Date().toISOString(),
+                last_update: now,
+                client_last_update: now,  // 🔴 Aggiungi client_last_update
                 pilot_level: 1,
                 sponsor_level: 1,
                 merch_level: 1,
@@ -211,13 +214,12 @@ const IdleManager = {
                 team_level: 1,
                 car_level: 1,
                 structures_level: 1
-                // car_unlocked rimosso - verifichiamo dai livelli
             });
         
         if (error) throw error;
         
         this.balance = this.STARTING_BALANCE;
-        this.lastUpdate = new Date();  // Imposta per coerenza
+        this.lastUpdate = new Date();
     },
     
     // Calcola guadagno offline
@@ -528,7 +530,7 @@ const IdleManager = {
             const userId = await getUserId();
             
             console.log(`💾 TENTATIVO SAVE:
-  lastUpdate: ${this.lastUpdate.toISOString()}
+  client_last_update: ${this.lastUpdate.toISOString()}
   balance: €${this.balance.toFixed(2)}
   user_id: ${userId}`);
             
@@ -536,7 +538,7 @@ const IdleManager = {
                 .from('idle_progress')
                 .update({
                     balance: this.balance,
-                    last_update: this.lastUpdate.toISOString(),
+                    client_last_update: this.lastUpdate.toISOString(),  // 🔴 USA client_last_update
                     pilot_level: this.levels.pilot,
                     sponsor_level: this.levels.sponsor,
                     merch_level: this.levels.merch,
@@ -557,7 +559,7 @@ const IdleManager = {
             // 🔴 VERIFICA: Leggi cosa è stato salvato davvero
             const { data: savedData, error: readError } = await supabase
                 .from('idle_progress')
-                .select('last_update, balance')
+                .select('client_last_update, balance')
                 .eq('user_id', userId)
                 .single();
             
@@ -565,9 +567,9 @@ const IdleManager = {
                 console.error('❌ ERRORE VERIFICA READ:', readError);
             } else {
                 console.log(`✅ VERIFICA SALVATO SU DB:
-  DB lastUpdate: ${savedData.last_update}
+  DB client_last_update: ${savedData.client_last_update}
   DB balance: €${savedData.balance}
-  MATCH: ${savedData.last_update === this.lastUpdate.toISOString() ? '✅ SI' : '❌ NO!'}`);
+  MATCH: ${savedData.client_last_update === this.lastUpdate.toISOString() ? '✅ SI' : '❌ NO!'}`);
             }
             
         } catch (error) {
