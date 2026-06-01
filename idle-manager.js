@@ -19,6 +19,7 @@ const IdleManager = {
     // State
     balance: 5000,
     lastUpdate: null,
+    offlineAlreadyCalculated: false,  // 🔴 FLAG: evita ricalcolo offline
     tickTimer: null,
     currentTab: 'income',  // Tab corrente
     
@@ -221,6 +222,12 @@ const IdleManager = {
     
     // Calcola guadagno offline
     async calculateOfflineProgress() {
+        // 🔴 CRITICO: Calcola offline UNA SOLA VOLTA per sessione
+        if (this.offlineAlreadyCalculated) {
+            console.log('✅ Offline già calcolato in questa sessione - ignora');
+            return;
+        }
+        
         const now = new Date();
         const offlineSeconds = Math.floor((now - this.lastUpdate) / 1000);
         
@@ -229,8 +236,9 @@ const IdleManager = {
   Ultimo update: ${this.lastUpdate.toISOString()}
   Secondi offline: ${offlineSeconds}s`);
         
-        if (offlineSeconds < 60) {
-            console.log('  ✅ Meno di 1 minuto - ignora');
+        if (offlineSeconds < 3600) {  // 🔴 Cambio: 3600 secondi = 60 MINUTI
+            console.log('  ✅ Meno di 60 minuti - ignora offline bonus');
+            this.offlineAlreadyCalculated = true;  // Marca come calcolato
             return;
         }
         
@@ -251,6 +259,9 @@ const IdleManager = {
             
             // 🔴 CRITICO: Aggiorna lastUpdate SUBITO per evitare doppi conteggi al reload
             this.lastUpdate = now;
+            
+            // 🔴 CRITICO: Marca offline come calcolato per questa sessione
+            this.offlineAlreadyCalculated = true;
             
             console.log(`  ✅ Nuovo balance: €${this.balance.toFixed(2)}`);
             
