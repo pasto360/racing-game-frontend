@@ -527,11 +527,16 @@ const IdleManager = {
         try {
             const userId = await getUserId();
             
-            const { error } = await supabase
+            console.log(`💾 TENTATIVO SAVE:
+  lastUpdate: ${this.lastUpdate.toISOString()}
+  balance: €${this.balance.toFixed(2)}
+  user_id: ${userId}`);
+            
+            const { error, data } = await supabase
                 .from('idle_progress')
                 .update({
                     balance: this.balance,
-                    last_update: this.lastUpdate.toISOString(),  // ✅ USA this.lastUpdate
+                    last_update: this.lastUpdate.toISOString(),
                     pilot_level: this.levels.pilot,
                     sponsor_level: this.levels.sponsor,
                     merch_level: this.levels.merch,
@@ -541,16 +546,18 @@ const IdleManager = {
                     car_level: this.levels.car,
                     structures_level: this.levels.structures,
                     play_time_seconds: this.stats.playTimeSeconds || 0
-                    // car_unlocked rimosso - verifichiamo al reload dai livelli
                 })
                 .eq('user_id', userId);
             
-            if (error) throw error;
+            if (error) {
+                console.error('❌ ERRORE SAVE SUPABASE:', error);
+                throw error;
+            }
             
-            console.log('💾 IDLE salvato su Supabase');
+            console.log('✅ IDLE salvato su Supabase - lastUpdate AGGIORNATO');
             
         } catch (error) {
-            console.error('❌ Errore save IDLE:', error);
+            console.error('❌ Errore salvataggio IDLE:', error);
         }
     },
     
