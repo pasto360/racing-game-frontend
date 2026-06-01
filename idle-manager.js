@@ -216,7 +216,7 @@ const IdleManager = {
         if (error) throw error;
         
         this.balance = this.STARTING_BALANCE;
-        this.lastUpdate = new Date();
+        this.lastUpdate = new Date();  // Imposta per coerenza
     },
     
     // Calcola guadagno offline
@@ -520,7 +520,7 @@ const IdleManager = {
                 .from('idle_progress')
                 .update({
                     balance: this.balance,
-                    last_update: new Date().toISOString(),
+                    last_update: this.lastUpdate.toISOString(),  // ✅ USA this.lastUpdate
                     pilot_level: this.levels.pilot,
                     sponsor_level: this.levels.sponsor,
                     merch_level: this.levels.merch,
