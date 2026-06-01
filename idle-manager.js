@@ -19,7 +19,6 @@ const IdleManager = {
     // State
     balance: 5000,
     lastUpdate: null,
-    carUnlocked: false,  // Flag per ULTIMATE car (persiste)
     tickTimer: null,
     currentTab: 'income',  // Tab corrente
     
@@ -150,7 +149,7 @@ const IdleManager = {
                 // Carica dati esistenti
                 this.balance = parseFloat(data.balance);
                 this.lastUpdate = new Date(data.last_update);
-                this.carUnlocked = data.car_unlocked || false;  // Carica flag ULTIMATE
+                // carUnlocked è determinato dai livelli, non da un flag
                 
                 this.levels = {
                     pilot: data.pilot_level,
@@ -166,6 +165,13 @@ const IdleManager = {
                 this.stats = {
                     playTimeSeconds: data.play_time_seconds || 0
                 };
+                
+                // Verifica se l'auto è già sbloccata (dai livelli)
+                const allMaxLevel = Object.values(this.levels).every(lv => lv >= this.MAX_LEVEL);
+                const hasBalance = this.balance >= this.UNLOCK_REQUIREMENTS.minBalance;
+                if (allMaxLevel && hasBalance) {
+                    this.carUnlocked = true;
+                }
                 
                 // Calcola offline progress
                 await this.calculateOfflineProgress();
@@ -203,8 +209,8 @@ const IdleManager = {
                 tv_level: 1,
                 team_level: 1,
                 car_level: 1,
-                structures_level: 1,
-                car_unlocked: false  // Flag ULTIMATE car
+                structures_level: 1
+                // car_unlocked rimosso - verifichiamo dai livelli
             });
         
         if (error) throw error;
@@ -523,8 +529,8 @@ const IdleManager = {
                     team_level: this.levels.team,
                     car_level: this.levels.car,
                     structures_level: this.levels.structures,
-                    play_time_seconds: this.stats.playTimeSeconds || 0,
-                    car_unlocked: this.carUnlocked  // Salva flag ULTIMATE
+                    play_time_seconds: this.stats.playTimeSeconds || 0
+                    // car_unlocked rimosso - verifichiamo al reload dai livelli
                 })
                 .eq('user_id', userId);
             
