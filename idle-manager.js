@@ -351,8 +351,8 @@ const IdleManager = {
         // Aggiorna play time
         this.stats.playTimeSeconds++;
         
-        // Salva ogni 10 secondi
-        if (this.stats.playTimeSeconds % 10 === 0) {
+        // 🔴 Salva ogni 60 secondi (non ogni 10) per ridurre traffico API
+        if (this.stats.playTimeSeconds % 60 === 0) {
             this.save();
         }
         
@@ -529,16 +529,11 @@ const IdleManager = {
         try {
             const userId = await getUserId();
             
-            console.log(`💾 TENTATIVO SAVE:
-  client_last_update: ${this.lastUpdate.toISOString()}
-  balance: €${this.balance.toFixed(2)}
-  user_id: ${userId}`);
-            
             const { error } = await supabase
                 .from('idle_progress')
                 .update({
                     balance: this.balance,
-                    client_last_update: this.lastUpdate.toISOString(),  // 🔴 USA client_last_update
+                    client_last_update: this.lastUpdate.toISOString(),
                     pilot_level: this.levels.pilot,
                     sponsor_level: this.levels.sponsor,
                     merch_level: this.levels.merch,
@@ -552,24 +547,9 @@ const IdleManager = {
                 .eq('user_id', userId);
             
             if (error) {
-                console.error('❌ ERRORE UPDATE:', error);
-                throw error;
-            }
-            
-            // 🔴 VERIFICA: Leggi cosa è stato salvato davvero
-            const { data: savedData, error: readError } = await supabase
-                .from('idle_progress')
-                .select('client_last_update, balance')
-                .eq('user_id', userId)
-                .single();
-            
-            if (readError) {
-                console.error('❌ ERRORE VERIFICA READ:', readError);
+                console.error('❌ ERRORE SAVE:', error);
             } else {
-                console.log(`✅ VERIFICA SALVATO SU DB:
-  DB client_last_update: ${savedData.client_last_update}
-  DB balance: €${savedData.balance}
-  MATCH: ${savedData.client_last_update === this.lastUpdate.toISOString() ? '✅ SI' : '❌ NO!'}`);
+                console.log('💾 IDLE salvato');
             }
             
         } catch (error) {
