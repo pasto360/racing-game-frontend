@@ -19,6 +19,7 @@ const IdleManager = {
     // State
     balance: 5000,
     lastUpdate: null,
+    carUnlocked: false,  // Flag per ULTIMATE car (persiste)
     tickTimer: null,
     currentTab: 'income',  // Tab corrente
     
@@ -149,6 +150,7 @@ const IdleManager = {
                 // Carica dati esistenti
                 this.balance = parseFloat(data.balance);
                 this.lastUpdate = new Date(data.last_update);
+                this.carUnlocked = data.car_unlocked || false;  // Carica flag ULTIMATE
                 
                 this.levels = {
                     pilot: data.pilot_level,
@@ -201,7 +203,8 @@ const IdleManager = {
                 tv_level: 1,
                 team_level: 1,
                 car_level: 1,
-                structures_level: 1
+                structures_level: 1,
+                car_unlocked: false  // Flag ULTIMATE car
             });
         
         if (error) throw error;
@@ -215,7 +218,15 @@ const IdleManager = {
         const now = new Date();
         const offlineSeconds = Math.floor((now - this.lastUpdate) / 1000);
         
-        if (offlineSeconds < 60) return; // Meno di 1 minuto, ignora
+        console.log(`⏰ OFFLINE DEBUG:
+  Ora attuale: ${now.toISOString()}
+  Ultimo update: ${this.lastUpdate.toISOString()}
+  Secondi offline: ${offlineSeconds}s`);
+        
+        if (offlineSeconds < 60) {
+            console.log('  ✅ Meno di 1 minuto - ignora');
+            return;
+        }
         
         // Max 24 ore
         const maxOfflineSeconds = this.MAX_OFFLINE_HOURS * 3600;
@@ -223,12 +234,19 @@ const IdleManager = {
         
         const balancePerSec = this.calculateBalancePerSecond();
         
+        console.log(`  💰 Bilancio/sec: €${balancePerSec.toFixed(2)}`);
+        
         if (balancePerSec > 0) {
             const offlineGain = balancePerSec * actualSeconds;
+            
+            console.log(`  📈 Guadagno offline: €${offlineGain.toFixed(2)}`);
+            
             this.balance += offlineGain;
             
             // 🔴 CRITICO: Aggiorna lastUpdate SUBITO per evitare doppi conteggi al reload
             this.lastUpdate = now;
+            
+            console.log(`  ✅ Nuovo balance: €${this.balance.toFixed(2)}`);
             
             // Mostra popup
             this.showOfflinePopup(offlineSeconds, offlineGain);
@@ -505,7 +523,8 @@ const IdleManager = {
                     team_level: this.levels.team,
                     car_level: this.levels.car,
                     structures_level: this.levels.structures,
-                    play_time_seconds: this.stats.playTimeSeconds || 0
+                    play_time_seconds: this.stats.playTimeSeconds || 0,
+                    car_unlocked: this.carUnlocked  // Salva flag ULTIMATE
                 })
                 .eq('user_id', userId);
             
