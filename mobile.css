@@ -1,0 +1,220 @@
+@media (max-width: 767px) {
+
+  /* ── RIDEFINIZIONE VARIABILI CSS PER MOBILE ─────
+     Questo sovrascrive var(--text), var(--muted) ecc.
+     usate negli stili inline generati da app.js      */
+  :root {
+    --text:    #e3e3e3 !important;
+    --text2:   #e3e3e3 !important;
+    --muted:   #b9b9c1 !important;
+    --faint:   #7a7a8a !important;
+    --bg:      #1e1e24 !important;
+    --bg2:     #2e2e38 !important;
+    --card:    #4c4c5d !important;
+    --border:  #cfc126 !important;
+    --border2: #cfc126 !important;
+  }
+
+  html, body { overflow-x: hidden; max-width: 100vw; background: #1e1e24 !important; }
+
+  body::before {
+    content: ''; display: block; height: 3px;
+    background: linear-gradient(90deg, #ffe600, #a8f000, #ff2d78);
+    position: fixed; top: 0; left: 0; right: 0; z-index: 9999;
+  }
+
+  .app-header {
+    background: #4c4c5d !important; color: #e3e3e3 !important;
+    height: auto !important; padding: 10px 14px 12px !important;
+    flex-direction: column !important; align-items: flex-start !important;
+    gap: 10px !important; border-bottom: 1px solid #cfc126 !important; padding-top: 14px !important;
+  }
+  .app-header > div:first-child { width: 100%; display: flex; align-items: center; justify-content: space-between; }
+  .app-header span[style*="Georgia"] { color: #e3e3e3 !important; font-size: 18px !important; letter-spacing: 4px !important; }
+  .app-header span[style*="Georgia"] em { color: #dabe2f !important; }
+  .app-header > div:first-child > div:first-child { display: none !important; }
+  .app-header .online-count, .app-header > div:first-child > div:last-child { display: none !important; }
+  .app-header .right { width: 100% !important; display: flex !important; align-items: center !important; justify-content: space-between !important; gap: 6px !important; }
+  .app-header .user-chip { background: #2e2e38 !important; border-color: #cfc126 !important; border-radius: 20px !important; padding: 5px 12px !important; }
+  .app-header .user-chip-av { background: linear-gradient(135deg, #ffe600, #a8f000) !important; color: #1e1e24 !important; }
+  .app-header .user-chip-name { color: #e3e3e3 !important; font-size: 12px !important; }
+  .app-header .hbtn-icon { background: rgba(255,255,255,.06) !important; border-color: #cfc126 !important; color: #e3e3e3 !important; width: 34px !important; height: 34px !important; }
+  .notif-dot-badge { background: #ff2d78 !important; }
+  .app-header .nav-vsep { display: none !important; }
+  .app-header .hbtn { background: #2e2e38 !important; border: 1px solid #cfc126 !important; color: #e3e3e3 !important; font-size: 11px !important; padding: 5px 10px !important; border-radius: 6px !important; }
+  .app-header .hbtn.red { border-color: rgba(255,45,120,.3) !important; color: #ff2d78 !important; }
+
+  .page { background: #1e1e24 !important; min-height: 100vh; padding-bottom: 72px !important; }
+
+  .welcome-greet { color: #b9b9c1 !important; font-size: 12px !important; padding: 14px 14px 2px !important; }
+  .welcome-name { color: #e3e3e3 !important; }
+
+  .search-bar { padding: 10px 14px !important; display: flex !important; position: static !important; transform: none !important; background: transparent !important; gap: 8px !important; }
+  .search-inner-wrap { flex: 1; background: #4c4c5d !important; border-color: #cfc126 !important; border-radius: 10px !important; }
+  .search-input { background: #4c4c5d !important; color: #e3e3e3 !important; border: none !important; border-radius: 10px !important; font-size: 14px !important; padding: 10px 12px !important; }
+  .search-input::placeholder { color: #b9b9c1 !important; }
+  .search-icon-wrap { padding: 0 10px !important; color: #b9b9c1 !important; }
+
+  .sec-header { padding: .8rem 14px .5rem !important; }
+  .sec-title { color: #e3e3e3 !important; }
+  .sec-count { color: #b9b9c1 !important; }
+
+  #search-filters { padding: 0 14px 10px !important; display: flex !important; position: static !important; flex-wrap: nowrap !important; overflow-x: auto !important; gap: 6px !important; background: transparent !important; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  #search-filters::-webkit-scrollbar { display: none; }
+  .filter-pill { background: #4c4c5d !important; border-color: #cfc126 !important; color: #b9b9c1 !important; white-space: nowrap !important; font-size: 11px !important; flex-shrink: 0; }
+  .filter-pill.active { background: #ffe600 !important; border-color: #ffe600 !important; color: #1e1e24 !important; }
+
+  .champ-grid, .champ-grid.list-grid { grid-template-columns: 1fr !important; padding: 0 14px !important; gap: 10px !important; }
+
+  .champ-card { background: #4c4c5d !important; border-color: #cfc126 !important; border-radius: 14px !important; position: relative; overflow: hidden; }
+  .champ-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, #ffe600, #a8f000); }
+  .champ-card-name { color: #e3e3e3 !important; }
+  .champ-card-meta, .champ-card-pos { color: #b9b9c1 !important; }
+  .champ-card-mine .champ-card-pos { color: #dabe2f !important; }
+  .champ-card-open { background: #ffe600 !important; color: #1e1e24 !important; border: none !important; border-radius: 8px !important; font-weight: 700 !important; }
+
+  .footer-main { background: #4c4c5d !important; border-color: #cfc126 !important; }
+
+  #mobile-bottom-bar { display: flex !important; position: fixed; bottom: 0; left: 0; right: 0; height: 60px; background: #4c4c5d; border-top: 1px solid #cfc126; align-items: flex-end; justify-content: space-around; padding: 6px 0 10px; z-index: 500; }
+  #mobile-bottom-bar .mbb-item { display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 9px; color: #b9b9c1; padding: 0 8px; background: none; border: none; cursor: pointer; transition: color .15s; }
+  #mobile-bottom-bar .mbb-item.active { color: #ffe600; }
+  #mobile-bottom-bar .mbb-item i { font-size: 22px; display: block; }
+  #mobile-bottom-bar .mbb-fab { width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg, #ffe600, #a8f000); border: 3px solid #1e1e24; display: flex; align-items: center; justify-content: center; margin-top: -18px; cursor: pointer; flex-shrink: 0; }
+  #mobile-bottom-bar .mbb-fab i { font-size: 22px; color: #1e1e24; }
+
+  .champ-page-header { background: #4c4c5d !important; border-color: #cfc126 !important; }
+  .champ-hdr-title, #champ-hdr-title { color: #e3e3e3 !important; }
+  .champ-eyebrow, .champ-hdr-meta { color: #b9b9c1 !important; }
+
+  .tab-bar { background: #4c4c5d !important; border-color: #cfc126 !important; }
+  .tab-bar-inner { padding: 0 !important; overflow-x: visible !important; }
+  .tab-btn { flex: 1 !important; padding: 10px 4px !important; font-size: 10px !important; letter-spacing: 0 !important; color: #b9b9c1 !important; gap: 3px !important; justify-content: center !important; }
+  .tab-btn.active { color: #ffe600 !important; border-bottom-color: #ffe600 !important; }
+  .tab-btn span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  #races-grid { grid-template-columns: 1fr !important; }
+  #races-grid > div { background: #4c4c5d !important; border-color: #cfc126 !important; border-radius: 12px !important; }
+
+  .s-row { background: #4c4c5d !important; border-color: #cfc126 !important; }
+  .s-name { color: #e3e3e3 !important; }
+  .s-sub { color: #b9b9c1 !important; }
+  .s-pos-1 { color: #ffe600 !important; }
+  .s-pos-2 { color: #a8f000 !important; }
+  .s-pos-3 { color: #ff2d78 !important; }
+
+  .overlay-box, .modal-box { background: #4c4c5d !important; border-color: #cfc126 !important; }
+  .overlay-box h2, .overlay-box h3, .modal-box h2, .modal-box h3 { color: #e3e3e3 !important; }
+  .overlay-box input, .overlay-box select, .overlay-box textarea { background: #2e2e38 !important; border-color: #cfc126 !important; color: #e3e3e3 !important; }
+
+  .toast { background: #2e2e38 !important; color: #a8f000 !important; border: 1px solid #a8f000 !important; border-radius: 20px !important; }
+
+  .notif-panel, .friends-panel { background: #4c4c5d !important; border-color: #cfc126 !important; }
+  .notif-panel-title, .friends-panel-title { color: #e3e3e3 !important; border-color: #cfc126 !important; }
+  .notif-item { border-color: #cfc126 !important; }
+  .notif-title { color: #e3e3e3 !important; }
+  .notif-body, .notif-time { color: #b9b9c1 !important; }
+
+  .dash-container { padding: 12px 14px !important; background: #1e1e24 !important; }
+
+  #profile-avatar { background: linear-gradient(135deg, #ffe600, #a8f000) !important; color: #1e1e24 !important; }
+  #profile-username { color: #e3e3e3 !important; }
+
+  .auth-box { background: #4c4c5d !important; border-color: #cfc126 !important; }
+  .auth-box input { background: #2e2e38 !important; border-color: #cfc126 !important; color: #e3e3e3 !important; }
+
+  .online-count { display: none !important; }
+
+  #mobile-search-submit { width: 38px; height: 38px; background: #ffe600; border: none; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; }
+  #mobile-search-submit i { font-size: 18px; color: #1e1e24; }
+
+
+  /* ── PAGINA CAMPIONATO ─────────────────────────── */
+
+  /* Champ page header */
+  .champ-page-header { background: #4c4c5d !important; border-color: #cfc126 !important; }
+  .champ-hdr-title, #champ-hdr-title { color: #e3e3e3 !important; }
+  .champ-eyebrow, .champ-eyebrow-line { color: #dabe2f !important; }
+  .champ-hdr-meta { color: #b9b9c1 !important; }
+  .champ-season-inline { color: #b9b9c1 !important; }
+
+  /* Share strip */
+  .share-strip { background: rgba(255,255,255,.04) !important; border-color: #cfc126 !important; }
+  .share-strip-btn { background: transparent !important; border-color: #cfc126 !important; color: #b9b9c1 !important; }
+
+  /* Champ header buttons */
+  .champ-hdr-btn { border-color: #cfc126 !important; color: #e3e3e3 !important; background: transparent !important; }
+  .champ-hdr-btn.gold { background: rgba(201,168,76,.12) !important; border-color: #dabe2f !important; color: #dabe2f !important; }
+
+  /* Race cards */
+  #races-grid > div { background: #4c4c5d !important; border-color: #cfc126 !important; border-radius: 12px !important; }
+  #races-grid { grid-template-columns: 1fr !important; }
+
+  /* Standings */
+  .s-row { background: #4c4c5d !important; border-color: #cfc126 !important; }
+  .s-name { color: #e3e3e3 !important; }
+  .s-sub { color: #b9b9c1 !important; }
+  .s-pos-1 { color: #ffe600 !important; }
+  .s-pos-2 { color: #a8f000 !important; }
+  .s-pos-3 { color: #ff2d78 !important; }
+  .s-pts { color: #ffe600 !important; }
+  .s-badge-me { background: rgba(201,168,76,.12) !important; color: #dabe2f !important; }
+
+  /* RR table */
+  .rr-table { background: #4c4c5d !important; }
+  .rr-table th { color: #b9b9c1 !important; border-color: #cfc126 !important; background: #2e2e38 !important; }
+  .rr-table td { border-color: #cfc126 !important; color: #e3e3e3 !important; }
+
+  /* Manage panel */
+  .manage-inner { background: #4c4c5d !important; border-color: #cfc126 !important; }
+  .manage-tab { border-color: #cfc126 !important; color: #b9b9c1 !important; }
+  .manage-tab.active { background: #ffe600 !important; color: #1e1e24 !important; border-color: #ffe600 !important; }
+  .manage-hint { color: #b9b9c1 !important; }
+  .sort-item { background: #2e2e38 !important; border-color: #cfc126 !important; color: #e3e3e3 !important; }
+  .field label { color: #b9b9c1 !important; }
+  .field input, .field select, .field textarea { background: #2e2e38 !important; border-color: #cfc126 !important; color: #e3e3e3 !important; }
+
+  /* Result overlay */
+  #result-overlay .overlay-box { background: #4c4c5d !important; border-color: #cfc126 !important; }
+  #result-selects select { background: #2e2e38 !important; border-color: #cfc126 !important; color: #e3e3e3 !important; }
+
+  /* Live section */
+  .live-stream-wrap { background: #4c4c5d !important; border-color: #cfc126 !important; }
+  .sync-badge { background: #2e2e38 !important; border-color: #cfc126 !important; color: #b9b9c1 !important; }
+
+
+  /* ── STATUS GARE ───────────────────────────────── */
+  .race-status-done {
+    color: #a8f000 !important; /* lime */
+  }
+  .race-status-todo {
+    color: #ff2d78 !important; /* fucsia */
+  }
+  /* Dot di stato */
+  #races-grid > div div[style*="background:#276749"] {
+    background: #a8f000 !important;
+  }
+  #races-grid > div div[style*="background:var(--faint)"] {
+    background: #ff2d78 !important;
+  }
+
+
+  /* ── DADO MOBILE ────────────────────────────────── */
+  .dice-widget {
+    background: #4c4c5d !important;
+    border-color: #cfc126 !important;
+    margin: 0 14px 14px !important;
+  }
+  .dice-roll-btn {
+    background: rgba(207,193,38,.12) !important;
+    border-color: #cfc126 !important;
+  }
+  #dice-label { color: #cfc126 !important; }
+  .dice-log-num { background: #ffe600 !important; color: #1e1e24 !important; }
+  .dice-log-player { color: #e3e3e3 !important; }
+  .dice-log-time { color: #b9b9c1 !important; }
+  .dice-log-row { border-color: #3a3a46 !important; }
+  .dice-log { border-color: #3a3a46 !important; }
+  .dice-title { color: #e3e3e3 !important; }
+  .dice-title i { color: #cfc126 !important; }
+
+} /* end @media (max-width: 767px) */
