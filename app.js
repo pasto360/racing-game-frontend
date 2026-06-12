@@ -994,6 +994,7 @@ function myMemberStatus() {
 // ── JOIN BANNER ───────────────────────────────────
 function renderJoinBanner() {
   const el = document.getElementById('join-banner'); if (!el) return;
+  const el2 = document.getElementById('join-banner-races');
   const status = myMemberStatus();
 
   // Owner: show pending requests notification
@@ -1020,6 +1021,7 @@ function renderJoinBanner() {
         + '</div>';
     } else {
       el.innerHTML = '';
+      if (el2) el2.innerHTML = el.innerHTML;
     }
     return;
   }
@@ -1031,6 +1033,7 @@ function renderJoinBanner() {
 
     if (isClosed) {
       el.innerHTML = '<div style="margin:12px 0;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 14px;text-align:center;font-size:13px;color:var(--muted);">🔐 Campionato chiuso — solo su invito diretto</div>';
+      if (el2) el2.innerHTML = el.innerHTML;
     } else {
       // Pubblico o Privato (password già inserita): mostra pulsante richiesta
       el.innerHTML = '<div style="margin:12px 0;background:rgba(139,92,246,0.1);border:1px solid rgba(139,92,246,0.3);border-radius:12px;padding:14px;text-align:center;">'
@@ -1054,6 +1057,7 @@ function renderJoinBanner() {
   }
   // player or owner: hide banner
   el.innerHTML = '';
+  if (el2) el2.innerHTML = el.innerHTML;
 }
 
 
