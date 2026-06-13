@@ -1044,6 +1044,7 @@ function renderJoinBanner() {
         + '<div style="font-size:13px;color:var(--muted);margin-bottom:10px;">Vuoi partecipare a questo campionato?</div>'
         + '<button onclick="requestJoin()" style="background:var(--violet);color:#fff;border:none;border-radius:10px;padding:9px 24px;font-size:14px;font-weight:700;cursor:pointer;">Richiedi iscrizione</button>'
         + '</div>';
+      if (el2) el2.innerHTML = el.innerHTML;
     }
     return;
   }
