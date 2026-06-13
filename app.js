@@ -589,8 +589,13 @@ function renderAllChamps() {
 }
 
 function isMemberOf(champId) {
-  // Check if current user is owner or player of this champ (from allChamps cache)
-  // For closed champs we check champ_members — but since this is sync, use a flag set at load time
+  // Check current champ members (loaded when champ is open)
+  if (champId === currentChamp?.id) {
+    return champMembers.some(function(m) {
+      return m.user_id === currentUser?.id && (m.role === 'owner' || m.role === 'player');
+    });
+  }
+  // Fallback for other champs (e.g. home page cards)
   return closedMemberships.has(champId);
 }
 
