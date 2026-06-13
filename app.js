@@ -589,13 +589,12 @@ function renderAllChamps() {
 }
 
 function isMemberOf(champId) {
-  // Check current champ members (loaded when champ is open)
+  // When inside a champ page, check live champMembers
   if (champId === currentChamp?.id) {
     return champMembers.some(function(m) {
       return m.user_id === currentUser?.id && (m.role === 'owner' || m.role === 'player');
     });
   }
-  // Fallback for other champs (e.g. home page cards)
   return closedMemberships.has(champId);
 }
 
