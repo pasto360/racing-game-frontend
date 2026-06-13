@@ -997,11 +997,18 @@ function myMemberStatus() {
 
 // ── JOIN BANNER ───────────────────────────────────
 function renderJoinBanner() {
-  const el = document.getElementById('join-banner'); if (!el) return;
+  const el  = document.getElementById('join-banner');
   const el2 = document.getElementById('join-banner-races');
+  if (!el && !el2) return;
+
+  function setContent(content) {
+    if (el)  el.innerHTML  = content;
+    if (el2) el2.innerHTML = content;
+  }
+
   const status = myMemberStatus();
 
-  // Owner: show pending requests notification
+  // Owner: show pending requests
   if (isOwner) {
     var pending = champMembers.filter(function(m){ return m.role === 'pending'; });
     if (pending.length) {
@@ -1011,63 +1018,53 @@ function renderJoinBanner() {
         rows += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">'
              + '<div style="width:8px;height:8px;border-radius:50%;background:#e0c060;flex-shrink:0;"></div>'
              + '<span style="flex:1;font-size:13px;font-weight:600;">' + pm.username + '</span>'
-             + '<button onclick="acceptMember(' + "'" + pm.id + "'" + ')" style="background:rgba(45,198,83,0.15);border:1px solid #b0d8b0;border-radius:8px;padding:6px 14px;font-size:15px;cursor:pointer;font-weight:700;" title="Accetta">&#10003;</button>'
-             + '<button onclick="rejectMember(' + "'" + pm.id + "'" + ')" style="background:rgba(230,57,70,0.15);border:1px solid #e0b0b0;border-radius:8px;padding:6px 14px;font-size:15px;cursor:pointer;font-weight:700;" title="Rifiuta">&#10007;</button>'
+             + '<button onclick="acceptMember(\'' + pm.id + '\')" style="background:rgba(45,198,83,0.15);border:1px solid #b0d8b0;border-radius:8px;padding:6px 14px;font-size:15px;cursor:pointer;font-weight:700;" title="Accetta">&#10003;</button>'
+             + '<button onclick="rejectMember(\'' + pm.id + '\')" style="background:rgba(230,57,70,0.15);border:1px solid #e0b0b0;border-radius:8px;padding:6px 14px;font-size:15px;cursor:pointer;font-weight:700;color:#c0392b;" title="Rifiuta">&#10005;</button>'
              + '</div>';
       }
-      var label = pending.length > 1 ? 'richieste di iscrizione in attesa' : 'richiesta di iscrizione in attesa';
-      el.innerHTML = '<div style="margin:12px 0;background:#fffbf0;border:1px solid #f0d080;border-radius:12px;padding:14px 16px;">'
-        + '<div style="font-size:13px;font-weight:700;color:#b07000;margin-bottom:12px;display:flex;align-items:center;gap:6px;">'
-        + '<span style="font-size:18px;">&#9203;</span>'
-        + '<span>' + pending.length + ' ' + label + '</span>'
-        + '</div>'
-        + rows
-        + '</div>';
+      setContent('<div style="margin:12px 0;background:var(--gold-bg);border:1px solid var(--gold);border-radius:3px;padding:12px 14px;">'
+        + '<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--gold);margin-bottom:8px;">Richieste di iscrizione (' + pending.length + ')</div>'
+        + rows + '</div>');
     } else {
-      el.innerHTML = '';
-      if (el2) el2.innerHTML = el.innerHTML;
+      setContent('');
     }
+    return;
+  }
+
+  // Already a player
+  if (status === 'player') {
+    setContent('');
+    return;
+  }
+
+  // Already invited
+  if (status === 'invited') {
+    setContent('<div style="margin:12px 0;background:var(--gold-bg);border:1px solid var(--gold);border-radius:3px;padding:12px 14px;text-align:center;font-size:13px;color:var(--text);">📨 Hai un invito in attesa — controlla le notifiche</div>');
+    return;
+  }
+
+  // Pending request
+  if (status === 'pending') {
+    setContent('<div style="margin:12px 0;background:var(--card);border:1px solid var(--border);border-radius:3px;padding:12px 14px;text-align:center;font-size:13px;color:var(--muted);">⏳ Richiesta di iscrizione inviata — in attesa di approvazione</div>');
     return;
   }
 
   // Non-member
   if (!status) {
-    var isClosed   = currentChamp.access === 'closed' || !!currentChamp.closed;
-    var isPassword = currentChamp.access === 'password' && !isClosed;
-
+    var isClosed = currentChamp.access === 'closed' || !!currentChamp.closed;
     if (isClosed) {
-      el.innerHTML = '<div style="margin:12px 0;background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 14px;text-align:center;font-size:13px;color:var(--muted);">🔐 Campionato chiuso — solo su invito diretto</div>';
-      if (el2) el2.innerHTML = el.innerHTML;
+      setContent('<div style="margin:12px 0;background:var(--card);border:1px solid var(--border);border-radius:3px;padding:12px 14px;text-align:center;font-size:13px;color:var(--muted);">🔐 Campionato chiuso — solo su invito diretto</div>');
     } else {
-      // Pubblico o Privato (password già inserita): mostra pulsante richiesta
-      el.innerHTML = '<div style="margin:12px 0;background:rgba(139,92,246,0.1);border:1px solid rgba(139,92,246,0.3);border-radius:12px;padding:14px;text-align:center;">'
+      setContent('<div style="margin:12px 0;background:rgba(201,168,76,.08);border:1px solid var(--gold);border-radius:3px;padding:14px;text-align:center;">'
         + '<div style="font-size:13px;color:var(--muted);margin-bottom:10px;">Vuoi partecipare a questo campionato?</div>'
-        + '<button onclick="requestJoin()" style="background:var(--violet);color:#fff;border:none;border-radius:10px;padding:9px 24px;font-size:14px;font-weight:700;cursor:pointer;">Richiedi iscrizione</button>'
-        + '</div>';
-      if (el2) el2.innerHTML = el.innerHTML;
+        + '<button onclick="requestJoin()" style="background:var(--gold);color:#fff;border:none;border-radius:3px;padding:9px 24px;font-size:14px;font-weight:700;cursor:pointer;">Richiedi iscrizione</button>'
+        + '</div>');
     }
     return;
   }
-  if (status === 'pending') {
-    el.innerHTML = '<div style="margin:12px 0;background:#fffbf0;border:1px solid #f0d080;border-radius:12px;padding:12px 14px;text-align:center;font-size:13px;color:#b07000;">'
-      + "&#9203; Richiesta inviata &mdash; attendi l'approvazione dell'admin"
-      + '</div>';
-    return;
-  }
-  if (status === 'rejected') {
-    el.innerHTML = '<div style="margin:12px 0;background:rgba(230,57,70,0.15);border:1px solid #e0b0b0;border-radius:12px;padding:12px 14px;text-align:center;font-size:13px;color:#a03030;">'
-      + '&#10007; La tua richiesta è stata rifiutata'
-      + '</div>';
-    return;
-  }
-  // player or owner: hide banner
-  el.innerHTML = '';
-  if (el2) el2.innerHTML = el.innerHTML;
 }
 
 
-// ── PENDING POLL (owner) ──────────────────────────
-let pendingPollTimer = null;
 function startPendingPoll() {
   stopPendingPoll();
   pendingPollTimer = setInterval(async function() {
@@ -1244,8 +1241,10 @@ function scheduleSave() {
 function renderDiceWidget() {
   var widget = document.getElementById('dice-widget');
   if (!widget) return;
-  // Show only to members/owner
-  if (!isMemberOf(currentChamp.id) && !isOwner) {
+  var isMember = champMembers.some(function(m) {
+    return m.user_id === currentUser?.id && (m.role === 'owner' || m.role === 'player');
+  });
+  if (!isMember && !isOwner) {
     widget.style.display = 'none';
     return;
   }

@@ -384,18 +384,20 @@
       <div class="sec-hdr"><span class="sec-lbl">Gare</span><span id="races-count" style="font-size:11px;color:#bbb;"></span></div>
       <div id="join-banner-races"></div>
       <div class="races-grid" id="races-grid"></div>
-      <div class="dice-widget" id="dice-widget" style="display:none;margin:14px 0 4px;">
-        <div class="dice-header">
-          <span class="dice-title"><i class="ti ti-dice-6" aria-hidden="true"></i> Dado</span>
-          <span class="dice-sub">Solo per i partecipanti</span>
+
+      <!-- DADO -->
+      <div id="dice-widget" style="margin:16px 0;background:var(--card);border:1px solid var(--border);border-radius:6px;padding:14px 16px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <span style="font-size:13px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:6px;"><i class="ti ti-dice-6" style="color:var(--gold);font-size:16px;"></i> Dado</span>
+          <span style="font-size:11px;color:var(--muted);">Solo per i partecipanti</span>
         </div>
-        <div class="dice-body">
-          <button class="dice-roll-btn" id="dice-roll-btn" onclick="rollDice()">
-            <span id="dice-face">🎲</span>
-            <span id="dice-label">Tira il dado</span>
+        <div style="display:flex;justify-content:center;margin-bottom:12px;">
+          <button id="dice-roll-btn" onclick="rollDice()" style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 28px;background:var(--gold-bg);border:1px solid var(--gold);border-radius:3px;cursor:pointer;width:100%;">
+            <span id="dice-face" style="font-size:36px;line-height:1;">🎲</span>
+            <span id="dice-label" style="font-size:11px;letter-spacing:.5px;color:var(--gold);font-weight:600;text-transform:uppercase;">Tira il dado</span>
           </button>
         </div>
-        <div class="dice-log" id="dice-log"></div>
+        <div id="dice-log" style="border-top:1px solid var(--bg2);padding-top:10px;display:flex;flex-direction:column;gap:5px;"></div>
       </div>
     </div>
     <!-- RIGHT COL -->
@@ -422,33 +424,6 @@
           </button>
         </div>
       </div>
-      <!-- classifica -->
-      <div class="sec-hdr" style="margin-top:8px;"><span class="sec-lbl">Classifica</span><span id="races-progress" style="font-size:11px;color:#bbb;"></span></div>
-      <div class="standings-card" id="standings-container"></div>
-      <!-- download classifica -->
-      <div id="share-image-bar" style="display:flex;justify-content:flex-end;margin-top:10px;">
-        <button onclick="shareStandingsImage('download')" class="share-btn copy-link" title="Scarica classifica come immagine"
-          style="display:flex;align-items:center;gap:6px;padding:6px 14px;border-radius:8px;font-size:12px;font-weight:600;width:auto;">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Scarica classifica
-        </button>
-      </div>
-      <div class="prog-bar"><div class="prog-fill" id="progress-fill" style="width:0%"></div></div>
-      <div class="prog-lbl" id="progress-label"></div>
-      <!-- premi -->
-      <div class="sec-hdr" style="margin-top:16px;"><span class="sec-lbl">Premi</span></div>
-      <div class="prizes-card" id="prizes-container"></div>
-      <div id="join-banner"></div>
-    </div>
-    <!-- CHART -->
-    <div class="col-chart" id="chart-section">
-      <div class="sec-hdr"><span class="sec-lbl">Andamento Punti</span></div>
-      <div class="chart-card">
-        <div class="chart-legend" id="chart-legend"></div>
-        <div class="chart-wrap"><canvas id="chart-canvas"></canvas></div>
-      </div>
-    </div>
-  </div>
 
   <!-- mobile live page -->
   <div class="c-page" id="c-page-live" style="padding:16px;display:none;">
