@@ -384,6 +384,20 @@
       <div class="sec-hdr"><span class="sec-lbl">Gare</span><span id="races-count" style="font-size:11px;color:#bbb;"></span></div>
       <div id="join-banner-races"></div>
       <div class="races-grid" id="races-grid"></div>
+      <!-- dado -->
+      <div class="dice-widget" id="dice-widget" style="display:none;margin:14px 0;">
+        <div class="dice-header">
+          <span class="dice-title"><i class="ti ti-dice-6" aria-hidden="true"></i> Dado</span>
+          <span class="dice-sub">Solo per i partecipanti</span>
+        </div>
+        <div class="dice-body">
+          <button class="dice-roll-btn" id="dice-roll-btn" onclick="rollDice()">
+            <span id="dice-face">🎲</span>
+            <span id="dice-label">Tira il dado</span>
+          </button>
+        </div>
+        <div class="dice-log" id="dice-log"></div>
+      </div>
     </div>
     <!-- RIGHT COL -->
     <div class="col-right c-page" id="c-page-standings">
@@ -409,21 +423,6 @@
           </button>
         </div>
       </div>
-      <!-- dado -->
-      <div class="dice-widget" id="dice-widget" style="display:none;margin-bottom:14px;">
-        <div class="dice-header">
-          <span class="dice-title"><i class="ti ti-dice-6" aria-hidden="true"></i> Dado</span>
-          <span class="dice-sub">Tira per tutti</span>
-        </div>
-        <div class="dice-body">
-          <button class="dice-roll-btn" id="dice-roll-btn" onclick="rollDice()">
-            <span id="dice-face">🎲</span>
-            <span id="dice-label">Tira il dado</span>
-          </button>
-        </div>
-        <div class="dice-log" id="dice-log"></div>
-      </div>
-
       <!-- classifica -->
       <div class="sec-hdr" style="margin-top:8px;"><span class="sec-lbl">Classifica</span><span id="races-progress" style="font-size:11px;color:#bbb;"></span></div>
       <div class="standings-card" id="standings-container"></div>
